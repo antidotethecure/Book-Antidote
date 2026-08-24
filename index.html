@@ -4494,14 +4494,17 @@ const KICKCLIPS=[
   document.addEventListener("keydown",function(e){
     if((e.key==="Escape"||e.keyCode===27) && lyrModal && lyrModal.classList.contains("open")) closeLyr(); });
 
-  var BM_E="CRoAGRdVW0oYAQEdEUEWAE4ZM1o2ISc3UgYHDg==";
-  window.bmSongURL=function(){ return songURL(); };
+  /* Play the unlocked record in the site's own player. Delegated because the
+     button is re-rendered whenever the result panel is rebuilt. */
+  document.addEventListener("click",function(e){
+    var b=e.target.closest && e.target.closest("#bmPlayNow");
+    if(!b) return;
+    e.preventDefault();
+    var sec=document.getElementById("music");
+    if(sec) try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(err){ sec.scrollIntoView(); }
+    if(window.bmPlayGated) window.bmPlayGated();
+  });
   window.bmIsUnlocked=function(){ try{ return localStorage.getItem("bmUnlocked")==="1"; }catch(e){ return false; } };
-  function songURL(){
-    var k="antidote", e=atob(BM_E), o="";
-    for(var i=0;i<e.length;i++) o+=String.fromCharCode(e.charCodeAt(i)^k.charCodeAt(i%k.length));
-    return o;
-  }
 
   function tally(){
     var done=0,i; for(i=0;i<picks.length;i++){ if(picks[i]>=0) done++; }
@@ -4641,7 +4644,7 @@ const KICKCLIPS=[
     if(pass){
       res.innerHTML='<div class="bm-score">Clearance granted \u00b7 '+score+'/'+live.length+'</div>'
         +'<div class="bm-msg">You didn\u2019t take the surface read. You heard what\u2019s underneath it \u2014 so the gate opens. Press play, and listen the way you just answered.</div>'
-        +'<a class="btn btn-gold bm-play" href="'+songURL()+'" target="_blank" rel="noopener">\u25b6 Play \u201cBelieve Me\u201d</a>';
+        +'<button class="btn btn-gold bm-play" type="button" id="bmPlayNow">\u25b6 Play \u201cBelieve Me\u201d</button>';
       if(art) art.classList.add("unlocked");
       sub.disabled=true; sub.textContent="\ud83d\udd13 Unlocked";
       try{ localStorage.setItem("bmUnlocked","1"); }catch(e){}
@@ -4663,7 +4666,7 @@ const KICKCLIPS=[
       res.className="bm-result show pass";
       res.innerHTML='<div class="bm-score">Clearance already granted</div>'
         +'<div class="bm-msg">You passed this on a previous visit \u2014 the gate stays open for you.</div>'
-        +'<a class="btn btn-gold bm-play" href="'+songURL()+'" target="_blank" rel="noopener">\u25b6 Play \u201cBelieve Me\u201d</a>';
+        +'<button class="btn btn-gold bm-play" type="button" id="bmPlayNow">\u25b6 Play \u201cBelieve Me\u201d</button>';
     }
     if(sub){ sub.disabled=true; sub.textContent="\ud83d\udd13 Unlocked"; }
   })();
@@ -5646,15 +5649,16 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     if((filter==="all"||filter==="original") &&
        (!query || GATED_TITLE.toLowerCase().indexOf(query)>-1)){
       var unl = (window.bmIsUnlocked && window.bmIsUnlocked());
+      var gt=null; for(var gi=0;gi<TRACKS.length;gi++){ if(TRACKS[gi].f===GATED_FILE){ gt=TRACKS[gi]; break; } }
       html+='<button class="trk '+(unl?'earned':'locked')+'" type="button" '+
         (unl?'data-earned="1"':'data-lock="1"')+' aria-current="false" '+
-        'title="'+(unl?'Unlocked \u2014 watch on YouTube':'Pass the test to unlock')+'">'+
+        'title="'+(unl?'Unlocked \u2014 play it':'Pass the test to unlock')+'">'+
         '<span class="trk-num">'+(unl?'&#9654;':'&#128274;')+'</span>'+
         '<span class="trk-meta"><span class="trk-t">Believe Me</span>'+
         '<span class="trk-f">'+(unl
           ? 'Unlocked &middot; Prod. Mike Zombie &mdash; watch it'
           : 'Sealed &middot; Prod. Mike Zombie &mdash; pass the test')+'</span></span>'+
-        '<span class="trk-d">'+(unl?'&#9741;':'&#8212;')+'</span></button>';
+        '<span class="trk-d">'+(unl?fmt(gt?gt.d:0):'&#8212;')+'</span></button>';
     }
     grid.innerHTML=html;
     mark();
@@ -5766,6 +5770,16 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     },
     onChange:function(cb){ ['play','pause','ended'].forEach(function(ev){ el.addEventListener(ev,cb); }); }
   };
+
+  /* Believe Me is gated, but once earned it plays here from audio/believe-me.m4a
+     like any other record. It used to hand the visitor off to YouTube, which was
+     a different master at a different quality. */
+  window.bmPlayGated=function(){
+    for(var i=0;i<TRACKS.length;i++){
+      if(TRACKS[i].f===GATED_FILE){ load(i); return true; }
+    }
+    return false;
+  };
   function next(){ advance(false); }
   /* auto=true means the track ended on its own; only then does repeat apply. */
   function advance(auto){
@@ -5787,8 +5801,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   grid.addEventListener('click',function(e){
     var b=e.target.closest('.trk'); if(!b) return;
     if(b.dataset.earned){
-      var u = window.bmSongURL ? window.bmSongURL() : "";
-      if(u) window.open(u,"_blank","noopener");
+      if(window.bmPlayGated) window.bmPlayGated();
       return;
     }
     if(b.dataset.lock){ var bl=document.getElementById('believe'); if(bl) bl.scrollIntoView({behavior:'smooth',block:'start'}); return; }
@@ -5823,10 +5836,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
           /* Sealed track: shown on the timeline, but it never serves audio. */
           var unl=(window.bmIsUnlocked && window.bmIsUnlocked());
           html+='<button class="tl-trk tl-locked" type="button" data-gate="1" aria-current="false" '+
-                'title="'+(unl?'Unlocked \u2014 watch on YouTube':'Sealed \u2014 pass the test to unlock')+'">'+
+                'title="'+(unl?'Unlocked \u2014 play it':'Sealed \u2014 pass the test to unlock')+'">'+
                 '<span class="tl-t">'+(unl?'\u25B6\uFE0E ':'\uD83D\uDD12 ')+o.t.t+'</span>'+
                 (o.t.x?'<span class="tl-x">'+o.t.x+'</span>':'')+
-                '<span class="tl-d">'+(unl?'\u2669':'\u2014')+'</span></button>';
+                '<span class="tl-d">'+(unl?fmt(o.t.d):'\u2014')+'</span></button>';
           return;
         }
         html+='<button class="tl-trk" type="button" data-i="'+o.i+'" aria-current="false">'+
@@ -5849,8 +5862,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       var b=e.target.closest('.tl-trk'); if(!b) return;
       if(b.dataset.gate){
         if(window.bmIsUnlocked && window.bmIsUnlocked()){
-          var u=window.bmSongURL?window.bmSongURL():"";
-          if(u) window.open(u,"_blank","noopener");
+          if(window.bmPlayGated) window.bmPlayGated();
         } else {
           var bl=document.getElementById('believe');
           if(bl) bl.scrollIntoView({behavior:'smooth',block:'start'});
