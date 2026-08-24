@@ -109,6 +109,7 @@ h2{font-size:clamp(1.9rem,5.5vw,3rem);margin:.35em 0 .45em}
 .neon-p{color:#ffeef5;text-shadow:0 0 4px rgba(255,255,255,.65),0 0 12px rgba(255,62,142,.85),0 0 26px rgba(255,62,142,.6),0 0 48px rgba(255,62,142,.35);animation:flick 5.8s infinite}
 @keyframes flick{0%,100%{opacity:1}48%{opacity:1}49%{opacity:.72}50%{opacity:1}72%{opacity:1}73%{opacity:.85}74%{opacity:1}}
 .hero h1 .l2{filter:drop-shadow(0 0 16px rgba(245,166,35,.55))}
+section[id]{scroll-margin-top:64px}   /* clear the fixed nav when jumped to */
 section{padding:72px 0;position:relative;background-color:#0b0a08}
 
 /* ---------- NAV ---------- */
@@ -153,6 +154,11 @@ canvas.hero-driz{position:absolute !important;inset:0;z-index:2 !important;width
 .tagline b{color:var(--neon-g)} .tagline i{color:var(--neon-p);font-style:normal}
 .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
 .stat{border:1px solid rgba(245,166,35,.45);background:rgba(20,16,10,.55);border-radius:12px;padding:9px 14px;font-weight:700;font-size:.92rem}
+.stat{text-decoration:none;color:inherit;cursor:pointer;
+  transition:border-color .16s ease,background .16s ease,transform .16s ease}
+.stat:hover{border-color:rgba(245,166,35,.95);background:rgba(38,28,12,.75);transform:translateY(-2px)}
+.stat:focus-visible{outline:2px solid var(--syrup-hi,#ffd166);outline-offset:3px}
+.stat::after{content:"\2197";margin-left:7px;font-size:.72em;opacity:.5}
 .stat b{color:var(--syrup)}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:26px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:1.02rem;transition:transform .15s}
@@ -927,11 +933,13 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <div class="tagline"><i>Drizzle.</i> <b>Bite.</b> Repeat.</div>
   </div>
   <div class="stats">
-    <div class="stat"><b>133+</b> Reviews</div>
-    <div class="stat"><b>10+</b> Cuisines</div>
-    <div class="stat"><b>Celebrity</b> Co-Signed</div>
-    <div class="stat"><b>YouTube + IG</b> Reach</div>
-    <div class="stat"><b id="statSongs">79</b> Songs</div>
+    <a class="stat" href="#reviews"><b>133+</b> Reviews</a>
+    <a class="stat" href="#reviews"><b>10+</b> Cuisines</a>
+    <a class="stat" href="#celebs"><b>Celebrity</b> Co-Signed</a>
+    <a class="stat" href="#churro"><b>YouTube + IG</b> Reach</a>
+    <a class="stat" href="#music"><b id="statSongs">82</b> Songs</a>
+    <a class="stat" href="#ebook"><b>Wealth</b> Blueprint</a>
+    <a class="stat" href="#crypto"><b>All In</b> On Crypto</a>
   </div>
   <div class="cta-row">
     <a class="btn btn-gold" href="tel:+14243094068">📞 Book Your Review</a>
