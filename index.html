@@ -96,6 +96,13 @@
   --neon-g:#39ff6a; --neon-p:#ff3e8e; --cream:#fff6e8; --mut:#cbb99a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* One dial for every section backdrop video. Cover scales to the taller edge, so
+     an uncapped band magnifies the clip badly on a long section; these keep them
+     near 1x — small on the page, and showing most of the actual frame. */
+  --vid-band:min(52vh,500px);
+  --vid-band-sm:min(44vh,340px);
+}
 html{scroll-behavior:smooth;background:#0b0a08}
 body{background-color:#0b0a08;background:var(--ink);color:var(--cream);font-family:'Barlow',system-ui,sans-serif;overflow-x:hidden}
 img{display:block;max-width:100%}
@@ -510,6 +517,16 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 
 /* ---------- EBOOK ---------- */
 #ebook{background:radial-gradient(ellipse at 50% 0%,#2a1f05,var(--ink) 70%);position:relative;overflow:hidden}
+#ebook > *:not(.eb-bg){position:relative;z-index:1}
+.eb-bg{position:absolute;left:0;right:0;top:0;height:var(--vid-band);
+  z-index:0;pointer-events:none;overflow:hidden}
+.eb-bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 42%;opacity:0;transition:opacity 1.1s ease}
+.eb-bg-vid.on{opacity:1}
+.eb-bg-scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(11,10,8,.55) 0%,rgba(11,10,8,.62) 40%,rgba(11,10,8,.86) 78%,#0b0a08 100%)}
+@media(max-width:640px){.eb-bg{height:var(--vid-band-sm)}}
+@media(prefers-reduced-motion:reduce){.eb-bg-vid{display:none}}
 #crypto .cryptorain{position:absolute;inset:0;z-index:1;pointer-events:none}
 #ebook .wrap{position:relative;z-index:2}
 #ebook .moneyrain{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
@@ -1591,6 +1608,13 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 
 <!-- EBOOK -->
 <section id="ebook">
+  <!-- Cell to freeway: the arc the Blueprint is about. Same capped band and lazy
+       load as the other section backdrops. -->
+  <div class="eb-bg" aria-hidden="true">
+    <video class="eb-bg-vid" id="ebBgVid" muted loop playsinline preload="none"
+           poster="video/ebook-poster.webp" data-src="video/ebook-loop.mp4"></video>
+    <div class="eb-bg-scrim"></div>
+  </div>
   <div class="wrap">
     <div class="eyebrow">Beyond The Plate</div>
     <h2>Antidote's <span class="neon">Wealth Blueprint</span></h2>
@@ -1759,14 +1783,14 @@ body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
    a deliberate z-index alone: the floating notes canvas (6) must stay over the
    section and the timeline (7) over the notes. */
 #music > *:not(.mus-bg):not(.mus-notes-canvas):not(.mus-tl-wrap){position:relative;z-index:1}
-.mus-bg{position:absolute;left:0;right:0;top:min(78vh,620px);height:min(70vh,660px);
+.mus-bg{position:absolute;left:0;right:0;top:min(78vh,620px);height:var(--vid-band);
   z-index:0;pointer-events:none;overflow:hidden}
 .mus-bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:center 45%;opacity:0;transition:opacity 1.1s ease}
 .mus-bg-vid.on{opacity:1}
 .mus-bg-scrim{position:absolute;inset:0;
   background:linear-gradient(180deg,#0b0a08 0%,rgba(11,10,8,.66) 18%,rgba(11,10,8,.70) 64%,#0b0a08 100%)}
-@media(max-width:640px){.mus-bg{top:66vh;height:min(56vh,440px)}}
+@media(max-width:640px){.mus-bg{top:66vh;height:var(--vid-band-sm)}}
 @media(prefers-reduced-motion:reduce){.mus-bg-vid{display:none}.mus-bg{background:#0b0a08}}
 .mus-hero{position:relative;width:100%;min-height:min(78vh,620px);display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
 .mus-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;
@@ -2042,9 +2066,9 @@ body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
    tall box, so only the middle ~54% of the frame was ever on screen, magnified.
    Capping the height drops that to ~1.1x: smaller on the page, and more of the
    actual frame visible. Band stays generous enough to read on a phone. */
-.bm-bg{position:absolute;left:0;right:0;top:0;height:min(64vh,620px);
+.bm-bg{position:absolute;left:0;right:0;top:0;height:var(--vid-band);
   z-index:0;pointer-events:none;overflow:hidden}
-@media(max-width:640px){.bm-bg{height:min(52vh,420px)}}
+@media(max-width:640px){.bm-bg{height:var(--vid-band-sm)}}
 .bm-bg-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;
   opacity:0;transition:opacity 1.1s ease}
 .bm-bg-vid.on{opacity:1}
@@ -4441,6 +4465,24 @@ const KICKCLIPS=[
 
 
 
+
+/* ---- ebook section: looping backdrop ---- */
+(function ebBackdrop(){
+  var v=document.getElementById("ebBgVid");
+  if(!v) return;
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var sec=document.getElementById("ebook"), loaded=false;
+  function start(){
+    if(!loaded){ loaded=true; v.src=v.dataset.src; }
+    var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
+    v.classList.add("on");
+  }
+  if(!("IntersectionObserver" in window)){ start(); return; }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting) start(); else if(loaded) v.pause(); });
+  },{rootMargin:"300px 0px"});
+  io.observe(sec);
+})();
 
 /* ---- music section: looping backdrop, same lazy pattern as Believe Me ---- */
 (function musBackdrop(){
