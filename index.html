@@ -1979,6 +1979,31 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   transition:border-color .18s ease,background .18s ease,transform .12s ease;-webkit-tap-highlight-color:transparent}
 .bm-opt:hover{border-color:rgba(245,166,35,.7);background:rgba(245,166,35,.07)}
 .bm-opt.sel{border-color:var(--syrup,#f5a623);background:rgba(245,166,35,.16);transform:translateX(3px)}
+/* ---- graded review: shown after Check My Frequency ---- */
+.bm-q.graded .bm-opt{pointer-events:none;transform:none}
+.bm-q.graded .bm-opt:not(.correct):not(.wrong){opacity:.45}
+.bm-opt.correct{border-color:rgba(57,255,106,.75);background:rgba(57,255,106,.12);
+  color:#e8fff0;box-shadow:0 0 0 1px rgba(57,255,106,.22),0 0 22px rgba(57,255,106,.12)}
+.bm-opt.correct b{background:var(--neon-g,#39ff6a);color:#062a10;font-size:.8rem}
+.bm-opt.wrong{border-color:rgba(232,37,60,.7);background:rgba(232,37,60,.10);color:#ffe6e9}
+.bm-opt.wrong b{background:#e8253c;color:#fff;font-size:.8rem}
+/* tag on the right edge of a graded row */
+.bm-mark{margin-left:auto;flex:0 0 auto;align-self:center;font-size:.66rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.bm-opt.correct .bm-mark{background:rgba(57,255,106,.2);color:#8dffb0}
+.bm-opt.wrong .bm-mark{background:rgba(232,37,60,.22);color:#ff9aa6}
+/* ---- why-this-answer disclosure ---- */
+.bm-why{display:none;margin-top:2px}
+.bm-q.graded .bm-why{display:block}
+.bm-why-btn{cursor:pointer;background:transparent;border:1px dashed rgba(245,166,35,.42);
+  color:#ffd166;border-radius:999px;padding:6px 13px;font:800 .72rem/1 ui-sans-serif,system-ui;
+  letter-spacing:.1em;text-transform:uppercase;transition:background .18s ease,border-color .18s ease}
+.bm-why-btn:hover{background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.8)}
+.bm-why-body{display:none;margin-top:9px;padding:11px 13px;border-radius:11px;
+  background:rgba(11,10,8,.6);border-left:3px solid var(--neon-g,#39ff6a);
+  color:rgba(245,235,215,.9);font-size:.88rem;line-height:1.55}
+.bm-why.open .bm-why-body{display:block}
+.bm-why.open .bm-why-btn{background:rgba(245,166,35,.12)}
 .bm-opt b{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:.74rem;background:rgba(245,166,35,.22);color:#ffd166}
 .bm-opt.sel b{background:var(--syrup,#f5a623);color:#1a1000}
@@ -4224,6 +4249,33 @@ const KICKCLIPS=[
     if(sub) sub.disabled = done<live.length;
   }
 
+  var graded=false;
+
+  /* Mark every row: green on the right answer (always), red on the wrong pick.
+     Correct index is derived from the same hash the scorer uses, so the review
+     can never disagree with the score. */
+  function gradeAll(){
+    var rows=host.children;
+    live.forEach(function(item,qi){
+      var d=rows[qi]; if(!d) return;
+      var opts=d.querySelectorAll(".bm-opt"), ci=-1, i;
+      for(i=0;i<item.a.length;i++){ if(H(item.a[i])===item.k){ ci=i; break; } }
+      for(i=0;i<opts.length;i++){
+        var o=opts[i]; o.classList.remove("sel");
+        var tag=document.createElement("span"); tag.className="bm-mark";
+        if(i===ci){ o.classList.add("correct"); tag.textContent="Correct"; o.appendChild(tag); }
+        else if(picks[qi]===i){ o.classList.add("wrong"); tag.textContent="Your pick"; o.appendChild(tag); }
+      }
+      d.classList.add("graded");
+    });
+    graded=true;
+  }
+
+  function clearGrade(){
+    graded=false;
+    [].slice.call(host.querySelectorAll(".bm-q")).forEach(function(d){ d.classList.remove("graded"); });
+  }
+
   function render(){
     host.innerHTML="";
     live.forEach(function(item,qi){
@@ -4234,6 +4286,7 @@ const KICKCLIPS=[
         b.type="button"; b.className="bm-opt";
         b.innerHTML='<b>'+LET[oi]+'</b><span>'+opt+'</span>';
         b.addEventListener("click",function(){
+          if(graded) return;                      /* locked once the round is scored */
           picks[qi]=oi;
           [].slice.call(d.querySelectorAll(".bm-opt")).forEach(function(x){ x.classList.remove("sel"); });
           b.classList.add("sel");
@@ -4242,6 +4295,21 @@ const KICKCLIPS=[
         });
         d.appendChild(b);
       });
+      /* why-this-answer disclosure — only rendered when the question carries an
+         explanation (item.x); hidden by CSS until the round is graded */
+      if(item.x){
+        var w=document.createElement("div"); w.className="bm-why";
+        var wb=document.createElement("button");
+        wb.type="button"; wb.className="bm-why-btn"; wb.textContent="Why this answer?";
+        wb.setAttribute("aria-expanded","false");
+        var body=document.createElement("div"); body.className="bm-why-body"; body.textContent=item.x;
+        wb.addEventListener("click",function(){
+          var open=w.classList.toggle("open");
+          wb.setAttribute("aria-expanded",open?"true":"false");
+          wb.textContent=open?"Hide explanation":"Why this answer?";
+        });
+        w.appendChild(wb); w.appendChild(body); d.appendChild(w);
+      }
       host.appendChild(d);
     });
   }
@@ -4252,6 +4320,7 @@ const KICKCLIPS=[
       return { n:t.n, q:v.q, a:shuf(v.a), k:v.k };
     });
     picks=[]; for(var i=0;i<live.length;i++) picks.push(-1);
+    graded=false;
     render(); tally();
   }
 
@@ -4265,11 +4334,22 @@ const KICKCLIPS=[
   }
 
   if(sub) sub.addEventListener("click",function(){
+    /* Second press acts as Try Again: the fresh set is dealt HERE, not at scoring
+       time, so the graded review stays on screen for as long as the user wants it. */
+    if(graded){
+      clearGrade();
+      sub.textContent="\ud83d\udd2e Check My Frequency";
+      if(res) res.className="bm-result";
+      deal();
+      try{ host.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){}
+      return;
+    }
     var score=0;
     live.forEach(function(item,qi){
       if(picks[qi]>=0 && H(item.a[picks[qi]])===item.k) score++;
     });
     var pass = score>=PASS;
+    gradeAll();
     res.className="bm-result show "+(pass?"pass":"fail");
     if(pass){
       res.innerHTML='<div class="bm-score">Clearance granted \u00b7 '+score+'/'+live.length+'</div>'
@@ -4282,8 +4362,8 @@ const KICKCLIPS=[
     }else{
       res.innerHTML='<div class="bm-score">Not yet \u00b7 '+score+'/'+live.length+'</div>'
         +'<div class="bm-msg">You\u2019re still reading the shadow instead of the thing casting it. '+PASS+' is the gate \u2014 you got '+score+'. And there\u2019s no answer key to pass around: a brand new set of questions just loaded. Go back through the lyrics slower. The obvious answer is the one that keeps you out.</div>';
-      sub.textContent="\ud83d\udd2e Try Again";
-      deal();
+      sub.textContent="\ud83d\udd2e Try Again \u2014 New Questions";
+      sub.disabled=false;
       if(res && res.scrollIntoView){ try{ res.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }
     }
   });
