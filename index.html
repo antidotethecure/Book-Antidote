@@ -1405,6 +1405,9 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   <canvas class="mus-notes-canvas" id="musNotesCanvas" aria-hidden="true"></canvas>
   <div class="mus-hero">
     <img class="mus-hero-img" src="hero-crowd.jpg" alt="Antidote performing to a packed room, crowd filming" decoding="async" loading="lazy">
+    <!-- Same frame, subject lifted out: sits above the headline so the type reads behind him.
+         Decorative duplicate of the plate above, so it is hidden from assistive tech. -->
+    <img class="mus-hero-cut" src="hero-crowd-cut.webp" alt="" aria-hidden="true" decoding="async" loading="lazy">
     <div class="mus-bloom" id="musBloom" aria-hidden="true"></div>
     <canvas id="musEQ" aria-hidden="true"></canvas>
     <div class="mus-hero-in">
@@ -1650,6 +1653,19 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   filter:saturate(1.02) contrast(1.05) brightness(.92);transform:scale(1.06);
   transition:filter .28s ease, transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform,filter}
 #music.mus-live .mus-hero-img{filter:saturate(1.18) contrast(1.12) brightness(1.08)}
+/* Lifted subject. Every geometry value here is a deliberate copy of .mus-hero-img —
+   object-fit, object-position and the scale must stay in lockstep or he slides off himself.
+   Sits at z-index 5, above the copy at 4, so the headline passes behind him. */
+.mus-hero-cut{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;
+  transform:scale(1.06);z-index:5;pointer-events:none;
+  filter:saturate(1.02) contrast(1.05) brightness(.98) drop-shadow(0 16px 30px rgba(0,0,0,.55));
+  transition:filter .28s ease, transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform,filter;
+  /* feet fade into the same darkness the scrim leaves at the bottom, so he is grounded
+     in the room instead of floating over a black band */
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 76%,rgba(0,0,0,.55) 90%,rgba(0,0,0,0) 100%);
+          mask-image:linear-gradient(180deg,#000 0%,#000 76%,rgba(0,0,0,.55) 90%,rgba(0,0,0,0) 100%)}
+/* a touch brighter than the plate when the room is live, so he separates from it */
+#music.mus-live .mus-hero-cut{filter:saturate(1.2) contrast(1.14) brightness(1.14) drop-shadow(0 16px 30px rgba(0,0,0,.6))}
 /* Scrim is now light up top and only holds weight where the copy actually sits,
    so the room stays visible instead of being flattened to black. */
 .mus-hero::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -1790,7 +1806,7 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   .nb-hideSm{display:none}
 }
 @media(prefers-reduced-motion:reduce){
-  .mus-hero-img,.mus-bloom{transition:none!important;transform:none!important}
+  .mus-hero-img,.mus-hero-cut,.mus-bloom{transition:none!important;transform:none!important}
   .trk-play i{animation:none;height:60%}
 }
 
@@ -5203,8 +5219,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     /* bass drives the room */
     var bass=0; for(var k=0;k<8;k++) bass+=freq[k]; bass/=(8*255);
     if(bloom){ bloom.style.opacity=(bass*0.95).toFixed(3); bloom.style.transform="scale("+(0.6+bass*0.85).toFixed(3)+")"; }
-    var img=sec.querySelector('.mus-hero-img');
-    if(img) img.style.transform="scale("+(1.06+bass*0.05).toFixed(4)+")";
+    var img=sec.querySelector('.mus-hero-img'), cut=sec.querySelector('.mus-hero-cut');
+    var heroScale="scale("+(1.06+bass*0.05).toFixed(4)+")";
+    if(img) img.style.transform=heroScale;
+    if(cut) cut.style.transform=heroScale;   /* cutout rides the same pulse or it drifts */
     /* waveform progress */
     if(wvx&&el.duration){
       var WW=waveC.width, HH=waveC.height, p=el.currentTime/el.duration;
