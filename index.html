@@ -1090,6 +1090,12 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 
 <!-- AFRICA -->
 <section class="africa reveal" id="africa">
+  <!-- The takeover track used to start on scroll with no way to stop it. -->
+  <button class="af-mute" id="afMute" type="button" aria-pressed="false"
+          aria-label="Mute the Africa takeover music" hidden>
+    <span class="af-mute-ico" aria-hidden="true">&#128266;</span>
+    <span class="af-mute-txt">Music on</span>
+  </button>
   <div class="af-sky" aria-hidden="true"></div>
   <div class="af-sun" aria-hidden="true"></div>
   <div class="af-tree af-tree1" aria-hidden="true"><svg viewBox="0 0 120 90"><path d="M58,90 L62,90 L61,46 L74,38 L61,42 L60,30 L72,20 L59,26 L58,14 L56,26 L44,19 L55,30 L54,42 L42,37 L57,46 Z" fill="#120c05"/><ellipse cx="60" cy="16" rx="46" ry="11" fill="#120c05"/><ellipse cx="30" cy="24" rx="22" ry="7" fill="#120c05"/><ellipse cx="92" cy="24" rx="20" ry="6.5" fill="#120c05"/></svg></div>
@@ -1695,6 +1701,10 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 @media(max-width:760px){.dzb{width:36px;height:113px;top:0}}
 @media(prefers-reduced-motion:reduce){.dzb,.dzb svg{animation:none}}
 
+/* The now-playing bar is ~106px tall (38px wave + 68px row) and never closes once
+   a track has loaded, so at 66px this pill sat underneath it and could not be
+   tapped. Lift it clear whenever the bar is up. */
+body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
 .musicbtn{position:fixed;left:12px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:71;
   display:flex;align-items:center;gap:7px;padding:8px 13px 8px 11px;
   border-radius:999px;cursor:pointer;
@@ -2193,6 +2203,17 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   background:radial-gradient(circle,#ffd166 0%,#f5a623 45%,rgba(245,166,35,.25) 68%,transparent 72%);
   filter:blur(2px);animation:afSun 9s ease-in-out infinite}
 @keyframes afSun{0%,100%{opacity:.75;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
+.af-mute{position:sticky;top:70px;float:right;margin:10px 14px 0 0;z-index:30;
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  padding:8px 14px;border-radius:999px;
+  background:rgba(11,10,8,.82);border:1px solid rgba(245,166,35,.5);color:var(--cream);
+  font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.12em;text-transform:uppercase;
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  box-shadow:0 6px 20px rgba(0,0,0,.45);transition:border-color .18s ease,background .18s ease}
+.af-mute:hover{border-color:rgba(245,166,35,.95);background:rgba(24,18,10,.9)}
+.af-mute:focus-visible{outline:2px solid var(--syrup-hi,#ffd166);outline-offset:3px}
+.af-mute[aria-pressed="true"]{opacity:.72;border-color:rgba(245,235,215,.3)}
+@media(max-width:560px){.af-mute{top:62px;font-size:10px;padding:7px 12px}}
 .af-tree{position:absolute;bottom:130px;width:150px;opacity:.9;pointer-events:none}
 .af-tree1{left:3%}.af-tree2{right:3%;transform:scaleX(-1)}
 .af-core{position:relative;z-index:2;max-width:900px;margin:0 auto}
@@ -4932,13 +4953,46 @@ function synthRoar(){
     fade(af,0,700,function(){af.pause();});
     if(bg&&!bg.paused)fade(bg,0.18,900);
   }
-  sec.addEventListener("mouseenter",enter);
-  sec.addEventListener("mouseleave",leave);
+  /* ---- off switch ----
+     The track started on scroll or hover and had no control at all, so a visitor
+     who did not want it had no way out. Muting is remembered, otherwise the next
+     scroll past this section would just start it again. */
+  var btn=document.getElementById("afMute"),
+      ico=btn&&btn.querySelector(".af-mute-ico"),
+      txt=btn&&btn.querySelector(".af-mute-txt"),
+      muted=false;
+  try{ muted = localStorage.getItem("antidoteAfricaMuted")==="1"; }catch(e){}
+
+  function paintMute(){
+    if(!btn) return;
+    btn.setAttribute("aria-pressed",muted?"true":"false");
+    btn.setAttribute("aria-label",muted?"Unmute the Africa takeover music":"Mute the Africa takeover music");
+    if(ico) ico.innerHTML = muted ? "&#128263;" : "&#128266;";
+    if(txt) txt.textContent = muted ? "Music off" : "Music on";
+  }
+  if(btn){
+    btn.hidden=false;
+    paintMute();
+    btn.addEventListener("click",function(){
+      muted=!muted;
+      try{ localStorage.setItem("antidoteAfricaMuted",muted?"1":"0"); }catch(e){}
+      paintMute();
+      if(muted){ leave(); }
+      else if(visible){ enter(); }     /* unmuting while still in the section starts it */
+    });
+  }
+
+  var visible=false;
+  function wantEnter(){ visible=true; if(!muted) enter(); }
+  function wantLeave(){ visible=false; leave(); }
+
+  sec.addEventListener("mouseenter",wantEnter);
+  sec.addEventListener("mouseleave",wantLeave);
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
       es.forEach(function(e){
         if(!window.matchMedia("(hover:hover)").matches){
-          e.isIntersecting?enter():leave();
+          e.isIntersecting?wantEnter():wantLeave();
         }
       });
     },{threshold:.45}).observe(sec);
@@ -5741,7 +5795,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     document.getElementById('nbT').textContent=t.t;
     document.getElementById('nbF').textContent=t.x||CATS[t.c];
     document.getElementById('nbDur').textContent=fmt(t.d);
-    bar.classList.add('on'); mark();
+    bar.classList.add('on'); document.body.classList.add('nowbar-open'); mark();
     if(auto!==false) play();
   }
   function play(){
