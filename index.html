@@ -4707,50 +4707,49 @@ const KICKCLIPS=[
 
 /* ================= BACKGROUND MUSIC ================= */
 (function(){
-  var a=document.getElementById("bgTrack"), btn=document.getElementById("musicBtn");
-  if(!a||!btn) return;
-  var VOL=0.18, ready=false, killed=false;
+  var btn=document.getElementById("musicBtn");
+  if(!btn) return;
 
-  /* if the mp3 is missing from the repo, hide the button entirely */
-  a.addEventListener("error",function(){ killed=true; btn.hidden=true; },true);
+  /* This button used to run its own background track (antidote-theme.mp3), which
+     meant two audio elements could play over each other the moment a visitor
+     started anything in the catalog — nothing ducked it. It is now a launcher for
+     the real player: tap takes you to the catalog and starts it, and thereafter it
+     mirrors and controls that one player. */
+  var mtxt=btn.querySelector(".mtxt");
+  function cat(){ return window.antidoteCatalog; }
 
-  function show(){ if(!killed) btn.hidden=false; }
-  function paint(on){
+  function paint(){
+    var on = !!(cat() && cat().isPlaying());
     btn.classList.toggle("playing",on);
     btn.setAttribute("aria-pressed",on?"true":"false");
-    btn.setAttribute("aria-label",on?"Mute background music":"Play background music");
+    btn.setAttribute("aria-label",on?"Pause the catalog":"Play the catalog");
+    if(on){ btn.classList.remove("prompt"); if(mtxt) mtxt.textContent="MUSIC"; }
   }
-  function play(){
-    if(killed) return;
-    if(!ready){ a.src="antidote-theme.mp3"; a.load(); ready=true; }
-    a.volume=0; var p=a.play();
-    if(p&&p.catch) p.catch(function(){ paint(false); });
-    /* gentle fade-in so it never slaps the visitor */
-    var s=0; var f=setInterval(function(){
-      s+=0.02; a.volume=Math.min(VOL,s*VOL);
-      if(a.volume>=VOL-0.001){ a.volume=VOL; clearInterval(f); }
-    },40);
-    paint(true);
-    try{ localStorage.setItem("antidoteMusic","on"); }catch(e){}
-  }
-  function stop(){
-    a.pause(); paint(false);
-    try{ localStorage.setItem("antidoteMusic","off"); }catch(e){}
-  }
-  btn.addEventListener("click",function(){ stopPrompt(); a.paused?play():stop(); });
 
-  /* NEVER autoplay. the visitor starts the music themselves — the button
-     pulses a frequency wave to invite the tap, and settles once playing. */
-  var mtxt=btn.querySelector(".mtxt");
-  function stopPrompt(){ btn.classList.remove("prompt"); if(mtxt) mtxt.textContent="MUSIC"; }
-  function startPrompt(){ if(!killed){ btn.classList.add("prompt"); if(mtxt) mtxt.textContent="TAP FOR MUSIC"; } }
-  show(); paint(false); startPrompt();
-
-  /* pause when the tab is hidden, resume when it returns */
-  document.addEventListener("visibilitychange",function(){
-    if(document.hidden){ if(!a.paused){ a.pause(); a.dataset.resume="1"; } }
-    else if(a.dataset.resume==="1"){ a.dataset.resume=""; a.play().catch(function(){}); }
+  btn.addEventListener("click",function(){
+    var c=cat();
+    if(!c){ /* catalog not ready yet: just take them there */
+      var sec=document.getElementById("music");
+      if(sec) try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ sec.scrollIntoView(); }
+      return;
+    }
+    btn.classList.remove("prompt"); if(mtxt) mtxt.textContent="MUSIC";
+    if(c.isPlaying()){ c.toggle(); return; }        /* already playing -> pause in place */
+    var sec=document.getElementById("music");
+    if(sec) try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ sec.scrollIntoView(); }
+    c.run();
   });
+
+  btn.hidden=false;
+  paint();
+  if(mtxt) { btn.classList.add("prompt"); mtxt.textContent="TAP FOR MUSIC"; }
+
+  /* keep the pill in sync however playback was actually started */
+  (function bind(){
+    var c=cat();
+    if(c){ c.onChange(paint); paint(); return; }
+    setTimeout(bind,300);          /* catalog IIFE runs later in the document */
+  })();
 })();
 
 
@@ -5754,6 +5753,19 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     document.getElementById('nbPlay').textContent="▶";
   }
   function toggle(){ el.paused?play():pause(); }
+
+  /* Small public handle so the floating MUSIC button drives THIS player rather
+     than running a second audio element against it. */
+  window.antidoteCatalog={
+    isPlaying:function(){ return !el.paused; },
+    toggle:toggle,
+    run:function(){
+      if(idx<0){ shuffled=true; if(shBtn) shBtn.setAttribute('aria-pressed','true');
+                 buildOrder(false); pos=0; load(order[0]); }
+      else if(el.paused){ play(); }
+    },
+    onChange:function(cb){ ['play','pause','ended'].forEach(function(ev){ el.addEventListener(ev,cb); }); }
+  };
   function next(){ advance(false); }
   /* auto=true means the track ended on its own; only then does repeat apply. */
   function advance(auto){
