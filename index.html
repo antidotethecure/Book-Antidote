@@ -135,7 +135,20 @@ canvas.hero-driz{position:absolute !important;inset:0;z-index:2 !important;width
  background:radial-gradient(ellipse 78% 34% at 50% 46%,rgba(11,10,8,.74),rgba(11,10,8,.3) 60%,transparent 80%)}
 .hero .eyebrow{font-size:clamp(1.05rem,3.4vw,1.5rem);margin-bottom:10px}
 .hero h1{font-size:clamp(2.6rem,10.5vw,6.2rem);max-width:11ch;text-shadow:0 6px 30px rgba(0,0,0,.85)}
-.hero h1 .l2{display:block;color:var(--syrup);text-shadow:0 0 10px rgba(245,166,35,.55),0 0 40px rgba(245,166,35,.55)}
+.hero h1 .l2{display:block;color:var(--syrup);
+ /* Dark definition ring is listed FIRST so it paints above the gold glow that follows,
+    giving the letterforms a hard edge instead of dissolving into their own bloom. */
+ text-shadow:
+   2px 0 0 rgba(8,6,2,.94), -2px 0 0 rgba(8,6,2,.94),
+   0 2px 0 rgba(8,6,2,.94), 0 -2px 0 rgba(8,6,2,.94),
+   1.4px 1.4px 0 rgba(8,6,2,.94), -1.4px 1.4px 0 rgba(8,6,2,.94),
+   1.4px -1.4px 0 rgba(8,6,2,.94), -1.4px -1.4px 0 rgba(8,6,2,.94),
+   0 0 12px rgba(245,166,35,.5), 0 0 40px rgba(245,166,35,.5)}
+/* Crisper stroke where supported; paint-order keeps it behind the gold fill so the
+   letterform itself is never thinned. Layered over the ring above, not instead of it. */
+@supports (paint-order: stroke){
+  .hero h1 .l2{-webkit-text-stroke:2.5px rgba(8,6,2,.94); paint-order:stroke fill}
+}
 .tagline{margin-top:16px;font-family:'Permanent Marker';font-size:clamp(1.1rem,4vw,1.6rem);color:var(--cream)}
 .tagline b{color:var(--neon-g)} .tagline i{color:var(--neon-p);font-style:normal}
 .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
@@ -1634,11 +1647,23 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 #music{position:relative;padding:0 0 68px;background:linear-gradient(180deg,#080706 0%,#0b0a08 40%,#0b0a08 100%);overflow:hidden}
 .mus-hero{position:relative;width:100%;min-height:min(78vh,620px);display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
 .mus-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;
-  filter:saturate(.82) contrast(1.06) brightness(.62);transform:scale(1.06);
+  filter:saturate(1.02) contrast(1.05) brightness(.92);transform:scale(1.06);
   transition:filter .28s ease, transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform,filter}
-#music.mus-live .mus-hero-img{filter:saturate(1.05) contrast(1.14) brightness(.72)}
+#music.mus-live .mus-hero-img{filter:saturate(1.18) contrast(1.12) brightness(1.08)}
+/* Scrim is now light up top and only holds weight where the copy actually sits,
+   so the room stays visible instead of being flattened to black. */
 .mus-hero::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(8,7,6,.72) 0%,rgba(8,7,6,.18) 34%,rgba(8,7,6,.86) 78%,#0b0a08 100%);z-index:2}
+  background:linear-gradient(180deg,rgba(8,7,6,.34) 0%,rgba(8,7,6,.05) 32%,rgba(8,7,6,.72) 76%,#0b0a08 100%);z-index:2}
+/* Warm stage-light halo bleeding in off all four edges — screen-blended so it reads
+   as light falling on the room, not as a tint laid over it. */
+.mus-hero::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  mix-blend-mode:screen;opacity:.82;transition:opacity .5s ease;
+  background:
+    radial-gradient(130% 62% at 50% 0%,   rgba(255,209,102,.30), transparent 64%),
+    radial-gradient(130% 58% at 50% 100%, rgba(245,166,35,.20), transparent 62%),
+    radial-gradient(58% 130% at 0% 50%,   rgba(245,166,35,.18), transparent 60%),
+    radial-gradient(58% 130% at 100% 50%, rgba(245,166,35,.18), transparent 60%)}
+#music.mus-live .mus-hero::before{opacity:1}
 /* bass bloom over the venue light */
 .mus-bloom{position:absolute;z-index:1;left:74%;top:14%;width:min(46vw,380px);aspect-ratio:1;border-radius:50%;
   background:radial-gradient(circle,rgba(255,209,102,.55) 0%,rgba(245,166,35,.22) 42%,transparent 70%);
@@ -1647,6 +1672,9 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 #musEQ{position:absolute;z-index:3;left:0;right:0;bottom:0;width:100%;height:120px;pointer-events:none;opacity:0;transition:opacity .5s ease}
 #music.mus-live #musEQ{opacity:1}
 .mus-hero-in{position:relative;z-index:4;width:min(1120px,92%);margin:0 auto;padding:0 0 34px}
+/* Local pool of shade behind the copy only — replaces darkening the whole photo. */
+.mus-hero-in::before{content:"";position:absolute;z-index:-1;inset:-26px -36px -38px -36px;pointer-events:none;
+  background:radial-gradient(120% 100% at 28% 68%,rgba(8,7,6,.84),rgba(8,7,6,.46) 56%,transparent 78%)}
 .mus-eyebrow{display:inline-flex;align-items:center;gap:9px;font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.24em;
   text-transform:uppercase;color:var(--syrup-hi);background:rgba(20,18,16,.62);border:1px solid rgba(245,166,35,.32);
   padding:8px 13px;border-radius:999px;backdrop-filter:blur(7px);margin-bottom:16px}
@@ -1716,8 +1744,15 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   border:1px solid rgba(245,166,35,.18);min-height:230px;display:grid;place-items:center;
   background:repeating-linear-gradient(45deg,#141210,#141210 12px,#191612 12px,#191612 24px)}
 .mus-stage img{width:100%;height:100%;object-fit:cover;display:block}
-.mus-stage{margin:56px auto 0;min-height:0;display:block;background:#0b0a08}
-.mus-stage img{width:100%;height:auto;display:block;filter:saturate(1.02) contrast(1.04)}
+.mus-stage{margin:56px auto 0;min-height:0;display:block;background:#0b0a08;
+  border-color:rgba(245,166,35,.34);box-shadow:0 0 0 1px rgba(245,166,35,.14),0 18px 60px rgba(245,166,35,.16)}
+.mus-stage img{width:100%;height:auto;display:block;filter:saturate(1.16) contrast(1.1) brightness(1.07)}
+/* Same lit halo as the hero, so the two photos read as one pair. */
+.mus-stage::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:screen;
+  background:
+    radial-gradient(120% 60% at 50% 0%,   rgba(255,209,102,.24), transparent 62%),
+    radial-gradient(58% 120% at 0% 50%,   rgba(245,166,35,.16), transparent 58%),
+    radial-gradient(58% 120% at 100% 50%, rgba(245,166,35,.16), transparent 58%)}
 .mus-stage::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,transparent 40%,rgba(8,7,6,.55) 72%,rgba(8,7,6,.94) 100%)}
 .mus-stage-cap{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:26px clamp(18px,4vw,38px)}
