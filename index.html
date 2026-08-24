@@ -1603,7 +1603,20 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   @media(min-width:760px){.cl-grid{grid-template-columns:1fr 1fr}}
   .cl-tier{background:var(--card);border:1px solid rgba(245,166,35,.25);border-radius:18px;padding:28px 24px;display:flex;flex-direction:column;position:relative}
   .cl-featured{border-color:rgba(245,166,35,.7);box-shadow:0 0 46px rgba(245,166,35,.16)}
-  .cl-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
+  /* Review-cover art behind each package card. These cards are text-dense, so the
+   plate sits under a heavy scrim — it reads as texture, not as a competing image. */
+.cl-tier.has-bg{overflow:hidden}
+.cl-tier.has-bg > *:not(.cl-bg){position:relative;z-index:2}
+.cl-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  border-radius:inherit;z-index:0;pointer-events:none;
+  filter:saturate(1.06) contrast(1.04)}
+.cl-tier.has-bg::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  border-radius:inherit;
+  background:linear-gradient(180deg,rgba(11,10,8,.88) 0%,rgba(11,10,8,.82) 42%,rgba(11,10,8,.90) 100%)}
+/* the gold-bordered Headliner keeps a slightly warmer wash to match its accent */
+.cl-tier.cl-featured.has-bg::before{
+  background:linear-gradient(180deg,rgba(14,11,6,.87) 0%,rgba(13,10,6,.80) 42%,rgba(11,10,8,.91) 100%)}
+.cl-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
   .cl-label{font-family:'Permanent Marker',cursive;color:var(--syrup);font-size:1rem;letter-spacing:.4px}
   .cl-badge{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#1a1000;background:var(--syrup);padding:5px 10px;border-radius:7px;box-shadow:0 0 16px rgba(245,166,35,.45)}
   .cl-name{font-family:'Anton',sans-serif;font-size:clamp(1.7rem,4.5vw,2.2rem);letter-spacing:.5px;text-transform:uppercase;margin-top:4px;color:var(--cream)}
@@ -2724,7 +2737,8 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <div class="cl-grid">
 
       <!-- THE FEATURE -->
-      <div class="cl-tier reveal">
+      <div class="cl-tier has-bg reveal">
+        <img class="cl-bg" src="tier-feature.webp" alt="" aria-hidden="true" decoding="async" loading="lazy" style="object-position:center 35%">
         <div class="cl-head"><span class="cl-label">The Feature</span></div>
         <div class="cl-name">The Feature</div>
         <div class="cl-price" style="font-size:clamp(1.5rem,4.5vw,2rem);letter-spacing:.06em">CUSTOM QUOTE</div>
@@ -2741,7 +2755,8 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
       </div>
 
       <!-- THE HEADLINER -->
-      <div class="cl-tier cl-featured reveal">
+      <div class="cl-tier cl-featured has-bg reveal">
+        <img class="cl-bg" src="tier-headliner.webp" alt="" aria-hidden="true" decoding="async" loading="lazy" style="object-position:center 30%">
         <div class="cl-head"><span class="cl-label">The Headliner</span><span class="cl-badge">Max Exposure</span></div>
         <div class="cl-name">The Headliner</div>
         <div class="cl-price cl-price-hot" style="font-size:clamp(1.5rem,4.5vw,2rem);letter-spacing:.06em">CUSTOM QUOTE</div>
