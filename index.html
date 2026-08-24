@@ -603,6 +603,21 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 .kick-word{color:#53fc18;text-shadow:0 0 10px rgba(83,252,24,.85),0 0 34px rgba(83,252,24,.55)}
 .kick-art{position:relative;margin-top:16px;border-radius:20px;overflow:hidden;cursor:pointer;aspect-ratio:16/6.4;display:grid;place-items:center;isolation:isolate;background:radial-gradient(circle at 50% 62%,#123c07,#07110a 62%,#05070a);border:1px solid rgba(83,252,24,.35);box-shadow:0 0 44px rgba(83,252,24,.16)}
 .kick-art:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(83,252,24,.07) 0 2px,transparent 2px 7px);opacity:.5}
+/* Artwork fills the panel. 16/9 (was 16/6.4) because the source is square — a 2.5:1
+   box would have cropped away ~60% of it, losing the neon K and the posters. */
+.kick-art.has-art{aspect-ratio:16/9;background:#05070a}
+.kick-art-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 28%;z-index:0;display:block}
+/* scanlines stay for the CRT feel, but lighter so they don't veil the photo */
+.kick-art.has-art:before{opacity:.28;z-index:1}
+/* the artwork carries its own KICK wordmark, so the CSS one would fight it —
+   keep the handle, drop the duplicate word */
+.kick-art.has-art .kick-mark{position:absolute;z-index:3;left:0;right:0;bottom:0;top:auto;
+  text-align:left;padding:34px 16px 12px;
+  background:linear-gradient(180deg,transparent,rgba(5,7,10,.82) 62%,rgba(5,7,10,.92))}
+.kick-art.has-art .kick-mark .kk{display:none}
+.kick-art.has-art .kick-mark .kh{margin:0;font-size:.8rem;color:#d8ffc9;
+  text-shadow:0 0 10px rgba(83,252,24,.55),0 1px 6px rgba(0,0,0,.9)}
 .kick-mark{position:relative;z-index:2;text-align:center;padding:10px}
 .kick-mark .kk{font-family:'Anton';font-size:clamp(2.6rem,11vw,6rem);line-height:.9;letter-spacing:2px;color:#53fc18;text-shadow:0 0 8px #53fc18,0 0 30px rgba(83,252,24,.75),0 0 70px rgba(83,252,24,.45);transform:skewX(-7deg)}
 .kick-mark .kh{margin-top:6px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase;font-size:.82rem;color:#d8ffc9}
@@ -1380,7 +1395,8 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <h2>Antidote On <span class="kick-word">Kick</span></h2>
     <p class="shop-sub">Streams, clips, and unedited chaos. Tap in — the cameras are already flashing. 📸</p>
 
-    <div class="kick-art" id="kickArt" role="button" tabindex="0" aria-label="Antidote on Kick — tap for the flash">
+    <div class="kick-art has-art" id="kickArt" role="button" tabindex="0" aria-label="Antidote on Kick — tap for the flash">
+      <img class="kick-art-img" src="kick-studio.webp" alt="Antidote pouring the Drizzle on set under Kick-green lights, camera rolling" decoding="async" loading="lazy">
       <span class="kick-live"><b></b> Live on Kick</span>
       <div class="kick-mark"><div class="kk">KICK</div><div class="kh">kick.com/therealantidote</div></div>
       <div class="flashwrap" id="kickPaps"></div>
