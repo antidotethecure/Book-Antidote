@@ -1723,6 +1723,10 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
    Sits at z-index 5, above the copy at 4, so the headline passes behind him. */
 .mus-hero-cut{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;
   transform:scale(1.06);z-index:5;pointer-events:none;
+  /* Depth cycle. The plate underneath holds the same frame at the same geometry, so fading
+     this layer never removes him: it hands the overlap to the headline instead. Identical
+     pixels in identical position, so it reads as the type passing behind and in front. */
+  animation:musDepth 13s ease-in-out 0s infinite both;
   filter:saturate(1.02) contrast(1.05) brightness(.98) drop-shadow(0 16px 30px rgba(0,0,0,.55));
   transition:filter .28s ease, transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform,filter;
   /* feet fade into the same darkness the scrim leaves at the bottom, so he is grounded
@@ -1731,6 +1735,17 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
           mask-image:linear-gradient(180deg,#000 0%,#000 76%,rgba(0,0,0,.55) 90%,rgba(0,0,0,0) 100%)}
 /* a touch brighter than the plate when the room is live, so he separates from it */
 #music.mus-live .mus-hero-cut{filter:saturate(1.2) contrast(1.14) brightness(1.14) drop-shadow(0 16px 30px rgba(0,0,0,.6))}
+/* Opens with the headline fully legible, settles with him in front, then blinks
+   forward and drifts slowly back, so the words are readable on every pass. */
+@keyframes musDepth{
+  0%,26%   {opacity:0}
+  38%,68%  {opacity:1}
+  71%,76%  {opacity:0}
+  100%     {opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+  .mus-hero-cut{animation:none;opacity:0}   /* hold the state where the whole headline reads */
+}
 /* Scrim is now light up top and only holds weight where the copy actually sits,
    so the room stays visible instead of being flattened to black. */
 .mus-hero::after{content:"";position:absolute;inset:0;pointer-events:none;
