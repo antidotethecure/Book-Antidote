@@ -1828,34 +1828,8 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 /* The now-playing bar is ~106px tall (38px wave + 68px row) and never closes once
    a track has loaded, so at 66px this pill sat underneath it and could not be
    tapped. Lift it clear whenever the bar is up. */
-body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
-.musicbtn{position:fixed;left:12px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:71;
-  display:flex;align-items:center;gap:7px;padding:8px 13px 8px 11px;
-  border-radius:999px;cursor:pointer;
-  background:rgba(11,10,8,.92);border:1px solid rgba(245,166,35,.45);
-  backdrop-filter:blur(8px);color:var(--syrup-hi,#ffd166);
-  font:700 10.5px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  letter-spacing:.14em;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
-  -webkit-tap-highlight-color:transparent}
-.musicbtn:hover{transform:translateY(-2px);border-color:rgba(245,166,35,.9);
-  box-shadow:0 6px 20px rgba(245,166,35,.28)}
-.musicbtn:focus-visible{outline:2px solid var(--syrup-hi,#ffd166);outline-offset:3px}
-.musicbtn .mtxt{opacity:.85}
-.musicbtn .eq{display:flex;align-items:flex-end;gap:2.5px;height:13px;width:16px}
-.musicbtn .eq i{flex:1;background:currentColor;border-radius:1px;height:22%;
-  transform-origin:50% 100%;transition:height .25s ease}
-.musicbtn.playing .eq i{animation:eqbar .9s ease-in-out infinite}
-.musicbtn.playing .eq i:nth-child(1){animation-delay:0s}
-.musicbtn.playing .eq i:nth-child(2){animation-delay:.18s}
-.musicbtn.playing .eq i:nth-child(3){animation-delay:.36s}
-.musicbtn.playing .eq i:nth-child(4){animation-delay:.54s}
-.musicbtn:not(.playing){opacity:.72}
-.musicbtn:not(.playing) .eq i{height:22%}
 @keyframes eqbar{0%,100%{height:22%}50%{height:100%}}
 /* frequency-wave prompt ring — invites the first tap */
-.musicbtn.prompt{opacity:1;border-color:rgba(245,166,35,.95)}
-.musicbtn.prompt::before,.musicbtn.prompt::after{content:"";position:absolute;inset:-2px;border-radius:999px;border:2px solid rgba(245,166,35,.7);pointer-events:none;animation:mwave 2.2s cubic-bezier(.22,.61,.36,1) infinite}
-.musicbtn.prompt::after{animation-delay:1.1s}
 @keyframes mwave{0%{transform:scale(1);opacity:.8}60%{opacity:.12}100%{transform:scale(1.9);opacity:0}}
 
 /* ===== THE CATALOG — music ===== */
@@ -2331,14 +2305,6 @@ body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
 @media(max-width:600px){.toc{top:66px;right:6px;gap:7px}.toc-tog{width:28px;height:28px}
   .toc-dot{width:8px;height:8px}.toc-plate{min-width:112px;height:38px;font-size:9px;right:18px}}
 @media(prefers-reduced-motion:reduce){.toc-plate,.toc-list{transition:opacity .12s ease}}
-.musicbtn.prompt .eq i{animation:eqbar 1.5s ease-in-out infinite}
-.musicbtn.prompt .eq i:nth-child(1){animation-delay:0s}
-.musicbtn.prompt .eq i:nth-child(2){animation-delay:.19s}
-.musicbtn.prompt .eq i:nth-child(3){animation-delay:.38s}
-.musicbtn.prompt .eq i:nth-child(4){animation-delay:.57s}
-@media(prefers-reduced-motion:reduce){.musicbtn.prompt::before,.musicbtn.prompt::after{animation:none}}
-@media(prefers-reduced-motion:reduce){.musicbtn.playing .eq i{animation:none;height:60%}}
-@media(max-width:420px){.musicbtn .mtxt{display:none}.musicbtn{padding:9px 11px}}
 
 .africa{position:relative;overflow:hidden;padding:90px 16px 110px;text-align:center;
   background:linear-gradient(180deg,#0b0a08 0%,#1c0f04 18%,#3d1c06 46%,#57260a 62%,#170c04 88%,#0b0a08 100%)}
@@ -3866,9 +3832,6 @@ function agencySubmit(e){
 
 
 <audio id="africaTrack" loop preload="none" playsinline><source src="antidote-africa.mp3" type="audio/mpeg"></audio>
-<audio id="bgTrack" loop preload="none" playsinline>
-  <source src="antidote-theme.mp3" type="audio/mpeg">
-</audio>
 <div class="toc" id="toc" role="navigation" aria-label="Jump to section">
   <button class="toc-tog" id="tocTog" type="button" aria-expanded="false" aria-controls="tocList" aria-label="Table of contents">
     <span class="toc-bars" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -3893,10 +3856,6 @@ function agencySubmit(e){
     <a class="toc-i" href="#agency"><span class="toc-dot"></span><span class="toc-plate">💼 The Agency</span></a>
   </div>
 </div>
-<button id="musicBtn" class="musicbtn" type="button" aria-label="Toggle background music" aria-pressed="false" hidden>
-  <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-  <span class="mtxt">MUSIC</span>
-</button>
 <div class="sticky-bar">
   <a class="sb-call" href="tel:+14243094068">📞 Book</a>
   <a class="sb-ig" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">Instagram</a>
@@ -4994,53 +4953,6 @@ const KICKCLIPS=[
 
 
 /* ================= BACKGROUND MUSIC ================= */
-(function(){
-  var btn=document.getElementById("musicBtn");
-  if(!btn) return;
-
-  /* This button used to run its own background track (antidote-theme.mp3), which
-     meant two audio elements could play over each other the moment a visitor
-     started anything in the catalog — nothing ducked it. It is now a launcher for
-     the real player: tap takes you to the catalog and starts it, and thereafter it
-     mirrors and controls that one player. */
-  var mtxt=btn.querySelector(".mtxt");
-  function cat(){ return window.antidoteCatalog; }
-
-  function paint(){
-    var on = !!(cat() && cat().isPlaying());
-    btn.classList.toggle("playing",on);
-    btn.setAttribute("aria-pressed",on?"true":"false");
-    btn.setAttribute("aria-label",on?"Pause the catalog":"Play the catalog");
-    if(on){ btn.classList.remove("prompt"); if(mtxt) mtxt.textContent="MUSIC"; }
-  }
-
-  btn.addEventListener("click",function(){
-    var c=cat();
-    if(!c){ /* catalog not ready yet: just take them there */
-      var sec=document.getElementById("music");
-      if(sec) try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ sec.scrollIntoView(); }
-      return;
-    }
-    btn.classList.remove("prompt"); if(mtxt) mtxt.textContent="MUSIC";
-    if(c.isPlaying()){ c.toggle(); return; }        /* already playing -> pause in place */
-    var sec=document.getElementById("music");
-    if(sec) try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ sec.scrollIntoView(); }
-    c.run();
-  });
-
-  btn.hidden=false;
-  paint();
-  if(mtxt) { btn.classList.add("prompt"); mtxt.textContent="TAP FOR MUSIC"; }
-
-  /* keep the pill in sync however playback was actually started */
-  (function bind(){
-    var c=cat();
-    if(c){ c.onChange(paint); paint(); return; }
-    setTimeout(bind,300);          /* catalog IIFE runs later in the document */
-  })();
-})();
-
-
 /* ================= AFRICA LION ROAR ================= */
 (function(){
   var wrap=document.getElementById("lionWrap"); if(!wrap) return;
@@ -5188,8 +5100,7 @@ function synthRoar(){
 
 /* ================= AFRICA TAKEOVER MUSIC ================= */
 (function(){
-  var sec=document.getElementById("africa"), af=document.getElementById("africaTrack"),
-      bg=document.getElementById("bgTrack");
+  var sec=document.getElementById("africa"), af=document.getElementById("africaTrack");
   if(!sec||!af) return;
   var AF_VOL=.34, inside=false, ready=false, dead=false, fading=null;
   af.addEventListener("error",function(){dead=true;},true);
@@ -5206,7 +5117,6 @@ function synthRoar(){
   function enter(){
     if(inside||dead)return; inside=true;
     if(!ready){af.src="antidote-africa.mp3";af.load();ready=true;}
-    if(bg&&!bg.paused)fade(bg,0,600);
     af.volume=0;
     var p=af.play();
     if(p&&p.catch)p.catch(function(){inside=false;});
@@ -5215,7 +5125,6 @@ function synthRoar(){
   function leave(){
     if(!inside)return; inside=false;
     fade(af,0,700,function(){af.pause();});
-    if(bg&&!bg.paused)fade(bg,0.18,900);
   }
   /* ---- off switch ----
      The track started on scroll or hover and had no control at all, so a visitor
@@ -6059,7 +5968,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     document.getElementById('nbT').textContent=t.t;
     document.getElementById('nbF').textContent=t.x||CATS[t.c];
     document.getElementById('nbDur').textContent=fmt(t.d);
-    bar.classList.add('on'); document.body.classList.add('nowbar-open'); mark();
+    bar.classList.add('on'); mark();
     if(auto!==false) play();
   }
   function play(){
@@ -6075,19 +5984,6 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     document.getElementById('nbPlay').textContent="▶";
   }
   function toggle(){ el.paused?play():pause(); }
-
-  /* Small public handle so the floating MUSIC button drives THIS player rather
-     than running a second audio element against it. */
-  window.antidoteCatalog={
-    isPlaying:function(){ return !el.paused; },
-    toggle:toggle,
-    run:function(){
-      if(idx<0){ shuffled=true; if(shBtn) shBtn.setAttribute('aria-pressed','true');
-                 buildOrder(false); pos=0; load(order[0]); }
-      else if(el.paused){ play(); }
-    },
-    onChange:function(cb){ ['play','pause','ended'].forEach(function(ev){ el.addEventListener(ev,cb); }); }
-  };
 
   /* Believe Me is gated, but once earned it plays here from audio/believe-me.m4a
      like any other record. It used to hand the visitor off to YouTube, which was
