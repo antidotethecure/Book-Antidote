@@ -189,6 +189,16 @@ canvas.hero-driz{position:absolute !important;inset:0;z-index:2 !important;width
 /* ---------- SIGNATURE MOVES ---------- */
 #moves{background:linear-gradient(180deg,var(--ink),#121007 55%,var(--ink))}
 .moves-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px;margin-top:8px}
+/* the move tiles now play real footage instead of a still */
+.move-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .45s ease;background:#0b0a08}
+.move-vid.on{opacity:1}
+.move-dots{position:absolute;left:0;right:0;bottom:10px;z-index:4;display:flex;justify-content:center;
+  gap:6px;pointer-events:none}
+.move-dots i{width:5px;height:5px;border-radius:50%;background:rgba(245,235,215,.34);
+  transition:background .25s ease,transform .25s ease}
+.move-dots i.on{background:var(--syrup,#f5a623);transform:scale(1.45)}
+@media(prefers-reduced-motion:reduce){.move-vid{transition:none}}
 .move{background:var(--card);border:1px solid rgba(245,166,35,.25);border-radius:18px;overflow:hidden;position:relative}
 .move .art{position:relative;overflow:hidden;aspect-ratio:4/4.6;cursor:pointer}
 .move .art img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
@@ -985,7 +995,13 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
       <div class="move reveal">
         <div class="art" id="clampDemo">
           <span class="tap-tag">👆 Tap for The Clamp</span>
-          <img data-img="GRITZ" alt="Antidote doing The Clamp on fried chicken at Gritz N Wafflez">
+          <!-- Real bites from the reviews, cycling. Sources listed on the element so the
+               rotation is data, not eight hard-coded elements. -->
+          <video class="move-vid" id="clampVid" muted playsinline preload="none"
+                 poster="video/moves/poster-clamp.jpg"
+                 data-clips="video/moves/clamp-stormburger-jaw.mp4|video/moves/clamp-stormburger-cheesepull.mp4|video/moves/clamp-fatimas-grill-hotcheeto-taco.mp4|video/moves/clamp-wangs-spiral-potato.mp4|video/moves/clamp-gritz-n-wafflez-chicken.mp4|video/moves/clamp-wangs-wings-basket.mp4|video/moves/clamp-wax-smash-burger.mp4|video/moves/clamp-serving-spoon-french-toast.mp4"
+                 aria-label="Antidote clamping down on food across different reviews"></video>
+          <span class="move-dots" id="clampDots" aria-hidden="true"></span>
         </div>
         <div class="body">
           <h3 class="neon-g">The Clamp™</h3>
@@ -995,7 +1011,11 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
       <div class="move reveal">
         <div class="art" id="drizDemo">
           <span class="tap-tag">👆 Tap for the Drizzle</span>
-          <img data-img="DRIZZLEART" alt="The Antidote Drizzle — signature syrup pour in front of a stadium crowd">
+          <video class="move-vid" id="drizVid" muted playsinline preload="none"
+                 poster="video/moves/poster-drizzle.jpg"
+                 data-clips="video/moves/driz-ny-gyro-highpour-foot-on-table.mp4|video/moves/driz-ny-gyro-antidote-pour.mp4"
+                 aria-label="The Antidote Drizzle poured over different dishes"></video>
+          <span class="move-dots" id="drizDots" aria-hidden="true"></span>
         </div>
         <div class="body">
           <h3 class="neon">The Antidote Drizzle™</h3>
@@ -3111,6 +3131,40 @@ body.nowbar-open .musicbtn{bottom:calc(124px + env(safe-area-inset-bottom))}
           <h1 class="pd-hero-h1">Which one<br>is <em>you?</em></h1>
           <p class="pd-hero-sub">Be honest. Tap whichever ones sting a little. Every answer builds a ticket at the bottom showing what it costs to fix hired out, and what it costs to fix with me.</p>
         </div>
+
+  <!-- Moved out of the agency block: the enquiry form belongs with the menu
+       it is quoting, not stranded at the foot of the page. -->
+  <div class="wrap">
+      <div class="ag-form reveal">
+        <h3>Start The Conversation</h3>
+        <p>Tell me what you're building or fixing — website, brand, content, credit, funding — and I'll follow up personally.</p>
+        <form id="agencyForm" onsubmit="return agencySubmit(event)">
+          <div class="ag-row">
+            <div><label for="agName">Name</label><input id="agName" name="name" type="text" required></div>
+            <div><label for="agBiz">Business</label><input id="agBiz" name="business" type="text"></div>
+          </div>
+          <div class="ag-row">
+            <div><label for="agEmail">Email or Phone</label><input id="agEmail" name="contact" type="text" required></div>
+            <div>
+              <label for="agInterest">Interested In</label>
+              <select id="agInterest" name="interest">
+                <option>Website / Brand Build</option>
+                <option>Content &amp; Marketing</option>
+                <option>Credit Repair &amp; Business Funding</option>
+                <option>More Than One</option>
+              </select>
+            </div>
+          </div>
+          <label for="agMsg">Message</label>
+          <textarea id="agMsg" name="message" placeholder="Tell me what you're trying to build."></textarea>
+          <div class="cl-cta-row">
+            <button type="submit" class="btn btn-gold">📩 Send It</button>
+            <a class="btn btn-ghost" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">📸 DM @TheRealAntidote</a>
+          </div>
+        </form>
+      </div>
+  </div>
+
       </section>
       
       <section class="pd-diag">
@@ -3719,34 +3773,6 @@ render();
       <p class="cc-disc">Ranges shown are illustrative and typical, not a quote or a guarantee from any specific lender. Actual approval amounts depend on income, debt&#8209;to&#8209;income ratio, collateral and each lender&rsquo;s own underwriting. Results vary and are never guaranteed.</p>
     </div>
 
-    <div class="ag-form reveal">
-      <h3>Start The Conversation</h3>
-      <p>Tell me what you're building or fixing — website, brand, content, credit, funding — and I'll follow up personally.</p>
-      <form id="agencyForm" onsubmit="return agencySubmit(event)">
-        <div class="ag-row">
-          <div><label for="agName">Name</label><input id="agName" name="name" type="text" required></div>
-          <div><label for="agBiz">Business</label><input id="agBiz" name="business" type="text"></div>
-        </div>
-        <div class="ag-row">
-          <div><label for="agEmail">Email or Phone</label><input id="agEmail" name="contact" type="text" required></div>
-          <div>
-            <label for="agInterest">Interested In</label>
-            <select id="agInterest" name="interest">
-              <option>Website / Brand Build</option>
-              <option>Content &amp; Marketing</option>
-              <option>Credit Repair &amp; Business Funding</option>
-              <option>More Than One</option>
-            </select>
-          </div>
-        </div>
-        <label for="agMsg">Message</label>
-        <textarea id="agMsg" name="message" placeholder="Tell me what you're trying to build."></textarea>
-        <div class="cl-cta-row">
-          <button type="submit" class="btn btn-gold">📩 Send It</button>
-          <a class="btn btn-ghost" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">📸 DM @TheRealAntidote</a>
-        </div>
-      </form>
-    </div>
   </div>
 </section>
 
@@ -4521,6 +4547,55 @@ const KICKCLIPS=[
     es.forEach(function(e){ if(e.isIntersecting) start(); else if(loaded) v.pause(); });
   },{rootMargin:"300px 0px"});
   io.observe(sec);
+})();
+
+/* ---- signature-move tiles: cycle real clips from the reviews ----
+   Each tile holds a pipe-separated clip list. We advance on ended, so a tile
+   walks its whole set rather than looping one bite forever. Nothing is fetched
+   until the tile is on screen, and it pauses when it leaves. */
+(function moveReels(){
+  [["clampVid","clampDots"],["drizVid","drizDots"]].forEach(function(pair){
+    var v=document.getElementById(pair[0]), dots=document.getElementById(pair[1]);
+    if(!v) return;
+    var list=(v.dataset.clips||"").split("|").filter(Boolean);
+    if(!list.length) return;
+    var idx=0, started=false;
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if(dots){
+      list.forEach(function(){ dots.appendChild(document.createElement("i")); });
+    }
+    function paintDots(){
+      if(!dots) return;
+      [].slice.call(dots.children).forEach(function(d,n){ d.classList.toggle("on",n===idx); });
+    }
+    function load(n,play){
+      idx=(n+list.length)%list.length;
+      v.src=list[idx];
+      v.load();
+      paintDots();
+      if(play){ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }
+    }
+    v.addEventListener("ended",function(){ load(idx+1,true); });
+    v.addEventListener("playing",function(){ v.classList.add("on"); });
+    /* Deliberately no tap handler here: these tiles already own a click that
+       fires the Clamp and Drizzle animations. Adding one would make a single
+       tap do two things. The reel advances on its own when a clip ends. */
+
+    function start(){
+      if(started) return; started=true;
+      if(reduce){ load(0,false); v.classList.add("on"); return; }  /* first frame only */
+      load(0,true);
+    }
+    if(!("IntersectionObserver" in window)){ start(); return; }
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting) start();
+        else if(started && !reduce) v.pause();
+      });
+    },{rootMargin:"200px 0px",threshold:.2});
+    io.observe(v.parentNode);
+  });
 })();
 
 /* ---- music section: looping backdrop, same lazy pattern as Believe Me ---- */
