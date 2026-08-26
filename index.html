@@ -4418,11 +4418,9 @@ function render(cat){
     const w = r.lt==="ig" ? `<a class="watch ig" href="${r.u}" target="_blank" rel="noopener">▶ Watch on Instagram</a>`
       : r.lt==="pl" ? `<a class="watch pl" href="${r.u}" target="_blank" rel="noopener">▶ Watch on the channel</a>`
       : `<a class="watch yt" href="${r.u}" target="_blank" rel="noopener">▶ Watch Review</a>`;
-    /* a three second cut from the middle of the review, attached only where one
-       exists and only fetched when the pointer actually lands on the card */
-    const prev = HOVERCLIPS.has(r.img)
-      ? `<video class="rprev" muted loop playsinline preload="none" data-src="video/hover/${r.img}.mp4" aria-hidden="true"></video>` : "";
-    card.innerHTML=`<div class="rart">${artHTML}${prev}<span class="fx-hint">${fxLabel(r.fx)}</span></div>
+    /* the preview player is a single shared element moved into whichever card is
+       hovered; 60 of them held 60 decoders and starved everything else */
+    card.innerHTML=`<div class="rart"${HOVERCLIPS.has(r.img)?` data-prev="video/hover/${r.img}.mp4"`:""}>${artHTML}<span class="fx-hint">${fxLabel(r.fx)}</span></div>
       <div class="rmeta"><div class="rcat">${CATNAME[r.c]}</div><div class="rname">${r.n}</div>${w}</div>`;
     card.querySelector(".rart").addEventListener("click",e=>doFx(e.currentTarget,r));
     grid.appendChild(card);
@@ -4646,6 +4644,30 @@ const KICKCLIPS=[
       prime(buf[1-cur],(idx+1)%list.length);   /* stage the one after this */
     }
     buf.forEach(function(v){ v.addEventListener("ended",function(){ if(v===buf[cur]) advance(); }); });
+
+    /* Watchdog. "ended" is the only thing driving the rotation, and a decoder
+       that stalls never fires it, which leaves the tile frozen on a still frame
+       with no way back. Poll the playhead instead: if it has not moved while the
+       tile is on screen and supposed to be running, kick it, then move on. */
+    var lastT=0, stuck=0;
+    setInterval(function(){
+      if(!started || reduce || document.hidden) return;
+      var v=buf[cur];
+      if(!v || v.paused) return;
+      if(Math.abs(v.currentTime-lastT)>0.02){ lastT=v.currentTime; stuck=0; return; }
+      if(++stuck<3) return;                    /* ~1.5s of no progress */
+      stuck=0;
+      var pr=v.play();                          /* first try: nudge it */
+      if(pr&&pr.catch) pr.catch(function(){});
+      if(v.currentTime===lastT) advance();      /* still dead: cut to the next clip */
+    },500);
+
+    /* a tab that was backgrounded comes back paused on some browsers */
+    document.addEventListener("visibilitychange",function(){
+      if(document.hidden||!started||reduce) return;
+      var v=buf[cur];
+      if(v&&v.paused){ var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+    });
 
     function start(){
       if(started) return; started=true;
@@ -5839,31 +5861,45 @@ function addResidue(el){
 function seedResidue(){ document.querySelectorAll(".rart,.move .art,.cnph,.epart").forEach(addResidue); }
 
 /* ---- review cards: play a clip from the middle of the review on hover ----
-   Delegated because the grid is rebuilt on every filter and search. The source
-   is attached on first hover, so a visitor who never hovers downloads none of
-   these. */
+   One shared player, moved into whichever card the pointer is on. Giving every
+   card its own element meant 60 media elements on the page, which exhausts the
+   browser's decoder pool and silently stalls whatever is already playing. The
+   source is also released on the way out so a decoder is never held idle. */
 (function reviewPreviews(){
   if(window.matchMedia && !window.matchMedia("(hover:hover)").matches) return;
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   var grid=document.getElementById("grid");
   if(!grid) return;
-  function enter(e){
-    var art=e.target.closest&&e.target.closest(".rart"); if(!art) return;
-    var v=art.querySelector(".rprev"); if(!v) return;
-    if(!v.src && v.dataset.src) v.src=v.dataset.src;
-    var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
-  }
-  function leave(e){
-    var art=e.target.closest&&e.target.closest(".rart"); if(!art) return;
-    var v=art.querySelector(".rprev"); if(!v) return;
+
+  var v=document.createElement("video");
+  v.className="rprev"; v.muted=true; v.loop=true; v.playsInline=true;
+  v.setAttribute("playsinline",""); v.setAttribute("aria-hidden","true"); v.preload="none";
+  v.addEventListener("playing",function(){ v.classList.add("on"); });
+
+  var host=null;
+  function release(){
     v.classList.remove("on");
-    try{ v.pause(); v.currentTime=0; }catch(err){}
+    try{ v.pause(); }catch(e){}
+    v.removeAttribute("src"); v.load();     /* hand the decoder back */
+    if(v.parentNode) v.parentNode.removeChild(v);
+    host=null;
   }
-  grid.addEventListener("mouseover",enter);
-  grid.addEventListener("mouseout",leave);
-  /* only reveal once frames are actually running, so the art never flashes black */
-  grid.addEventListener("playing",function(e){
-    if(e.target.classList&&e.target.classList.contains("rprev")) e.target.classList.add("on");
-  },true);
+  grid.addEventListener("mouseover",function(e){
+    var art=e.target.closest && e.target.closest(".rart");
+    if(!art || art===host) return;
+    var src=art.getAttribute("data-prev");
+    if(!src){ if(host) release(); return; }
+    if(host) release();
+    host=art; art.appendChild(v);
+    v.src=src;
+    var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
+  });
+  grid.addEventListener("mouseout",function(e){
+    if(!host) return;
+    var to=e.relatedTarget;
+    if(to && host.contains(to)) return;      /* still inside the same card */
+    release();
+  });
 })();
 
 /* ========== IDLE TAKEOVER (9s idle -> screen pour, review section only) ========== */
