@@ -5826,28 +5826,48 @@ function addResidue(el){
 }
 function seedResidue(){ document.querySelectorAll(".rart,.move .art,.cnph,.epart").forEach(addResidue); }
 
-/* ================= IDLE TAKEOVER (9s idle -> screen pour) ================= */
+/* ========== IDLE TAKEOVER (9s idle -> screen pour, review section only) ========== */
 const tkEng=liquidEngine(document.getElementById("tkCanvas"),{dz:"cheese",indep:true,
   streams:[{x:.05,w:8},{x:.17,w:9},{x:.29,w:7},{x:.42,w:9},{x:.54,w:8},{x:.66,w:9},{x:.78,w:7},{x:.91,w:9}],
   wMin:7,wMax:10,speed:.3,wig:13,poolMax:.3,poolTime:12});
-let idleTimer=null, idleActive=false;
+let idleTimer=null, idleActive=false, inReviews=false;
 function goIdle(){
   if(idleActive)return;
+  if(!inReviews)return;                 /* the pour belongs to the review section only */
   if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   idleActive=true;
   seedResidue();
   document.body.classList.add("idleon","smeared");
   tkEng.start(); pourSound();
 }
-function wakeUp(){
-  clearTimeout(idleTimer); idleTimer=setTimeout(goIdle,9000);
+function stopIdle(){
+  clearTimeout(idleTimer);
   if(!idleActive)return;
   idleActive=false;
   document.body.classList.remove("idleon","smeared");
   setTimeout(()=>{ if(!idleActive) tkEng.stop(); },480);
 }
+function armIdle(){
+  clearTimeout(idleTimer);
+  if(inReviews) idleTimer=setTimeout(goIdle,9000);
+}
+function wakeUp(){ stopIdle(); armIdle(); }
 ["pointermove","pointerdown","scroll","keydown","touchstart","wheel"].forEach(ev=>window.addEventListener(ev,wakeUp,{passive:true}));
-idleTimer=setTimeout(goIdle,9000);
+
+/* Arm only while the review section is on screen. Scrolling away tears it down
+   at once rather than leaving cheese running over the rest of the page. */
+(function scopeIdle(){
+  var sec=document.getElementById("reviews");
+  if(!sec) return;
+  if(!("IntersectionObserver" in window)){ inReviews=true; armIdle(); return; }
+  new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      inReviews=e.isIntersecting;
+      if(inReviews) armIdle();
+      else stopIdle();
+    });
+  },{threshold:.2}).observe(sec);
+})();
 
 /* ================= REVEAL ================= */
 const io=new IntersectionObserver(es=>es.forEach(x=>{ if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);} }),{threshold:.12});
