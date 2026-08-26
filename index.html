@@ -281,6 +281,13 @@ body.idleon #takeover{opacity:1}
 .rcard .rmeta{border-top:1px solid rgba(245,166,35,.16)}
 .rcard:hover{transform:translateY(-3px);border-color:rgba(245,166,35,.6)}
 .rart{position:relative;aspect-ratio:2/2.6;overflow:hidden;cursor:pointer;background:#0e0c08}
+/* hover preview sits over the cover art and fades in once it is actually playing */
+.rprev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .28s ease;pointer-events:none;z-index:1}
+.rprev.on{opacity:1}
+.rart .fx-hint{z-index:2}
+@media(hover:none){.rprev{display:none}}          /* no hover on touch, so never fetch it */
+@media(prefers-reduced-motion:reduce){.rprev{display:none}}
 .rart img{width:100%;height:100%;object-fit:cover}
 .tile{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;text-align:center;background:radial-gradient(circle at 50% 20%,#241d10,#0e0c08 75%)}
 .tile .fj{font-size:2.5rem}
@@ -4316,6 +4323,7 @@ const CATS = [
   ["africa","🌍 Africa Food Tour"]
 ];
 const CATNAME = Object.fromEntries(CATS);
+const HOVERCLIPS=new Set(["ALLNDI","AMIGOS","ARAYAKIHD","BIRRIERIA","BNB","BOOS","BREE","BUBBAS","CALICHILLI","CHOPCHEESE","CHURRITO","CHURRITO1","CHURRITO3","CHURRITO35","CHURRITO4","COSMO","CRABGRAB","EATNPARK","FLAMIN","FROSTY","FUEGOCRAVE","FUEGOCRAVE2","GRIDDLE","GRITZ","GRITZ2","HABIBI","HIBIKI","JAWNYS","KAVA","KAYSER","LAGOON","LUVDDUK","MAPLE","MARATHON","MARISCOS","MEANCOW","MELBAS","MYNY","NALU","NYGYRO","PAPILLON","SPOON","STORM1","STORM2","WANGS","WAX","ZFOODBOIL","ZIGGLE"]);
 const R = [
  {n:"Maison Kayser",c:"africa",c2:"breakfast",img:"KAYSER",fx:"clamp",u:"https://youtu.be/jfHZfgUYZ0M",lt:"yt",e:"🥐"},
  {n:"Maple",c:"africa",c2:"breakfast",img:"MAPLE",fx:"clamp",u:"https://www.instagram.com/reel/DOw3rnoj0Vn/",lt:"ig",e:"🥞"},
@@ -4410,7 +4418,11 @@ function render(cat){
     const w = r.lt==="ig" ? `<a class="watch ig" href="${r.u}" target="_blank" rel="noopener">▶ Watch on Instagram</a>`
       : r.lt==="pl" ? `<a class="watch pl" href="${r.u}" target="_blank" rel="noopener">▶ Watch on the channel</a>`
       : `<a class="watch yt" href="${r.u}" target="_blank" rel="noopener">▶ Watch Review</a>`;
-    card.innerHTML=`<div class="rart">${artHTML}<span class="fx-hint">${fxLabel(r.fx)}</span></div>
+    /* a three second cut from the middle of the review, attached only where one
+       exists and only fetched when the pointer actually lands on the card */
+    const prev = HOVERCLIPS.has(r.img)
+      ? `<video class="rprev" muted loop playsinline preload="none" data-src="video/hover/${r.img}.mp4" aria-hidden="true"></video>` : "";
+    card.innerHTML=`<div class="rart">${artHTML}${prev}<span class="fx-hint">${fxLabel(r.fx)}</span></div>
       <div class="rmeta"><div class="rcat">${CATNAME[r.c]}</div><div class="rname">${r.n}</div>${w}</div>`;
     card.querySelector(".rart").addEventListener("click",e=>doFx(e.currentTarget,r));
     grid.appendChild(card);
@@ -5825,6 +5837,34 @@ function addResidue(el){
   r.innerHTML=html; el.appendChild(r);
 }
 function seedResidue(){ document.querySelectorAll(".rart,.move .art,.cnph,.epart").forEach(addResidue); }
+
+/* ---- review cards: play a clip from the middle of the review on hover ----
+   Delegated because the grid is rebuilt on every filter and search. The source
+   is attached on first hover, so a visitor who never hovers downloads none of
+   these. */
+(function reviewPreviews(){
+  if(window.matchMedia && !window.matchMedia("(hover:hover)").matches) return;
+  var grid=document.getElementById("grid");
+  if(!grid) return;
+  function enter(e){
+    var art=e.target.closest&&e.target.closest(".rart"); if(!art) return;
+    var v=art.querySelector(".rprev"); if(!v) return;
+    if(!v.src && v.dataset.src) v.src=v.dataset.src;
+    var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
+  }
+  function leave(e){
+    var art=e.target.closest&&e.target.closest(".rart"); if(!art) return;
+    var v=art.querySelector(".rprev"); if(!v) return;
+    v.classList.remove("on");
+    try{ v.pause(); v.currentTime=0; }catch(err){}
+  }
+  grid.addEventListener("mouseover",enter);
+  grid.addEventListener("mouseout",leave);
+  /* only reveal once frames are actually running, so the art never flashes black */
+  grid.addEventListener("playing",function(e){
+    if(e.target.classList&&e.target.classList.contains("rprev")) e.target.classList.add("on");
+  },true);
+})();
 
 /* ========== IDLE TAKEOVER (9s idle -> screen pour, review section only) ========== */
 const tkEng=liquidEngine(document.getElementById("tkCanvas"),{dz:"cheese",indep:true,
