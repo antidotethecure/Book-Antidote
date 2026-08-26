@@ -4579,51 +4579,86 @@ const KICKCLIPS=[
 })();
 
 /* ---- signature-move tiles: cycle real clips from the reviews ----
-   Each tile holds a pipe-separated clip list. We advance on ended, so a tile
-   walks its whole set rather than looping one bite forever. Nothing is fetched
-   until the tile is on screen, and it pauses when it leaves. */
+   Double-buffered on purpose. A single element re-pointed at the next file has
+   to fetch and decode from nothing at every cut, which showed up as a freeze on
+   each transition. Two elements alternate instead: while one plays, the other
+   has already fetched and decoded the next clip, so the cut is just a swap of
+   which one is visible. */
 (function moveReels(){
-  [["clampVid","clampDots"],["drizVid","drizDots"]].forEach(function(pair){
-    var v=document.getElementById(pair[0]), dots=document.getElementById(pair[1]);
-    if(!v) return;
-    var list=(v.dataset.clips||"").split("|").filter(Boolean);
+  [["clampVid","clampDots"],["drizVid","drizDots"]].forEach(function(pair,tile){
+    var a=document.getElementById(pair[0]), dots=document.getElementById(pair[1]);
+    if(!a) return;
+    var list=(a.dataset.clips||"").split("|").filter(Boolean);
     if(!list.length) return;
-    var idx=0, started=false;
     var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if(dots){
-      list.forEach(function(){ dots.appendChild(document.createElement("i")); });
-    }
-    function paintDots(){
+    /* the second buffer is built here rather than in the markup so the two
+       always share one set of attributes */
+    var b=a.cloneNode(false);
+    b.removeAttribute("id");
+    b.removeAttribute("poster");
+    b.classList.remove("on");
+    a.parentNode.insertBefore(b,a.nextSibling);
+    var buf=[a,b], cur=0, idx=0, started=false;
+
+    if(dots) list.forEach(function(){ dots.appendChild(document.createElement("i")); });
+    function paintDots(n){
       if(!dots) return;
-      [].slice.call(dots.children).forEach(function(d,n){ d.classList.toggle("on",n===idx); });
+      [].slice.call(dots.children).forEach(function(d,i){ d.classList.toggle("on",i===n); });
     }
-    function load(n,play){
-      idx=(n+list.length)%list.length;
-      v.src=list[idx];
-      v.load();
-      paintDots();
-      if(play){ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }
+    /* fetch and decode ahead of time; never called on the element that is playing */
+    function prime(v,n){
+      if(v.dataset.n===String(n) && v.readyState>=3) return;
+      v.dataset.n=String(n);
+      v.preload="auto";
+      v.src=list[n];
+      try{ v.load(); }catch(e){}
     }
-    v.addEventListener("ended",function(){ load(idx+1,true); });
-    v.addEventListener("playing",function(){ v.classList.add("on"); });
-    /* Deliberately no tap handler here: these tiles already own a click that
-       fires the Clamp and Drizzle animations. Adding one would make a single
-       tap do two things. The reel advances on its own when a clip ends. */
+    function show(v){
+      buf.forEach(function(x){ x.classList.toggle("on",x===v); });
+    }
+    function advance(){
+      var nxt=(idx+1)%list.length, other=buf[1-cur];
+      /* if the buffer is not ready yet, let the current clip run again rather
+         than cutting to a stall */
+      if(other.dataset.n!==String(nxt) || other.readyState<3){
+        prime(other,nxt);
+        var v=buf[cur]; try{ v.currentTime=0; v.play(); }catch(e){}
+        return;
+      }
+      cur=1-cur; idx=nxt;
+      var now=buf[cur];
+      try{ now.currentTime=0; }catch(e){}
+      var pr=now.play(); if(pr&&pr.catch) pr.catch(function(){});
+      show(now); paintDots(idx);
+      prime(buf[1-cur],(idx+1)%list.length);   /* stage the one after this */
+    }
+    buf.forEach(function(v){ v.addEventListener("ended",function(){ if(v===buf[cur]) advance(); }); });
 
     function start(){
       if(started) return; started=true;
-      if(reduce){ load(0,false); v.classList.add("on"); return; }  /* first frame only */
-      load(0,true);
+      prime(buf[0],0);
+      paintDots(0);
+      if(reduce){ show(buf[0]); return; }              /* first frame, no cycling */
+      var go=function(){
+        var pr=buf[0].play(); if(pr&&pr.catch) pr.catch(function(){});
+        show(buf[0]);
+        prime(buf[1],1%list.length);                   /* stage clip two immediately */
+      };
+      if(buf[0].readyState>=3) go();
+      else buf[0].addEventListener("canplay",go,{once:true});
     }
+
     if(!("IntersectionObserver" in window)){ start(); return; }
+    /* the tiles sit high on the page, so begin fetching well before they are
+       reached; stagger the two so they are not competing for the same bytes */
     var io=new IntersectionObserver(function(es){
       es.forEach(function(e){
-        if(e.isIntersecting) start();
-        else if(started && !reduce) v.pause();
+        if(e.isIntersecting) setTimeout(start,tile*400);
+        else if(started && !reduce) buf.forEach(function(v){ v.pause(); });
       });
-    },{rootMargin:"200px 0px",threshold:.2});
-    io.observe(v.parentNode);
+    },{rootMargin:"700px 0px",threshold:0});
+    io.observe(a.parentNode);
   });
 })();
 
