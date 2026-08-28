@@ -1563,6 +1563,63 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <div class="mus-bg-scrim"></div>
   </div>
   <canvas class="mus-notes-canvas" id="musNotesCanvas" aria-hidden="true"></canvas>
+  <!-- FEATURED MUSIC VIDEO — "Cheat Code" (added 2026-08). Self-contained; scoped #mvid. -->
+  <div id="mvid" aria-label="Featured music video: Cheat Code">
+    <style>
+      #mvid{position:relative;width:min(1120px,92%);margin:6px auto 30px;z-index:2}
+      #mvid .mvid-eyebrow{display:block;text-align:center;font-size:.82rem;letter-spacing:.14em;
+        text-transform:uppercase;color:#f5a623;margin:0 0 10px;
+        text-shadow:0 0 12px rgba(245,166,35,.45)}
+      #mvid .mvid-frame{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
+        background:#000;border:1px solid rgba(245,166,35,.35);
+        box-shadow:0 14px 46px rgba(0,0,0,.55),0 0 34px rgba(245,166,35,.18)}
+      #mvid .mvid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+      #mvid .mvid-hit{position:absolute;inset:0;cursor:pointer;z-index:2}
+      #mvid .mvid-badge{position:absolute;top:14px;right:14px;z-index:3;display:flex;
+        align-items:center;gap:6px;background:linear-gradient(135deg,#ff2d55,#ff0059);
+        color:#fff;font-weight:800;font-size:14px;letter-spacing:.02em;padding:8px 14px;
+        border-radius:999px;box-shadow:0 4px 16px rgba(255,0,80,.5);pointer-events:none}
+      #mvid .mvid-badge svg{width:15px;height:15px;fill:#fff}
+      #mvid .mvid-sound{position:absolute;bottom:14px;left:14px;z-index:4;cursor:pointer;
+        display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.6);color:#fff4de;
+        border:1px solid rgba(255,244,222,.28);font-size:13px;font-weight:700;padding:8px 14px;
+        border-radius:999px;backdrop-filter:blur(4px)}
+      #mvid .mvid-sound:hover{background:rgba(0,0,0,.82)}
+      #mvid .mvid-cta{position:absolute;bottom:14px;right:14px;z-index:4;cursor:pointer;
+        display:flex;align-items:center;gap:6px;background:#fff4de;color:#161009;
+        font-size:13px;font-weight:800;padding:8px 14px;border-radius:999px;text-decoration:none}
+      #mvid .mvid-cta svg{width:15px;height:15px;fill:#ff0000}
+    </style>
+    <span class="mvid-eyebrow">&#127925; The Music Video &middot; Cheat Code</span>
+    <div class="mvid-frame">
+      <div id="mvid-player"></div>
+      <a class="mvid-hit" href="https://www.youtube.com/watch?v=HKeXMOWF_kA" target="_blank" rel="noopener" aria-label="Watch Cheat Code on YouTube"></a>
+      <div class="mvid-badge"><svg viewBox="0 0 24 24"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 11a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z"/></svg>1M+ views</div>
+      <button class="mvid-sound" id="mvid-sound" type="button"><span id="mvid-ico">&#128263;</span><span id="mvid-txt">Tap for sound</span></button>
+      <a class="mvid-cta" href="https://www.youtube.com/watch?v=HKeXMOWF_kA" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M23 7.5a3 3 0 00-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 001 7.5 31 31 0 00.5 12 31 31 0 001 16.5a3 3 0 002.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 002.1-2.1A31 31 0 0023.5 12 31 31 0 0023 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>Watch on YouTube</a>
+    </div>
+    <script>
+    (function(){
+      var VIDEO="HKeXMOWF_kA",muted=true,player;
+      function build(){
+        player=new YT.Player("mvid-player",{videoId:VIDEO,
+          playerVars:{autoplay:1,mute:1,loop:1,playlist:VIDEO,controls:0,modestbranding:1,playsinline:1,rel:0},
+          events:{onReady:function(e){e.target.mute();e.target.playVideo();}}});
+      }
+      if(window.YT&&window.YT.Player){build();}
+      else{var t=document.createElement("script");t.src="https://www.youtube.com/iframe_api";
+        document.head.appendChild(t);var prev=window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady=function(){if(prev)prev();build();};}
+      document.getElementById("mvid-sound").addEventListener("click",function(){
+        if(!player||!player.unMute)return;muted=!muted;
+        if(muted){player.mute();}else{player.unMute();player.setVolume(100);player.playVideo();}
+        document.getElementById("mvid-ico").innerHTML=muted?"&#128263;":"&#128266;";
+        document.getElementById("mvid-txt").textContent=muted?"Tap for sound":"Sound on";
+      });
+    })();
+    </script>
+  </div>
+
   <div class="mus-hero">
     <img class="mus-hero-img" src="hero-crowd.jpg" alt="Antidote performing to a packed room, crowd filming" decoding="async" loading="lazy">
     <!-- Same frame, subject lifted out: sits above the headline so the type reads behind him.
