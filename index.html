@@ -5,6 +5,8 @@
 <meta name="color-scheme" content="dark only">
 <meta name="theme-color" content="#0b0a08">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script id="fmLeaflet" defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <title>Antidote The Foodie 🍴</title>
 <meta name="description" content="Anthony Suggs, aka Antidote The Foodie. Compton and Long Beach. Rapper, food reviewer, and the man behind the Clamp and the Antidote Drizzle. Food reviews, an 82-record catalog, crypto, credit repair and the Wealth Blueprint, all in one place.">
 
@@ -767,6 +769,99 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   .seal,.seal-ring,.maker.in .seal{animation:none}
   .seal:hover .seal-drip,.seal:focus .seal-drip{animation:none}
 }
+
+/* ================= FOOD MAP (Where The Reviews Live) ================= */
+#foodmap{margin:8px 0 26px}
+.fm-shell{position:relative;border:1px solid rgba(245,166,35,.34);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:0 12px 44px rgba(0,0,0,.55)}
+.fm-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(245,166,35,.22);background:linear-gradient(180deg,rgba(245,166,35,.10),transparent)}
+.fm-htxt{min-width:180px}
+.fm-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:1.06rem;letter-spacing:.6px;color:var(--cream);line-height:1.15}
+.fm-title span{color:var(--syrup)}
+.fm-sub{font-family:'Barlow',sans-serif;font-size:.82rem;color:var(--mut);margin-top:3px}
+.fm-actions{display:flex;gap:8px;flex-wrap:wrap}
+.fm-btn{border:1.5px solid rgba(245,166,35,.55);background:transparent;color:var(--cream);font-family:'Barlow',sans-serif;font-weight:700;font-size:.85rem;padding:8px 13px;border-radius:999px;cursor:pointer;transition:background .15s,box-shadow .15s;white-space:nowrap}
+.fm-btn:hover{background:rgba(245,166,35,.16)}
+.fm-btn:focus-visible{outline:2px solid var(--syrup);outline-offset:2px}
+.fm-btn.gold{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup));color:#1a1000;border-color:transparent;box-shadow:0 4px 18px rgba(245,166,35,.42)}
+.fm-btn.gold:hover{box-shadow:0 6px 24px rgba(245,166,35,.6)}
+.fm-btn[hidden]{display:none}
+.fm-body{display:grid;grid-template-columns:1.3fr .95fr}
+@media(max-width:860px){.fm-body{grid-template-columns:1fr}}
+.fm-mapwrap{position:relative;min-height:380px}
+@media(max-width:860px){.fm-mapwrap{min-height:320px}}
+#fmMap{position:absolute;inset:0;background:#0e0d0b}
+@media(max-width:860px){#fmMap{position:relative;height:320px}}
+.fm-fallback{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:'Barlow',sans-serif;color:var(--mut);font-size:.9rem;line-height:1.5}
+.fm-shell.no-map .fm-fallback{display:flex}
+.fm-shell.no-map #fmMap{display:none}
+
+/* bubbles + pins */
+.fm-bub{display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,209,102,.95),rgba(245,166,35,.85) 55%,rgba(196,122,10,.9));
+  color:#1a1000;font-family:'Anton',sans-serif;border:2px solid rgba(255,246,232,.85);
+  box-shadow:0 0 0 6px rgba(245,166,35,.16),0 0 26px rgba(245,166,35,.65);cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease;line-height:1}
+.fm-bub:hover{transform:scale(1.08);box-shadow:0 0 0 9px rgba(245,166,35,.22),0 0 34px rgba(245,166,35,.9)}
+.fm-bub b{font-size:1.15rem;letter-spacing:.5px}
+.fm-bub i{font-style:normal;font-size:.56rem;text-transform:uppercase;letter-spacing:.6px;font-family:'Barlow',sans-serif;font-weight:800;opacity:.85}
+.fm-pin{display:flex;align-items:center;justify-content:center;border-radius:50%;width:34px;height:34px;font-size:1rem;
+  background:linear-gradient(180deg,#1f1a12,#141210);border:2px solid var(--syrup);
+  box-shadow:0 0 14px rgba(245,166,35,.6);cursor:pointer;transition:transform .15s}
+.fm-pin:hover{transform:scale(1.15)}
+.fm-pin.multi{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup));color:#1a1000;font-family:'Anton',sans-serif;font-size:.95rem}
+.fm-me{width:20px;height:20px;border-radius:50%;background:var(--neon-g);border:3px solid #08170c;
+  box-shadow:0 0 0 5px rgba(57,255,106,.25),0 0 22px rgba(57,255,106,.95);animation:fmPulse 1.9s ease-out infinite}
+@keyframes fmPulse{0%{box-shadow:0 0 0 4px rgba(57,255,106,.35),0 0 18px rgba(57,255,106,.9)}70%{box-shadow:0 0 0 16px rgba(57,255,106,0),0 0 22px rgba(57,255,106,.7)}100%{box-shadow:0 0 0 4px rgba(57,255,106,0),0 0 18px rgba(57,255,106,.9)}}
+
+/* leaflet skin */
+#fmMap .leaflet-container{background:#0e0d0b;font-family:'Barlow',sans-serif}
+#fmMap .leaflet-popup-content-wrapper{background:var(--card);color:var(--cream);border:1px solid rgba(245,166,35,.5);border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.7)}
+#fmMap .leaflet-popup-tip{background:var(--card);border:1px solid rgba(245,166,35,.5)}
+#fmMap .leaflet-popup-content{margin:11px 13px;font-size:.86rem;line-height:1.45}
+#fmMap .leaflet-popup-close-button{color:var(--mut)}
+#fmMap .leaflet-control-zoom a{background:var(--card);color:var(--cream);border-color:rgba(245,166,35,.4)}
+#fmMap .leaflet-control-zoom a:hover{background:rgba(245,166,35,.22)}
+#fmMap .leaflet-control-attribution{background:rgba(11,10,8,.78);color:var(--mut);font-size:10px}
+#fmMap .leaflet-control-attribution a{color:var(--syrup)}
+.fm-pop-t{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:.98rem;color:var(--syrup-hi);letter-spacing:.4px}
+.fm-pop-m{color:var(--mut);font-size:.78rem;margin:3px 0 7px}
+.fm-pop-a{display:inline-block;margin:3px 6px 0 0;padding:5px 10px;border-radius:999px;font-weight:700;font-size:.76rem;text-decoration:none;border:1px solid rgba(245,166,35,.55);color:var(--cream)}
+.fm-pop-a.go{background:var(--syrup);color:#1a1000;border-color:transparent}
+.fm-pop ul{margin:6px 0 0;padding-left:17px}
+.fm-pop li{margin:3px 0}
+
+/* side list */
+.fm-side{border-left:1px solid rgba(245,166,35,.22);display:flex;flex-direction:column;max-height:460px}
+@media(max-width:860px){.fm-side{border-left:none;border-top:1px solid rgba(245,166,35,.22);max-height:420px}}
+.fm-sidehead{padding:11px 14px;border-bottom:1px solid rgba(245,166,35,.18);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fm-sidetitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:.9rem;color:var(--cream);letter-spacing:.5px}
+.fm-count{font-family:'Barlow',sans-serif;font-size:.76rem;color:var(--mut);white-space:nowrap}
+.fm-list{overflow-y:auto;padding:8px 10px 12px;scrollbar-width:thin}
+.fm-list::-webkit-scrollbar{width:7px}
+.fm-list::-webkit-scrollbar-thumb{background:rgba(245,166,35,.35);border-radius:9px}
+.fm-row{display:flex;gap:9px;align-items:flex-start;padding:9px 9px;border-radius:11px;border:1px solid transparent;transition:background .13s,border-color .13s}
+.fm-row+.fm-row{margin-top:2px}
+.fm-row:hover{background:rgba(245,166,35,.09);border-color:rgba(245,166,35,.28)}
+.fm-row.pinned{cursor:pointer}
+.fm-emo{font-size:1.15rem;line-height:1.3;flex:0 0 auto}
+.fm-info{min-width:0;flex:1}
+.fm-name{font-family:'Barlow',sans-serif;font-weight:800;font-size:.9rem;color:var(--cream);line-height:1.25}
+.fm-meta{font-family:'Barlow',sans-serif;font-size:.74rem;color:var(--mut);margin-top:2px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fm-dist{color:var(--neon-g);font-weight:800}
+.fm-approx{color:var(--syrup);opacity:.9}
+.fm-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.fm-mini{font-family:'Barlow',sans-serif;font-size:.72rem;font-weight:700;text-decoration:none;padding:4px 9px;border-radius:999px;border:1px solid rgba(245,166,35,.45);color:var(--cream);white-space:nowrap}
+.fm-mini:hover{background:rgba(245,166,35,.16)}
+.fm-mini.go{background:rgba(57,255,106,.14);border-color:rgba(57,255,106,.5);color:#d8ffe4}
+.fm-group{font-family:'Permanent Marker',cursive;color:var(--syrup);font-size:.82rem;margin:12px 4px 6px;display:flex;align-items:center;gap:7px}
+.fm-group::after{content:"";flex:1;height:1px;background:rgba(245,166,35,.22)}
+.fm-note{font-family:'Barlow',sans-serif;font-size:.76rem;color:var(--mut);line-height:1.5;padding:9px 12px;border-top:1px solid rgba(245,166,35,.18);background:rgba(11,10,8,.4)}
+.fm-note b{color:var(--syrup)}
+.fm-status{font-family:'Barlow',sans-serif;font-size:.79rem;padding:8px 14px;color:var(--mut);border-top:1px solid rgba(245,166,35,.18);display:none}
+.fm-status.show{display:block}
+.fm-status.err{color:#ffb3c8}
+.fm-status.ok{color:#9dffbb}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 
@@ -1103,6 +1198,38 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
   <div class="wrap">
     <div class="eyebrow">Tap the artwork — bite it or drizzle it 👀</div>
     <h2>The Review <span class="neon">Legacy</span></h2>
+
+    <!-- ===== FOOD MAP ===== -->
+    <div id="foodmap">
+      <div class="fm-shell" id="fmShell">
+        <div class="fm-head">
+          <div class="fm-htxt">
+            <div class="fm-title">Where The <span>Reviews</span> Live</div>
+            <div class="fm-sub" id="fmSub">Tap a bubble to zoom in — Africa &amp; Los Angeles</div>
+          </div>
+          <div class="fm-actions">
+            <button class="fm-btn" id="fmWorld" type="button" hidden>🌐 Back to World</button>
+            <button class="fm-btn gold" id="fmLocate" type="button">📍 Share My Location</button>
+          </div>
+        </div>
+        <div class="fm-body">
+          <div class="fm-mapwrap">
+            <div id="fmMap" role="application" aria-label="Map of Antidote food review locations"></div>
+            <div class="fm-fallback">🗺️ The live map needs an internet connection.<br>The full spot list is right here — every one links straight to directions.</div>
+          </div>
+          <div class="fm-side">
+            <div class="fm-sidehead">
+              <div class="fm-sidetitle" id="fmSideTitle">All Spots</div>
+              <div class="fm-count" id="fmSideCount"></div>
+            </div>
+            <div class="fm-list" id="fmList"></div>
+            <div class="fm-status" id="fmStatus" role="status" aria-live="polite"></div>
+            <div class="fm-note">📍 = mapped pin. Pins marked <b>approx</b> sit on the neighborhood, not the doorstep — <b>Directions</b> always searches the real business by name, so it lands you in the right place.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="chips" id="chips"></div>
     <div class="revsearch-wrap">
       <span class="revsearch-ico">🔍</span>
@@ -6527,5 +6654,298 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   sec.addEventListener('touchstart', start, {passive:true});
 })();
 </script>
+
+<script>
+/* ================= FOOD MAP — Where The Reviews Live ================= */
+(function(){
+  "use strict";
+  var shell=document.getElementById("fmShell"); if(!shell) return;
+
+  /* Reviews come from the R array defined above. */
+  var ALL=(typeof R!=="undefined"&&Array.isArray(R))?R:[];
+
+  /* -------- Location book --------
+     Keyed by the review's img code. Add a spot by dropping a line in here:
+       IMGCODE:{lat:34.0,lng:-118.2,city:"Neighborhood, CA",region:"la",exact:true}
+     exact:false renders an "approx" badge (pin sits on the area, not the address).
+     Anything without an entry still appears in the list with working Directions. */
+  var GEO={
+    /* Africa Food Tour — Nigeria */
+    LAGOON:{lat:6.4281,lng:3.4219,city:"Victoria Island, Lagos, Nigeria",region:"africa",exact:false},
+    KAYSER:{lat:6.4281,lng:3.4219,city:"Lagos, Nigeria",region:"africa",exact:false},
+    MAPLE:{lat:6.4281,lng:3.4219,city:"Lagos, Nigeria",region:"africa",exact:false},
+    /* Los Angeles area */
+    NALU:{lat:33.9850,lng:-118.4695,city:"Venice, CA",region:"la",exact:false},
+    SPOON:{lat:33.9561,lng:-118.3531,city:"Inglewood, CA",region:"la",exact:false},
+    BOOS:{lat:34.0722,lng:-118.2790,city:"Historic Filipinotown, Los Angeles, CA",region:"la",exact:false}
+  };
+
+  var REGIONS={
+    africa:{key:"africa",flag:"🌍",label:"Africa Food Tour",note:"Lagos, Nigeria",center:[6.4281,3.4219],zoom:11,searchCity:"Lagos Nigeria"},
+    la:{key:"la",flag:"🌴",label:"Los Angeles",note:"Los Angeles area, CA",center:[34.0522,-118.2437],zoom:10,searchCity:"Los Angeles CA"}
+  };
+
+  function regionOf(r){
+    var g=GEO[r.img]; if(g&&g.region) return g.region;
+    return (r.c==="africa"||r.c2==="africa")?"africa":"la";
+  }
+  function catLabel(r){
+    var f=(typeof CATNAME!=="undefined"&&CATNAME)?CATNAME:{};
+    return f[r.c]||r.c||"";
+  }
+  function dirUrl(r){
+    var g=GEO[r.img];
+    var where=g?g.city:(REGIONS[regionOf(r)]||REGIONS.la).searchCity;
+    return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.n+" "+where);
+  }
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+
+  /* Great-circle distance in miles. */
+  function miles(a,b,c,d){
+    var Rm=3958.8,t=Math.PI/180;
+    var dLa=(c-a)*t,dLo=(d-b)*t;
+    var h=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a*t)*Math.cos(c*t)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return Rm*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+  }
+  function fmtDist(mi){
+    if(mi==null) return "";
+    if(mi<0.2) return "right here";
+    if(mi<10) return mi.toFixed(1)+" mi";
+    if(mi<1000) return Math.round(mi)+" mi";
+    return Math.round(mi).toLocaleString()+" mi";
+  }
+
+  /* -------- Build the model -------- */
+  var byRegion={africa:[],la:[]};
+  ALL.forEach(function(r){ var k=regionOf(r); (byRegion[k]||byRegion.la).push(r); });
+
+  /* Group pinned spots that share one coordinate so they never stack. */
+  function pinGroups(key){
+    var m={};
+    byRegion[key].forEach(function(r){
+      var g=GEO[r.img]; if(!g) return;
+      var id=g.lat.toFixed(4)+","+g.lng.toFixed(4);
+      (m[id]=m[id]||{lat:g.lat,lng:g.lng,city:g.city,exact:g.exact,items:[]}).items.push(r);
+    });
+    return Object.keys(m).map(function(k){return m[k];});
+  }
+
+  var listEl=document.getElementById("fmList"),
+      titleEl=document.getElementById("fmSideTitle"),
+      countEl=document.getElementById("fmSideCount"),
+      subEl=document.getElementById("fmSub"),
+      statusEl=document.getElementById("fmStatus"),
+      worldBtn=document.getElementById("fmWorld"),
+      locBtn=document.getElementById("fmLocate");
+
+  var me=null, view="world", map=null, layer=null, meMarker=null, markerOf={};
+
+  function say(msg,cls){
+    statusEl.className="fm-status show"+(cls?" "+cls:"");
+    statusEl.textContent=msg;
+  }
+
+  function rowHTML(r,dist){
+    var g=GEO[r.img];
+    var bits=[];
+    if(g) bits.push('<span>📍 '+esc(g.city)+'</span>');
+    if(g&&!g.exact) bits.push('<span class="fm-approx">approx</span>');
+    if(!g) bits.push('<span class="fm-approx">not pinned yet</span>');
+    var cl=catLabel(r); if(cl) bits.push('<span>'+esc(cl)+'</span>');
+    if(dist!=null) bits.push('<span class="fm-dist">'+fmtDist(dist)+' away</span>');
+    var watch=r.u?'<a class="fm-mini" href="'+esc(r.u)+'" target="_blank" rel="noopener">▶ Watch</a>':'';
+    return '<div class="fm-row'+(g?' pinned':'')+'" data-img="'+esc(r.img||"")+'">'+
+        '<div class="fm-emo">'+esc(r.e||"🍽️")+'</div>'+
+        '<div class="fm-info"><div class="fm-name">'+esc(r.n)+'</div>'+
+          '<div class="fm-meta">'+bits.join("")+'</div>'+
+          '<div class="fm-links">'+watch+
+            '<a class="fm-mini go" href="'+esc(dirUrl(r))+'" target="_blank" rel="noopener">🧭 Directions</a>'+
+          '</div>'+
+        '</div></div>';
+  }
+
+  function distTo(r){
+    if(!me) return null;
+    var g=GEO[r.img]; if(!g) return null;
+    return miles(me.lat,me.lng,g.lat,g.lng);
+  }
+
+  function renderList(regionKey){
+    var items,label;
+    if(regionKey){ items=byRegion[regionKey].slice(); label=REGIONS[regionKey].flag+" "+REGIONS[regionKey].label; }
+    else { items=ALL.slice(); label="All Spots"; }
+    titleEl.textContent=label;
+    countEl.textContent=items.length+" review"+(items.length===1?"":"s");
+
+    var withD=[],withoutD=[];
+    items.forEach(function(r){ (GEO[r.img]?withD:withoutD).push(r); });
+
+    if(me){
+      withD.sort(function(a,b){ return (distTo(a)||0)-(distTo(b)||0); });
+    }
+
+    var html="";
+    if(withD.length){
+      html+='<div class="fm-group">'+(me?"Nearest first":"On the map")+'</div>';
+      withD.forEach(function(r){ html+=rowHTML(r,distTo(r)); });
+    }
+    if(withoutD.length){
+      html+='<div class="fm-group">Add an address to pin these</div>';
+      withoutD.forEach(function(r){ html+=rowHTML(r,null); });
+    }
+    listEl.innerHTML=html;
+    listEl.scrollTop=0;
+  }
+
+  /* -------- Map -------- */
+  function buildMap(){
+    if(typeof L==="undefined"){ shell.classList.add("no-map"); renderList(null); return; }
+    map=L.map("fmMap",{scrollWheelZoom:false,worldCopyJump:true,zoomControl:true,attributionControl:true});
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
+      maxZoom:19,subdomains:"abcd",
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+    layer=L.layerGroup().addTo(map);
+    map.on("click",function(){ /* keeps focus sane on mobile */ });
+    showWorld();
+    setTimeout(function(){ map.invalidateSize(); },250);
+  }
+
+  function bubbleIcon(count,flag){
+    var size=count>=25?86:count>=10?74:62;
+    return L.divIcon({className:"",iconSize:[size,size],iconAnchor:[size/2,size/2],
+      html:'<div class="fm-bub" style="width:'+size+'px;height:'+size+'px">'+
+           '<b>'+count+'</b><i>'+flag+' spots</i></div>'});
+  }
+  function pinIcon(group){
+    var n=group.items.length;
+    if(n>1) return L.divIcon({className:"",iconSize:[34,34],iconAnchor:[17,17],
+      html:'<div class="fm-pin multi">'+n+'</div>'});
+    return L.divIcon({className:"",iconSize:[34,34],iconAnchor:[17,17],
+      html:'<div class="fm-pin">'+esc(group.items[0].e||"🍽️")+'</div>'});
+  }
+
+  function showWorld(){
+    if(!map) return;
+    view="world"; worldBtn.hidden=true; markerOf={};
+    layer.clearLayers();
+    subEl.textContent="Tap a bubble to zoom in — Africa & Los Angeles";
+    Object.keys(REGIONS).forEach(function(k){
+      var reg=REGIONS[k], n=byRegion[k].length; if(!n) return;
+      var extra=me?"<div class='fm-pop-m'>"+fmtDist(miles(me.lat,me.lng,reg.center[0],reg.center[1]))+" from you</div>":"";
+      L.marker(reg.center,{icon:bubbleIcon(n,reg.flag),title:reg.label,riseOnHover:true})
+        .addTo(layer)
+        .bindPopup('<div class="fm-pop"><div class="fm-pop-t">'+reg.flag+" "+esc(reg.label)+'</div>'+
+          '<div class="fm-pop-m">'+esc(reg.note)+" · "+n+' reviews</div>'+extra+
+          '<a class="fm-pop-a go" href="#" data-zoom="'+k+'">Zoom in →</a></div>')
+        .on("click",function(){ showRegion(k); });
+    });
+    var pts=Object.keys(REGIONS).filter(function(k){return byRegion[k].length;}).map(function(k){return REGIONS[k].center;});
+    if(me) pts.push([me.lat,me.lng]);
+    if(pts.length>1) map.fitBounds(L.latLngBounds(pts).pad(0.35));
+    else map.setView(pts[0]||[20,0],3);
+    if(me) addMe();
+    renderList(null);
+  }
+
+  function showRegion(key){
+    if(!map) return;
+    var reg=REGIONS[key]; if(!reg) return;
+    view=key; worldBtn.hidden=false; markerOf={};
+    layer.clearLayers();
+    subEl.textContent=reg.flag+" "+reg.label+" — tap a pin for the review & directions";
+    var groups=pinGroups(key);
+    groups.forEach(function(g){
+      var m=L.marker([g.lat,g.lng],{icon:pinIcon(g),riseOnHover:true}).addTo(layer);
+      var head=g.items.length>1
+        ? '<div class="fm-pop-t">'+g.items.length+' spots here</div>'
+        : '<div class="fm-pop-t">'+esc(g.items[0].e||"")+" "+esc(g.items[0].n)+'</div>';
+      var meta='<div class="fm-pop-m">'+esc(g.city)+(g.exact?"":" · approx")+
+        (me?" · "+fmtDist(miles(me.lat,me.lng,g.lat,g.lng))+" away":"")+'</div>';
+      var body="";
+      if(g.items.length>1){
+        body+="<ul>";
+        g.items.forEach(function(r){
+          body+='<li>'+esc(r.e||"")+" "+esc(r.n)+' — <a class="fm-pop-a" style="padding:2px 7px" href="'+esc(dirUrl(r))+'" target="_blank" rel="noopener">directions</a></li>';
+        });
+        body+="</ul>";
+      }else{
+        var r=g.items[0];
+        if(r.u) body+='<a class="fm-pop-a" href="'+esc(r.u)+'" target="_blank" rel="noopener">▶ Watch review</a>';
+        body+='<a class="fm-pop-a go" href="'+esc(dirUrl(r))+'" target="_blank" rel="noopener">🧭 Directions</a>';
+      }
+      m.bindPopup('<div class="fm-pop">'+head+meta+body+"</div>");
+      g.items.forEach(function(r){ if(r.img) markerOf[r.img]=m; });
+    });
+    var pts=groups.map(function(g){return [g.lat,g.lng];});
+    if(pts.length>1) map.fitBounds(L.latLngBounds(pts).pad(0.45));
+    else map.setView(pts[0]||reg.center,pts.length?13:reg.zoom);
+    if(me) addMe();
+    renderList(key);
+  }
+
+  function addMe(){
+    if(!map||!me) return;
+    if(meMarker) layer.removeLayer(meMarker);
+    meMarker=L.marker([me.lat,me.lng],{icon:L.divIcon({className:"",iconSize:[20,20],iconAnchor:[10,10],html:'<div class="fm-me"></div>'}),zIndexOffset:900})
+      .addTo(layer).bindPopup('<div class="fm-pop"><div class="fm-pop-t">📍 You are here</div></div>');
+  }
+
+  /* -------- Interactions -------- */
+  worldBtn.addEventListener("click",showWorld);
+
+  listEl.addEventListener("click",function(e){
+    if(e.target.closest("a")) return;
+    var row=e.target.closest(".fm-row.pinned"); if(!row) return;
+    var img=row.getAttribute("data-img"), g=GEO[img]; if(!g||!map) return;
+    if(view!==g.region) showRegion(g.region);
+    map.setView([g.lat,g.lng],15,{animate:true});
+    var m=markerOf[img]; if(m) m.openPopup();
+    document.getElementById("fmMap").scrollIntoView({behavior:"smooth",block:"center"});
+  });
+
+  document.addEventListener("click",function(e){
+    var z=e.target&&e.target.getAttribute&&e.target.getAttribute("data-zoom");
+    if(z){ e.preventDefault(); showRegion(z); }
+  });
+
+  locBtn.addEventListener("click",function(){
+    if(!navigator.geolocation){ say("This browser can't share a location.","err"); return; }
+    locBtn.disabled=true; locBtn.textContent="📍 Locating…";
+    say("Asking your browser for your location…");
+    navigator.geolocation.getCurrentPosition(function(pos){
+      me={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      locBtn.disabled=false; locBtn.textContent="🔄 Update My Location";
+      var near=null,nd=Infinity;
+      Object.keys(REGIONS).forEach(function(k){
+        if(!byRegion[k].length) return;
+        var d=miles(me.lat,me.lng,REGIONS[k].center[0],REGIONS[k].center[1]);
+        if(d<nd){nd=d;near=k;}
+      });
+      say("Got you — sorted by how close you are."+(near?" Nearest hub: "+REGIONS[near].label+" ("+fmtDist(nd)+").":""),"ok");
+      if(view==="world") showWorld(); else showRegion(view);
+    },function(err){
+      locBtn.disabled=false; locBtn.textContent="📍 Share My Location";
+      var m="Couldn't get your location.";
+      if(err&&err.code===1) m="Location permission was blocked — turn it on in your browser to see distances.";
+      else if(err&&err.code===2) m="Your location isn't available right now.";
+      else if(err&&err.code===3) m="Locating timed out. Give it another try.";
+      say(m,"err");
+    },{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+  });
+
+  /* -------- Boot (Leaflet may still be loading) -------- */
+  function boot(){ try{ buildMap(); }catch(e){ shell.classList.add("no-map"); renderList(null); } }
+  if(typeof L!=="undefined") boot();
+  else{
+    var s=document.getElementById("fmLeaflet"), done=false;
+    var go=function(){ if(done) return; done=true; boot(); };
+    if(s){ s.addEventListener("load",go); s.addEventListener("error",go); }
+    setTimeout(go,4000);
+  }
+})();
+</script>
+
 </body>
 </html>
