@@ -6724,12 +6724,16 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     /* City confirmed by the reviewer; no public street listing, so Directions
        searches the business by name in that city. */
     BREE:{lat:33.9425,lng:-117.2297,city:"Moreno Valley, CA",region:"la",exact:false},
-    BIRRIERIA:{lat:34.1083,lng:-117.2898,city:"San Bernardino, CA",region:"la",exact:false}
+    BIRRIERIA:{lat:34.1083,lng:-117.2898,city:"San Bernardino, CA",region:"la",exact:false},
+    LUCKY:{lat:33.8958,lng:-118.2201,addr:"15515 S Atlantic Ave",city:"Compton, CA 90221",region:"la",exact:false},
+    /* Frosty King has four Bakersfield-area stores; branch not yet confirmed, so
+       this pins the city and Directions lists them all. */
+    FROSTY:{lat:35.3733,lng:-119.0187,city:"Bakersfield, CA",region:"la",exact:false}
   };
 
   var REGIONS={
     africa:{key:"africa",flag:"🌍",label:"Africa Food Tour",note:"Lagos, Nigeria",center:[6.4281,3.4219],zoom:11,searchCity:"Lagos Nigeria"},
-    la:{key:"la",flag:"🌴",label:"Los Angeles",note:"Los Angeles area, CA",center:[34.0522,-118.2437],zoom:10,searchCity:"Los Angeles CA"}
+    la:{key:"la",flag:"🌴",label:"Los Angeles & Beyond",note:"Greater LA, Inland Empire & Central Valley",center:[34.0522,-118.2437],zoom:10,searchCity:"Los Angeles CA"}
   };
 
   function regionOf(r){
