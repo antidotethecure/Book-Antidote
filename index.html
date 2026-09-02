@@ -789,11 +789,11 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 @media(max-width:860px){.fm-body{grid-template-columns:1fr}}
 .fm-mapwrap{position:relative;min-height:380px}
 @media(max-width:860px){.fm-mapwrap{min-height:320px}}
-#fmMap{position:absolute;inset:0;background:#0e0d0b}
+#fmMap{position:absolute;inset:0;background:#e3e9ec}
 @media(max-width:860px){#fmMap{position:relative;height:320px}}
 .fm-fallback{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:'Barlow',sans-serif;color:var(--mut);font-size:.9rem;line-height:1.5}
 .fm-shell.no-map .fm-fallback{display:flex}
-.fm-shell.no-map #fmMap{display:none}
+.fm-shell.no-map #fmMap,.fm-shell.no-map #fmSat{display:none}
 
 /* bubbles + pins */
 .fm-bub{display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:50%;
@@ -814,7 +814,7 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 @keyframes fmPulse{0%{box-shadow:0 0 0 4px rgba(57,255,106,.35),0 0 18px rgba(57,255,106,.9)}70%{box-shadow:0 0 0 16px rgba(57,255,106,0),0 0 22px rgba(57,255,106,.7)}100%{box-shadow:0 0 0 4px rgba(57,255,106,0),0 0 18px rgba(57,255,106,.9)}}
 
 /* leaflet skin */
-#fmMap .leaflet-container{background:#0e0d0b;font-family:'Barlow',sans-serif}
+#fmMap .leaflet-container{background:#e3e9ec;font-family:'Barlow',sans-serif}
 #fmMap .leaflet-popup-content-wrapper{background:var(--card);color:var(--cream);border:1px solid rgba(245,166,35,.5);border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.7)}
 #fmMap .leaflet-popup-tip{background:var(--card);border:1px solid rgba(245,166,35,.5)}
 #fmMap .leaflet-popup-content{margin:11px 13px;font-size:.86rem;line-height:1.45}
@@ -1209,6 +1209,7 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
           </div>
           <div class="fm-actions">
             <button class="fm-btn" id="fmWorld" type="button" hidden>🌐 Back to World</button>
+            <button class="fm-btn" id="fmSat" type="button" aria-pressed="false">🛰 Satellite</button>
             <button class="fm-btn gold" id="fmLocate" type="button">📍 Share My Location</button>
           </div>
         </div>
@@ -6825,9 +6826,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       subEl=document.getElementById("fmSub"),
       statusEl=document.getElementById("fmStatus"),
       worldBtn=document.getElementById("fmWorld"),
+      satBtn=document.getElementById("fmSat"),
       locBtn=document.getElementById("fmLocate");
 
-  var me=null, view="world", map=null, layer=null, meMarker=null, markerOf={};
+  var me=null, view="world", map=null, base=null, layer=null, meMarker=null, markerOf={};
 
   function say(msg,cls){
     statusEl.className="fm-status show"+(cls?" "+cls:"");
@@ -6899,10 +6901,17 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   function buildMap(){
     if(typeof L==="undefined"){ shell.classList.add("no-map"); renderList(null); return; }
     map=L.map("fmMap",{scrollWheelZoom:false,worldCopyJump:true,zoomControl:true,attributionControl:true});
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
-      maxZoom:19,subdomains:"abcd",
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }).addTo(map);
+    var osm='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+    /* Street view: CARTO Voyager, a clean Google-Maps-style basemap. */
+    var streetTiles=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:osm});
+    /* Satellite view: Esri imagery with CARTO's label layer floated on top. */
+    var satTiles=L.layerGroup([
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,zIndex:1,
+        attribution:'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics'}),
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",zIndex:2,attribution:osm})
+    ]);
+    streetTiles.addTo(map);
+    base={street:streetTiles,sat:satTiles,cur:"street"};
     layer=L.layerGroup().addTo(map);
     map.on("click",function(){ /* keeps focus sane on mobile */ });
     showWorld();
@@ -6996,6 +7005,16 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
   /* -------- Interactions -------- */
   worldBtn.addEventListener("click",showWorld);
+
+  satBtn.addEventListener("click",function(){
+    if(!map||!base) return;
+    var toSat=base.cur==="street";
+    map.removeLayer(toSat?base.street:base.sat);
+    (toSat?base.sat:base.street).addTo(map);
+    base.cur=toSat?"sat":"street";
+    satBtn.textContent=toSat?"🗺 Map":"🛰 Satellite";
+    satBtn.setAttribute("aria-pressed",toSat?"true":"false");
+  });
 
   listEl.addEventListener("click",function(e){
     if(e.target.closest("a")) return;
