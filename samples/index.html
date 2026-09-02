@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antidote — Restaurant Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#15161a;--ground:#f4f4f1;--surface:#fff;--muted:#6b6f76;--line:#e2e2dd;--accent:#b3452f}
+  @media (prefers-color-scheme:dark){:root{--ink:#e9eaec;--ground:#0f1113;--surface:#181b1e;--muted:#949aa1;--line:#262a2e;--accent:#e0785f}}
+  body{background:var(--ground);color:var(--ink);font-family:Archivo,system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:44px 22px 80px}
+  header{margin-bottom:34px;border-bottom:1px solid var(--line);padding-bottom:22px}
+  h1{font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.03em;font-weight:700}
+  .sub{color:var(--muted);margin-top:8px;font-size:.95rem}
+  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px -18px rgba(0,0,0,.5)}
+  .shot{background:var(--ground);height:280px;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+  .shot img{width:100%;height:auto;display:block}
+  .noshot{color:var(--muted);font-size:.8rem;padding:40px 0}
+  .info{padding:14px 16px 16px;border-top:1px solid var(--line)}
+  .info h2{font-size:1.02rem;letter-spacing:-.01em;font-weight:600;text-wrap:balance}
+  .info p{color:var(--muted);font-size:.82rem;margin-top:3px}
+  .count{display:inline-block;margin-top:9px;font-size:.7rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent);font-weight:700}
+  footer{margin-top:44px;color:var(--muted);font-size:.8rem}
+  @media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Restaurant samples</h1>
+    <p class="sub">1 pages · built from each restaurant's own menu · 2026-09-02</p>
+  </header>
+  <div class="grid">
+    <a class="card" href="./boo-s-philly-cheesesteaks/index.html">
+      <div class="shot"><img src="./boo-s-philly-cheesesteaks/mobile.png" alt="Boo's Philly Cheesesteaks sample" loading="lazy"></div>
+      <div class="info">
+        <h2>Boo's Philly Cheesesteaks</h2>
+        <p></p>
+        <span class="count">9 items</span>
+      </div>
+    </a>
+  </div>
+  <footer>Sample pages designed by Antidote — AntidoteTheFoodie.com</footer>
+</div>
+</body>
+</html>

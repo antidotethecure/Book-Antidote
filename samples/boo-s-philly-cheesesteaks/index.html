@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boo's Philly Cheesesteaks — Sample Menu Page</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="An unofficial sample menu page designed by Antidote for Boo's Philly Cheesesteaks. Not affiliated with or endorsed by Boo's Philly Cheesesteaks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Karla:wght@400;500;700&display=swap">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#f2efe9; --ground:#12100e; --surface:#1b1815;
+    --accent:#053f67; --on-accent:#ffffff;
+    --muted:#a89f93; --line:#2c2722;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:'Karla', system-ui, sans-serif; font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 20px}
+
+  /* ---- hero ---- */
+  header{
+    padding:56px 0 40px; border-bottom:1px solid var(--line);
+    text-align:center;
+  }
+  .eyebrow{
+    font-size:.7rem; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:18px;
+  }
+  h1{
+    font-family:'Anton', Impact, sans-serif; font-weight:400;
+    font-size:clamp(2.5rem,11vw,4rem); line-height:.95;
+    letter-spacing:0.01em; text-wrap:balance;
+  }
+  .rule{
+    width:46px;height:3px;background:var(--accent);
+    margin:22px auto 0;border-radius:2px;
+  }
+  .tagline{
+    margin-top:22px;color:var(--muted);font-size:.98rem;
+    max-width:44ch;margin-left:auto;margin-right:auto;text-wrap:pretty;
+  }
+
+  /* ---- menu ---- */
+  main{padding:44px 0 8px}
+  .section-label{
+    font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin-bottom:24px;text-align:center;
+  }
+  ul{list-style:none;display:flex;flex-direction:column;gap:2px}
+  li{
+    background:var(--surface);border:1px solid var(--line);
+    padding:16px 18px;
+  }
+  li+li{border-top:none}
+  li:first-child{border-radius:10px 10px 0 0}
+  li:last-child{border-radius:0 0 10px 10px}
+  .row{display:flex;align-items:baseline;gap:14px}
+  .dish{
+    font-family:'Anton', Impact, sans-serif; font-weight:400;
+    font-size:1.06rem; line-height:1.25; letter-spacing:0.01em;
+    flex:1; text-wrap:balance;
+  }
+  .dots{
+    flex:1;border-bottom:1px dotted var(--line);
+    transform:translateY(-4px);min-width:12px;
+  }
+  .price{
+    font-variant-numeric:tabular-nums;font-weight:700;
+    color:var(--accent);white-space:nowrap;font-size:1rem;
+  }
+  .desc{
+    color:var(--muted);font-size:.88rem;line-height:1.5;
+    margin-top:5px;text-wrap:pretty;
+  }
+
+  /* ---- cta ---- */
+  .cta{
+    margin:40px 0 0;padding:28px 22px;border-radius:12px;
+    background:var(--accent);color:var(--on-accent);text-align:center;
+  }
+  .cta p{font-size:1.02rem;line-height:1.5;text-wrap:balance;opacity:.95}
+  .cta strong{display:block;font-family:'Anton', Impact, sans-serif;font-weight:700;
+    font-size:1.3rem;margin-bottom:8px;letter-spacing:0.01em}
+
+  /* ---- footer ---- */
+  footer{
+    margin-top:44px;padding:26px 0 40px;border-top:1px solid var(--line);
+    text-align:center;color:var(--muted);font-size:.82rem;
+  }
+  footer a{color:var(--accent);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+  .meta{margin-bottom:10px}
+  .disclose{margin-top:12px;font-size:.72rem;opacity:.65;max-width:46ch;
+    margin-left:auto;margin-right:auto;text-wrap:pretty}
+
+  @media (min-width:560px){
+    body{font-size:17px}
+    header{padding:76px 0 52px}
+    li{padding:18px 22px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    
+    <h1>Boo's Philly Cheesesteaks</h1>
+    <div class="rule"></div>
+    
+  </header>
+
+  <main>
+    <p class="section-label">Selected Menu</p>
+    <ul>
+      <li>
+        <div class="row">
+          <span class="dish">Boo's Cheesesteak Hoagie</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Boo's Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Boo's Mushroom Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Boo's Mushroom Pepper Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Boo's Sweet Pepper Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Chicken Cheesesteak Hoagie</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Chicken Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Chicken Mushroom Pepper Cheesesteak</span>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <span class="dish">Chicken Mushroom</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="cta">
+      <p><strong>This is a sample.</strong>
+      A full site would carry your whole menu, photos, hours, and ordering —
+      built to look like Boo's Philly Cheesesteaks, not a template.</p>
+    </div>
+  </main>
+
+  <footer>
+    <p class="meta"></p>
+    <p>Sample designed by Antidote —
+      <a href="https://AntidoteTheFoodie.com">AntidoteTheFoodie.com</a></p>
+    <p class="disclose">Unofficial concept page. Not affiliated with or endorsed by
+      Boo's Philly Cheesesteaks. Dish names taken from their published menu.</p>
+  </footer>
+
+</div>
+</body>
+</html>
