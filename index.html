@@ -6671,6 +6671,16 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
      address instead of searching the business name.
      exact:false renders a "pin approx" badge (pin sits on the area, not the door).
      Anything without an entry still appears in the list with working Directions. */
+  /* The Churrito Loco series was filmed across all four of the brand's stores;
+     which part belongs to which store isn't recorded, so every part maps to all
+     four and Directions sends a visitor to whichever is closest to them. */
+  var CHURRITO_LOCS=[
+    {lat:33.9547,lng:-118.2120,addr:"2801 Firestone Blvd, Ste A",city:"South Gate, CA 90280"},
+    {lat:34.0225,lng:-118.1580,addr:"5161 Pomona Blvd, Ste 103",city:"East Los Angeles, CA 90022"},
+    {lat:33.9270,lng:-117.2200,addr:"25030 Alessandro Blvd, Ste A",city:"Moreno Valley, CA 92553"},
+    {lat:34.0500,lng:-117.3100,addr:"1703 E Washington St",city:"Colton, CA 92324"}
+  ];
+
   var GEO={
     /* Africa Food Tour — Nigeria */
     LAGOON:{lat:6.4281,lng:3.4219,city:"Victoria Island, Lagos, Nigeria",region:"africa",exact:false},
@@ -6729,7 +6739,12 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     FROSTY:{lat:35.3430,lng:-119.0195,addr:"2625 S Chester Ave",city:"Bakersfield, CA",region:"la",exact:false},
     NYGYRO:{lat:34.1675,lng:-118.3765,addr:"5200 Lankershim Blvd, Unit 110",city:"North Hollywood, CA 91601",region:"la",exact:false},
     LOLAS:{lat:34.2820,lng:-118.4375,addr:"128 N Maclay Ave",city:"San Fernando, CA 91340",region:"la",exact:false},
-    MAIPHAT2:{lat:33.7508,lng:-117.9985,addr:"9550 Bolsa Ave, Ste 115A",city:"Westminster, CA 92683",region:"la",exact:false}
+    MAIPHAT2:{lat:33.7508,lng:-117.9985,addr:"9550 Bolsa Ave, Ste 115A",city:"Westminster, CA 92683",region:"la",exact:false},
+    CHURRITO1:{locs:CHURRITO_LOCS,region:"la",exact:false},
+    CHURRITO:{locs:CHURRITO_LOCS,region:"la",exact:false},
+    CHURRITO3:{locs:CHURRITO_LOCS,region:"la",exact:false},
+    CHURRITO35:{locs:CHURRITO_LOCS,region:"la",exact:false},
+    CHURRITO4:{locs:CHURRITO_LOCS,region:"la",exact:false}
   };
 
   var REGIONS={
@@ -6745,14 +6760,29 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     var f=(typeof CATNAME!=="undefined"&&CATNAME)?CATNAME:{};
     return f[r.c]||r.c||"";
   }
+  /* A spot is either one place or a brand with several; normalise to a list. */
+  function locsOf(g){
+    return (g.locs&&g.locs.length)?g.locs:[{lat:g.lat,lng:g.lng,addr:g.addr,city:g.city}];
+  }
+  function nearestLoc(g){
+    var L=locsOf(g);
+    if(L.length===1||!me) return L[0];
+    var best=L[0],bd=Infinity;
+    L.forEach(function(x){var d=miles(me.lat,me.lng,x.lat,x.lng); if(d<bd){bd=d;best=x;}});
+    return best;
+  }
   function dirUrl(r){
     var g=GEO[r.img];
     /* A known street address routes exactly; otherwise search the business by name. */
-    if(g&&g.addr) return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(g.addr+", "+g.city);
-    var where=g?g.city:(REGIONS[regionOf(r)]||REGIONS.la).searchCity;
+    if(g){
+      var L=nearestLoc(g);
+      if(L&&L.addr) return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(L.addr+", "+L.city);
+      if(L&&L.city) return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.n+" "+L.city);
+    }
+    var where=(REGIONS[regionOf(r)]||REGIONS.la).searchCity;
     return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.n+" "+where);
   }
-  function placeText(g){ return g.addr?g.addr+", "+g.city:g.city; }
+  function placeText(L){ return L.addr?L.addr+", "+L.city:L.city; }
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 
@@ -6780,8 +6810,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     var m={};
     byRegion[key].forEach(function(r){
       var g=GEO[r.img]; if(!g) return;
-      var id=g.lat.toFixed(4)+","+g.lng.toFixed(4);
-      (m[id]=m[id]||{lat:g.lat,lng:g.lng,city:g.city,addr:g.addr,exact:g.exact,items:[]}).items.push(r);
+      locsOf(g).forEach(function(L){
+        var id=L.lat.toFixed(4)+","+L.lng.toFixed(4);
+        (m[id]=m[id]||{lat:L.lat,lng:L.lng,city:L.city,addr:L.addr,exact:g.exact,items:[]}).items.push(r);
+      });
     });
     return Object.keys(m).map(function(k){return m[k];});
   }
@@ -6804,7 +6836,11 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   function rowHTML(r,dist){
     var g=GEO[r.img];
     var bits=[];
-    if(g) bits.push('<span>📍 '+esc(placeText(g))+'</span>');
+    if(g){
+      var GL=locsOf(g);
+      if(GL.length>1) bits.push('<span>📍 '+GL.length+' locations'+(me?" · nearest "+esc(nearestLoc(g).city):"")+'</span>');
+      else bits.push('<span>📍 '+esc(placeText(GL[0]))+'</span>');
+    }
     if(g&&!g.exact) bits.push('<span class="fm-approx">pin approx</span>');
     if(!g) bits.push('<span class="fm-approx">not pinned yet</span>');
     var cl=catLabel(r); if(cl) bits.push('<span>'+esc(cl)+'</span>');
@@ -6823,7 +6859,12 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   function distTo(r){
     if(!me) return null;
     var g=GEO[r.img]; if(!g) return null;
-    return miles(me.lat,me.lng,g.lat,g.lng);
+    var best=null;
+    locsOf(g).forEach(function(L){
+      var d=miles(me.lat,me.lng,L.lat,L.lng);
+      if(best==null||d<best) best=d;
+    });
+    return best;
   }
 
   function renderList(regionKey){
@@ -6910,7 +6951,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     view=key; worldBtn.hidden=false; markerOf={};
     layer.clearLayers();
     subEl.textContent=reg.flag+" "+reg.label+" — tap a pin for the review & directions";
-    var groups=pinGroups(key);
+    var groups=pinGroups(key), byCoord={};
     groups.forEach(function(g){
       var m=L.marker([g.lat,g.lng],{icon:pinIcon(g),riseOnHover:true}).addTo(layer);
       var head=g.items.length>1
@@ -6931,7 +6972,12 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
         body+='<a class="fm-pop-a go" href="'+esc(dirUrl(r))+'" target="_blank" rel="noopener">🧭 Directions</a>';
       }
       m.bindPopup('<div class="fm-pop">'+head+meta+body+"</div>");
-      g.items.forEach(function(r){ if(r.img) markerOf[r.img]=m; });
+      g.items.forEach(function(r){ if(r.img) byCoord[g.lat.toFixed(4)+","+g.lng.toFixed(4)]=m; });
+    });
+    byRegion[key].forEach(function(r){
+      var gg=GEO[r.img]; if(!gg||!r.img) return;
+      var nl=nearestLoc(gg), mk=byCoord[nl.lat.toFixed(4)+","+nl.lng.toFixed(4)];
+      if(mk) markerOf[r.img]=mk;
     });
     var pts=groups.map(function(g){return [g.lat,g.lng];});
     if(pts.length>1) map.fitBounds(L.latLngBounds(pts).pad(0.45));
@@ -6955,7 +7001,8 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     var row=e.target.closest(".fm-row.pinned"); if(!row) return;
     var img=row.getAttribute("data-img"), g=GEO[img]; if(!g||!map) return;
     if(view!==g.region) showRegion(g.region);
-    map.setView([g.lat,g.lng],15,{animate:true});
+    var nl=nearestLoc(g);
+    map.setView([nl.lat,nl.lng],15,{animate:true});
     var m=markerOf[img]; if(m) m.openPopup();
     document.getElementById("fmMap").scrollIntoView({behavior:"smooth",block:"center"});
   });
