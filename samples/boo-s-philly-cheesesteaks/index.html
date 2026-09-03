@@ -11,6 +11,26 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Karla:wght@400;500;700&display=swap">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
+
+  #intro{
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    opacity:1;transition:opacity .7s ease .15s;
+  }
+  #intro.done{opacity:0}
+  #intro canvas{width:100%;height:100%;display:block}
+  #flash{
+    position:fixed;inset:0;z-index:59;pointer-events:none;
+    background:#fff;opacity:0;mix-blend-mode:screen;
+  }
+  /* the hero holds still until the intro hands it over */
+  .hero-inner{opacity:0;transform:translateY(10px);
+    transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+  .hero-inner.lit{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    #intro{display:none}
+    .hero-inner{opacity:1;transform:none;transition:none}
+  }
+
   :root{
     --ink:#f6f4ef; --ground:#07070a; --surface:#101016; --surface-2:#16161e;
     --neon:#0a80d2; --muted:#9a97a8; --line:#23232e;
@@ -165,6 +185,37 @@
     text-shadow:0 0 10px var(--neon),0 0 30px color-mix(in srgb,var(--neon) 60%,transparent);
   }
   .cta p{color:var(--muted);font-size:.96rem;line-height:1.55;text-wrap:balance}
+  /* ---------------- contact ---------------- */
+  .contact{
+    margin:34px 0 0;padding:26px 20px 24px;border-radius:14px;
+    background:var(--surface);border:1px solid var(--line);
+  }
+  .contact h2{
+    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-size:1.5rem;letter-spacing:0.01em;text-align:center;color:#fff;
+    text-shadow:0 0 8px var(--neon),0 0 26px color-mix(in srgb,var(--neon) 60%,transparent);
+    margin-bottom:20px;
+  }
+  .rows{display:flex;flex-direction:column;gap:2px}
+  .row{
+    display:flex;align-items:flex-start;gap:13px;padding:12px 4px;
+    border-top:1px solid var(--line);
+  }
+  .row:first-child{border-top:none}
+  .row .ico{
+    flex:none;width:26px;height:26px;display:grid;place-items:center;
+    color:var(--neon);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--neon) 70%,transparent));
+  }
+  .row .ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
+    stroke-linecap:round;stroke-linejoin:round}
+  .row .val{flex:1;min-width:0;font-size:.94rem;line-height:1.45;word-break:break-word}
+  .row .lab{
+    display:block;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:3px;
+  }
+  .row a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;
+    transition:color .2s ease,border-color .2s ease}
+  .row a:hover{color:#fff;border-bottom-color:var(--neon)}
   footer{
     margin-top:40px;padding:24px 0 44px;border-top:1px solid var(--line);
     text-align:center;color:var(--muted);font-size:.8rem;
@@ -188,6 +239,8 @@
 </style>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><canvas id="introc"></canvas></div>
+<div id="flash" aria-hidden="true"></div>
 <div class="wrap">
 
   <header class="hero">
@@ -277,6 +330,25 @@
     </div>
   </main>
 
+  <section class="contact">
+    <h2>Contact Us</h2>
+    <div class="rows">
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="val"><span class="lab">Locations</span>4501 Fountain Ave.<br>3377 Wilshire Blvd. #103 Los Angeles, CA 90010</span>
+      </div>
+      
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg></span>
+        <span class="val"><span class="lab">Follow</span><a href="https://instagram.com/boosphilly" rel="noopener">@boosphilly</a></span>
+      </div>
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>
+        <span class="val"><span class="lab">Online</span><a href="https://www.boosphilly.com/" rel="noopener">www.boosphilly.com</a></span>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <p class="meta"></p>
     <p>Sample designed by Antidote —
@@ -290,6 +362,62 @@
 <div class="preview" id="preview" aria-hidden="true"><img id="preview-img" src="" alt=""><div class="cap" id="preview-cap"></div></div>
 
 <script>
+
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var wrap = document.getElementById('intro');
+  var flash = document.getElementById('flash');
+  var hero = document.querySelector('.hero-inner');
+  function reveal(){ if (hero) hero.classList.add('lit'); }
+  function finish(){
+    if (wrap) wrap.classList.add('done');
+    setTimeout(function(){ if (wrap) wrap.remove(); if (flash) flash.remove(); }, 900);
+  }
+  if (reduce || !wrap) { reveal(); if (wrap) wrap.remove(); return; }
+
+  var c = document.getElementById('introc');
+  var ctx = c.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  function size(){
+    W = c.width = Math.floor(innerWidth * dpr);
+    H = c.height = Math.floor(innerHeight * dpr);
+  }
+  size();
+  addEventListener('resize', size, { passive: true });
+  var NEON = '#0a80d2';
+  var start = performance.now();
+  var raf = 0;
+  function stop(){ cancelAnimationFrame(raf); finish(); }
+
+  var pops = [];
+  function frame(now){
+    var e = now - start;
+    ctx.clearRect(0,0,W,H);
+    if (e < 2000){
+      for (var n=0;n<4;n++){
+        var ox=Math.random()*W, oy=H*(0.45+Math.random()*0.55);
+        for (var k=0;k<5;k++){
+          pops.push({x:ox,y:oy,vx:(Math.random()-0.5)*5.5*dpr,vy:-(1+Math.random()*4)*dpr,
+                     r:(0.9+Math.random()*1.9)*dpr,life:1});
+        }
+      }
+    }
+    for (var i=pops.length-1;i>=0;i--){
+      var p=pops[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.16*dpr; p.life-=0.022;
+      if (p.life<=0){ pops.splice(i,1); continue; }
+      ctx.globalAlpha=Math.max(0,p.life);
+      ctx.fillStyle= p.life>0.7 ? '#fff' : NEON;
+      ctx.shadowColor=NEON; ctx.shadowBlur=12*dpr;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+    }
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    if (e > 800) reveal();
+    if (e > 2900) return stop();
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+})();
 (function(){
   var menu = document.getElementById('menu');
   if (!menu) return;
