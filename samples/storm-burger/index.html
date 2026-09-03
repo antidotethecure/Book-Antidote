@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storm Burger — Sample Menu Page</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="An unofficial sample menu page designed by Antidote for Storm Burger. Not affiliated with or endorsed by Storm Burger.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Karla:wght@400;500;700&display=swap">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  #intro{
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    opacity:1;transition:opacity .7s ease .15s;
+  }
+  #intro.done{opacity:0}
+  #intro canvas{width:100%;height:100%;display:block}
+  #flash{
+    position:fixed;inset:0;z-index:59;pointer-events:none;
+    background:#fff;opacity:0;mix-blend-mode:screen;
+  }
+  /* the hero holds still until the intro hands it over */
+  .hero-inner{opacity:0;transform:translateY(10px);
+    transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+  .hero-inner.lit{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    #intro{display:none}
+    .hero-inner{opacity:1;transform:none;transition:none}
+  }
+
+
+  #ambient{position:fixed;inset:0;z-index:2;pointer-events:none}
+  #ambient canvas{width:100%;height:100%;display:block}
+  li.zap{animation:zap .42s ease-out}
+  @keyframes zap{
+    0%{box-shadow:0 0 0 1px var(--neon),0 0 42px -4px var(--neon);filter:brightness(1.6)}
+    35%{filter:brightness(1)}
+    100%{box-shadow:none;filter:none}
+  }
+  .shot img{transform:scale(1.14);transition:transform .75s cubic-bezier(.2,.8,.2,1)}
+  li.open .shot img{transform:scale(1)}
+  @media (prefers-reduced-motion:reduce){
+    #ambient{display:none}
+    li.zap{animation:none}
+    .shot img{transform:none;transition:none}
+  }
+
+  :root{
+    --ink:#f6f4ef; --ground:#07070a; --surface:#101016; --surface-2:#16161e;
+    --neon:#2b56d2; --muted:#9a97a8; --line:#23232e;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:'Karla', system-ui, sans-serif; font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  /* ambient glow behind everything */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(60vw 40vh at 50% 0%, color-mix(in srgb, var(--neon) 18%, transparent), transparent 70%),
+      radial-gradient(40vw 30vh at 90% 80%, color-mix(in srgb, var(--neon) 10%, transparent), transparent 70%);
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:0 18px 0;position:relative;z-index:1}
+
+  /* ---------------- hero ---------------- */
+  .hero{position:relative;margin:0 -18px;padding:0 18px}
+  .hero-img{
+    position:absolute;inset:0;overflow:hidden;
+    -webkit-mask-image:linear-gradient(#000 35%,transparent);
+    mask-image:linear-gradient(#000 35%,transparent);
+  }
+  .hero-img img{width:100%;height:100%;object-fit:cover;opacity:.42;filter:saturate(1.05)}
+  .hero-inner{position:relative;padding:52px 0 40px;text-align:center}
+  .logo{
+    max-width:170px;max-height:88px;width:auto;height:auto;margin:0 auto 30px;
+    display:block;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--neon) 55%,transparent));
+  }
+  .eyebrow{
+    font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--neon);font-weight:700;margin-bottom:16px;
+    text-shadow:0 0 10px color-mix(in srgb,var(--neon) 70%,transparent);
+  }
+  h1{
+    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-size:clamp(1.5rem,5.6vw,2.1rem);
+    line-height:1;letter-spacing:0.01em;text-wrap:balance;
+    color:color-mix(in srgb,var(--neon) 24%,#fff);
+    text-shadow:
+      0 0 2px #fff,
+      0 0 8px color-mix(in srgb,var(--neon) 90%,#fff),
+      0 0 20px var(--neon),
+      0 0 48px var(--neon),
+      0 0 96px color-mix(in srgb,var(--neon) 80%,transparent);
+    animation:flicker 7s infinite steps(1);
+  }
+  @keyframes flicker{
+    0%,96%,100%{opacity:1}
+    97%{opacity:.72}
+    98%{opacity:1}
+    98.6%{opacity:.82}
+  }
+  .tube{
+    width:120px;height:2px;margin:26px auto 0;border-radius:2px;
+    background:var(--neon);
+    box-shadow:0 0 8px var(--neon),0 0 22px var(--neon),0 0 44px color-mix(in srgb,var(--neon) 60%,transparent);
+  }
+  .tagline{margin-top:20px;color:var(--muted);font-size:.96rem;max-width:40ch;
+    margin-left:auto;margin-right:auto;text-wrap:pretty}
+
+  /* ---------------- menu ---------------- */
+  main{padding:34px 0 8px;position:relative}
+  .section-label{
+    font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin-bottom:8px;text-align:center;
+  }
+  .hint{
+    text-align:center;color:var(--muted);font-size:.76rem;margin-bottom:22px;opacity:.8;
+  }
+  ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  li{
+    background:linear-gradient(180deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    transition:border-color .22s ease, box-shadow .22s ease, transform .22s ease;
+  }
+  li:hover,li:focus-within,li.open{
+    border-color:color-mix(in srgb,var(--neon) 60%,transparent);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--neon) 35%,transparent),
+               0 12px 40px -18px var(--neon);
+    transform:translateY(-2px);
+  }
+  .item{
+    display:flex;align-items:center;gap:14px;width:100%;
+    padding:12px 16px;background:none;border:0;color:inherit;
+    font:inherit;text-align:left;cursor:pointer;
+  }
+  .thumb{
+    width:58px;height:58px;flex:none;border-radius:10px;object-fit:cover;
+    border:1px solid var(--line);
+    transition:box-shadow .22s ease,border-color .22s ease,transform .22s ease;
+  }
+  li:hover .thumb,li.open .thumb{
+    border-color:color-mix(in srgb,var(--neon) 70%,transparent);
+    box-shadow:0 0 18px -2px var(--neon);transform:scale(1.04);
+  }
+  .dish{
+    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-size:1.02rem;line-height:1.22;letter-spacing:0.01em;flex:1;
+    text-wrap:balance;transition:color .2s ease,text-shadow .2s ease;
+  }
+  li:hover .dish,li.open .dish,.item:focus-visible .dish{
+    color:#fff;
+    text-shadow:0 0 8px var(--neon),0 0 24px color-mix(in srgb,var(--neon) 70%,transparent);
+  }
+  .dots{flex:none;width:22px;border-bottom:1px dotted var(--line);transform:translateY(-2px)}
+  .price{
+    font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;
+    font-size:.98rem;color:var(--neon);
+    text-shadow:0 0 10px color-mix(in srgb,var(--neon) 65%,transparent);
+  }
+  .desc{color:var(--muted);font-size:.86rem;line-height:1.5;padding:0 18px 14px;margin-top:-6px}
+
+  /* inline photo reveal (mobile + tap) */
+  .shot{
+    max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1);
+  }
+  li.open .shot{max-height:340px}
+  .shot img{width:100%;height:230px;object-fit:cover;display:block;
+    border-top:1px solid var(--line)}
+
+  /* floating preview (desktop hover) */
+  .preview{
+    position:fixed;top:50%;right:26px;transform:translateY(-50%) scale(.96);
+    width:290px;border-radius:16px;overflow:hidden;pointer-events:none;
+    border:1px solid color-mix(in srgb,var(--neon) 45%,transparent);
+    box-shadow:0 0 0 1px rgba(0,0,0,.6),0 24px 70px -20px var(--neon);
+    opacity:0;transition:opacity .22s ease,transform .22s ease;z-index:5;
+    background:var(--surface);
+  }
+  .preview.on{opacity:1;transform:translateY(-50%) scale(1)}
+  .preview img{width:100%;height:290px;object-fit:cover;display:block}
+  .preview .cap{
+    padding:11px 14px;font-size:.82rem;font-weight:600;color:#fff;
+    background:var(--surface);border-top:1px solid var(--line);
+  }
+  @media (max-width:1080px){.preview{display:none}}
+
+  /* ---------------- cta + footer ---------------- */
+  .cta{
+    margin:38px 0 0;padding:26px 22px;border-radius:14px;text-align:center;
+    background:var(--surface);
+    border:1px solid color-mix(in srgb,var(--neon) 40%,transparent);
+    box-shadow:0 0 34px -12px var(--neon);
+  }
+  .cta strong{
+    display:block;font-family:'Anton', Impact, sans-serif;font-weight:700;font-size:1.28rem;
+    margin-bottom:9px;letter-spacing:0.01em;color:#fff;
+    text-shadow:0 0 10px var(--neon),0 0 30px color-mix(in srgb,var(--neon) 60%,transparent);
+  }
+  .cta p{color:var(--muted);font-size:.96rem;line-height:1.55;text-wrap:balance}
+  /* ---------------- contact ---------------- */
+  .contact{
+    margin:34px 0 0;padding:26px 20px 24px;border-radius:14px;
+    background:var(--surface);border:1px solid var(--line);
+  }
+  .contact h2{
+    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-size:1.5rem;letter-spacing:0.01em;text-align:center;color:#fff;
+    text-shadow:0 0 8px var(--neon),0 0 26px color-mix(in srgb,var(--neon) 60%,transparent);
+    margin-bottom:20px;
+  }
+  .rows{display:flex;flex-direction:column;gap:2px}
+  .row{
+    display:flex;align-items:flex-start;gap:13px;padding:12px 4px;
+    border-top:1px solid var(--line);
+  }
+  .row:first-child{border-top:none}
+  .row .ico{
+    flex:none;width:26px;height:26px;display:grid;place-items:center;
+    color:var(--neon);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--neon) 70%,transparent));
+  }
+  .row .ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
+    stroke-linecap:round;stroke-linejoin:round}
+  .row .val{flex:1;min-width:0;font-size:.94rem;line-height:1.45;word-break:break-word}
+  .row .lab{
+    display:block;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:3px;
+  }
+  .row a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;
+    transition:color .2s ease,border-color .2s ease}
+  .row a:hover{color:#fff;border-bottom-color:var(--neon)}
+  footer{
+    margin-top:40px;padding:24px 0 44px;border-top:1px solid var(--line);
+    text-align:center;color:var(--muted);font-size:.8rem;
+  }
+  footer a{color:var(--neon);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+  .meta{margin-bottom:9px}
+  .disclose{margin-top:12px;font-size:.7rem;opacity:.55;max-width:44ch;
+    margin-left:auto;margin-right:auto;text-wrap:pretty}
+  :focus-visible{outline:2px solid var(--neon);outline-offset:3px;border-radius:8px}
+
+  @media (min-width:600px){
+    body{font-size:17px}
+    .hero-inner{padding:74px 0 52px}
+    .shot img{height:290px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .shot{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div id="intro" aria-hidden="true"><canvas id="introc"></canvas></div>
+<div id="flash" aria-hidden="true"></div>
+<div id="ambient" aria-hidden="true"><canvas id="ambc"></canvas></div>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-img"><img src="img/53944c432837.jpg" alt="" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <img class="logo" src="img/c0b7f2ff00e2.png" alt="Storm Burger logo">
+      
+      <h1>Storm Burger</h1>
+      <div class="tube"></div>
+      <p class="tagline">Experience the best burgers at StormBurger. Enjoy top-quality burgers, fries, and shakes made from the finest ingredients.</p>
+    </div>
+  </header>
+
+  <main>
+    <p class="section-label">Selected Menu</p>
+    <p class="hint">Hover any dish for the full shot, or tap to open it</p>
+    <ul id="menu">
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/2cb2656d9488.jpg" data-name="Bacon BBQ Burger">
+          <img class="thumb" loading="lazy" src="img/2cb2656d9488.jpg" alt="Bacon BBQ Burger">
+          <span class="dish">Bacon BBQ Burger</span>
+          <span class="dots"></span>
+          <span class="price">$7.99</span>
+        </button>
+        <p class="desc">Fresh buns, BBQ sauce, 4oz all-natural patty, American cheese, bacon, onion straws</p>
+        <div class="shot"><img loading="lazy" src="img/2cb2656d9488.jpg" alt="Bacon BBQ Burger"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/4a659cc28da7.jpg" data-name="Double Classic StormBurger">
+          <img class="thumb" loading="lazy" src="img/4a659cc28da7.jpg" alt="Double Classic StormBurger">
+          <span class="dish">Double Classic StormBurger</span>
+          <span class="dots"></span>
+          <span class="price">$8.49</span>
+        </button>
+        <p class="desc">Fresh buns, homemade storm sauce, two 4oz all-natural patties, American cheese, pickles, onions, tomato, lettuce</p>
+        <div class="shot"><img loading="lazy" src="img/4a659cc28da7.jpg" alt="Double Classic StormBurger"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/9ce6773ab327.jpg" data-name="Jalapeño Lightning Burger">
+          <img class="thumb" loading="lazy" src="img/9ce6773ab327.jpg" alt="Jalapeño Lightning Burger">
+          <span class="dish">Jalapeño Lightning Burger</span>
+          <span class="dots"></span>
+          <span class="price">$6.99</span>
+        </button>
+        <p class="desc">Fresh buns, homemade avocado crema, homemade storm sauce, 4oz all-natural patty, swiss cheese, grilled onions, jalapenos</p>
+        <div class="shot"><img loading="lazy" src="img/9ce6773ab327.jpg" alt="Jalapeño Lightning Burger"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/5cc4d97588b9.jpg" data-name="Classic StormBurger">
+          <img class="thumb" loading="lazy" src="img/5cc4d97588b9.jpg" alt="Classic StormBurger">
+          <span class="dish">Classic StormBurger</span>
+          <span class="dots"></span>
+          <span class="price">$5.99</span>
+        </button>
+        <p class="desc">Fresh buns, homemade storm Sauce, 4oz all-natural patty, American cheese, pickles, onions, tomato, lettuce</p>
+        <div class="shot"><img loading="lazy" src="img/5cc4d97588b9.jpg" alt="Classic StormBurger"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/69444e135194.jpg" data-name="Turkey Burger">
+          <img class="thumb" loading="lazy" src="img/69444e135194.jpg" alt="Turkey Burger">
+          <span class="dish">Turkey Burger</span>
+          <span class="dots"></span>
+          <span class="price">$6.99</span>
+        </button>
+        <p class="desc">Two 2 ounce turkey patties, lettuce, tomato, cheese, onions, pickles, burger sauce</p>
+        <div class="shot"><img loading="lazy" src="img/69444e135194.jpg" alt="Turkey Burger"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/ca3171574cbc.jpg" data-name="Chicken Sandwich">
+          <img class="thumb" loading="lazy" src="img/ca3171574cbc.jpg" alt="Chicken Sandwich">
+          <span class="dish">Chicken Sandwich</span>
+          <span class="dots"></span>
+          <span class="price">$6.99</span>
+        </button>
+        <p class="desc">Fresh buns, mayo, all-natural hand-breaded chicken, pickles</p>
+        <div class="shot"><img loading="lazy" src="img/ca3171574cbc.jpg" alt="Chicken Sandwich"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/a5fec3b2b365.jpg" data-name="Spicy Chicken Sandwich">
+          <img class="thumb" loading="lazy" src="img/a5fec3b2b365.jpg" alt="Spicy Chicken Sandwich">
+          <span class="dish">Spicy Chicken Sandwich</span>
+          <span class="dots"></span>
+          <span class="price">$6.99</span>
+        </button>
+        <p class="desc">Fresh buns, homemade spicy mayo, homemade thunder sauce, all-natural and hand-breaded chicken, pickles</p>
+        <div class="shot"><img loading="lazy" src="img/a5fec3b2b365.jpg" alt="Spicy Chicken Sandwich"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/2ff64725c2d5.jpg" data-name="Deluxe Chicken Sandwich">
+          <img class="thumb" loading="lazy" src="img/2ff64725c2d5.jpg" alt="Deluxe Chicken Sandwich">
+          <span class="dish">Deluxe Chicken Sandwich</span>
+          <span class="dots"></span>
+          <span class="price">$7.99</span>
+        </button>
+        <p class="desc">Fresh buns, mayo, all-natural and hand-breaded chicken, tomatoes, swiss cheese, homemade kale slaw</p>
+        <div class="shot"><img loading="lazy" src="img/2ff64725c2d5.jpg" alt="Deluxe Chicken Sandwich"></div>
+      </li>
+      <li class="has-shot">
+        <button class="item" type="button" data-img="img/ada7ad75e323.jpg" data-name="Spicy Deluxe Chicken Sandwich">
+          <img class="thumb" loading="lazy" src="img/ada7ad75e323.jpg" alt="Spicy Deluxe Chicken Sandwich">
+          <span class="dish">Spicy Deluxe Chicken Sandwich</span>
+          <span class="dots"></span>
+          <span class="price">$7.99</span>
+        </button>
+        <p class="desc">Fresh buns, homemade spicy mayo, homemade thunder sauce, all-natural and hand-breaded chicken, tomatoes, swiss cheese, homemade kale slaw</p>
+        <div class="shot"><img loading="lazy" src="img/ada7ad75e323.jpg" alt="Spicy Deluxe Chicken Sandwich"></div>
+      </li>
+    </ul>
+
+    <div class="cta">
+      <strong>This is a sample.</strong>
+      <p>A full site would carry your whole menu, your photography, hours and ordering,
+      built to look like Storm Burger and nothing else.</p>
+    </div>
+  </main>
+
+  <section class="contact">
+    <h2>Contact Us</h2>
+    <div class="rows">
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="val"><span class="lab">Visit</span>5801 Cherry Ave Long Beach, CA 90805</span>
+      </div>
+      
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg></span>
+        <span class="val"><span class="lab">Follow</span><a href="https://instagram.com/stormburger" rel="noopener">@stormburger</a></span>
+      </div>
+      <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>
+        <span class="val"><span class="lab">Online</span><a href="https://www.stormburger.com/" rel="noopener">www.stormburger.com</a></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="meta"></p>
+    <p>Sample designed by Antidote —
+      <a href="https://AntidoteTheFoodie.com">AntidoteTheFoodie.com</a></p>
+    <p class="disclose">Unofficial concept page. Not affiliated with or endorsed by
+      Storm Burger. Dish names and photographs are from their own published menu.</p>
+  </footer>
+
+</div>
+
+<div class="preview" id="preview" aria-hidden="true"><img id="preview-img" src="" alt=""><div class="cap" id="preview-cap"></div></div>
+
+<script>
+
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var wrap = document.getElementById('intro');
+  var flash = document.getElementById('flash');
+  var hero = document.querySelector('.hero-inner');
+  function reveal(){ if (hero) hero.classList.add('lit'); }
+  function finish(){
+    if (wrap) wrap.classList.add('done');
+    setTimeout(function(){ if (wrap) wrap.remove(); if (flash) flash.remove(); }, 900);
+  }
+  if (reduce || !wrap) { reveal(); if (wrap) wrap.remove(); return; }
+
+  var c = document.getElementById('introc');
+  var ctx = c.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  function size(){
+    W = c.width = Math.floor(innerWidth * dpr);
+    H = c.height = Math.floor(innerHeight * dpr);
+  }
+  size();
+  addEventListener('resize', size, { passive: true });
+  var NEON = '#2b56d2';
+  var start = performance.now();
+  var raf = 0;
+  function stop(){ cancelAnimationFrame(raf); finish(); }
+
+  // Recursive midpoint displacement makes a believable bolt.
+  function bolt(x1,y1,x2,y2,d,out){
+    if (d < 6) { out.push([x1,y1,x2,y2]); return; }
+    var mx=(x1+x2)/2, my=(y1+y2)/2;
+    var off=(Math.random()-0.5)*d;
+    var nx=-(y2-y1), ny=(x2-x1), len=Math.hypot(nx,ny)||1;
+    mx += nx/len*off; my += ny/len*off;
+    bolt(x1,y1,mx,my,d/2,out); bolt(mx,my,x2,y2,d/2,out);
+    if (Math.random()<0.35){
+      var ex=mx+(x2-x1)*0.35*(Math.random()-0.2), ey=my+(y2-y1)*0.35;
+      bolt(mx,my,ex,ey,d/3,out);
+    }
+  }
+  var strikes = [ {t:180,x:0.42}, {t:760,x:0.63}, {t:1420,x:0.5} ];
+  var segs = [], fired = -1;
+  function frame(now){
+    var e = now - start;
+    ctx.clearRect(0,0,W,H);
+    for (var i=0;i<strikes.length;i++){
+      if (e >= strikes[i].t && fired < i){
+        fired = i; segs = [];
+        bolt(strikes[i].x*W, -20, (strikes[i].x + (Math.random()-0.5)*0.25)*W, H*0.72, W*0.16, segs);
+        flash.style.transition='none';
+        flash.style.opacity = i===2 ? '0.5' : '0.32';
+        requestAnimationFrame(function(){
+          flash.style.transition='opacity .5s ease';
+          flash.style.opacity='0';
+        });
+        if (i===1) reveal();
+      }
+    }
+    var age = fired>=0 ? e - strikes[fired].t : 1e9;
+    if (age < 320 && segs.length){
+      var a = Math.max(0, 1 - age/320);
+      ctx.lineCap='round';
+      ctx.strokeStyle = NEON; ctx.globalAlpha = a*0.85;
+      ctx.lineWidth = 9*dpr; ctx.shadowColor = NEON; ctx.shadowBlur = 44*dpr;
+      ctx.beginPath();
+      for (var s=0;s<segs.length;s++){ ctx.moveTo(segs[s][0],segs[s][1]); ctx.lineTo(segs[s][2],segs[s][3]); }
+      ctx.stroke();
+      ctx.strokeStyle='#fff'; ctx.globalAlpha=a; ctx.lineWidth=2.6*dpr; ctx.shadowBlur=18*dpr;
+      ctx.stroke();
+      ctx.globalAlpha=1; ctx.shadowBlur=0;
+    }
+    if (e > 2300) { reveal(); return stop(); }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+})();
+
+(function(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var host = document.getElementById('ambient');
+  if (!host) return;
+  var c = document.getElementById('ambc'), ctx = c.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2), W=0, H=0;
+  function size(){ W=c.width=Math.floor(innerWidth*dpr); H=c.height=Math.floor(innerHeight*dpr); }
+  size(); addEventListener('resize', size, {passive:true});
+  var NEON = '#2b56d2';
+
+  function bolt(x1,y1,x2,y2,d,out){
+    if (d < 7) { out.push([x1,y1,x2,y2]); return; }
+    var mx=(x1+x2)/2, my=(y1+y2)/2, off=(Math.random()-0.5)*d;
+    var nx=-(y2-y1), ny=(x2-x1), len=Math.hypot(nx,ny)||1;
+    mx+=nx/len*off; my+=ny/len*off;
+    bolt(x1,y1,mx,my,d/2,out); bolt(mx,my,x2,y2,d/2,out);
+    if (Math.random()<0.3){
+      bolt(mx,my,mx+(x2-x1)*0.3*(Math.random()-0.2),my+(y2-y1)*0.3,d/3,out);
+    }
+  }
+
+  var segs=[], t0=0, raf=0, running=false, intensity=1;
+  function draw(now){
+    var age = now - t0;
+    ctx.clearRect(0,0,W,H);
+    if (age > 340){ running=false; ctx.clearRect(0,0,W,H); return; }
+    var a = (1 - age/340) * intensity;
+    ctx.lineCap='round';
+    ctx.strokeStyle=NEON; ctx.globalAlpha=a*0.8;
+    ctx.lineWidth=8*dpr; ctx.shadowColor=NEON; ctx.shadowBlur=40*dpr;
+    ctx.beginPath();
+    for (var i=0;i<segs.length;i++){ ctx.moveTo(segs[i][0],segs[i][1]); ctx.lineTo(segs[i][2],segs[i][3]); }
+    ctx.stroke();
+    ctx.strokeStyle='#fff'; ctx.globalAlpha=a; ctx.lineWidth=2.2*dpr; ctx.shadowBlur=16*dpr;
+    ctx.stroke();
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    raf = requestAnimationFrame(draw);
+  }
+
+  function strike(x, power){
+    if (document.hidden) return;
+    intensity = power || 1;
+    segs = [];
+    var sx = (x == null ? 0.15 + Math.random()*0.7 : x) * W;
+    bolt(sx, -20, sx + (Math.random()-0.5)*0.22*W, H*(0.55+Math.random()*0.3), W*0.15, segs);
+    t0 = performance.now();
+    if (!running){ running = true; raf = requestAnimationFrame(draw); }
+  }
+
+  // Ambient cadence: a strike every 4-8s, only while visible.
+  var timer;
+  function schedule(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      if (!document.hidden) strike(null, 0.85);
+      schedule();
+    }, 4000 + Math.random()*4000);
+  }
+  schedule();
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden){ clearTimeout(timer); cancelAnimationFrame(raf); running=false; ctx.clearRect(0,0,W,H); }
+    else schedule();
+  });
+
+  // Strike on hover / open of a menu row.
+  var menu = document.getElementById('menu');
+  if (menu){
+    var last = 0;
+    function zap(li, ratio){
+      var now = performance.now();
+      if (now - last < 260) return;
+      last = now;
+      li.classList.remove('zap'); void li.offsetWidth; li.classList.add('zap');
+      strike(ratio, 1);
+    }
+    menu.addEventListener('pointerover', function(e){
+      var btn = e.target.closest('.item'); if (!btn) return;
+      var li = btn.closest('li'); var r = li.getBoundingClientRect();
+      zap(li, (r.left + r.width*0.5) / innerWidth);
+    });
+    menu.addEventListener('click', function(e){
+      var btn = e.target.closest('.item'); if (!btn) return;
+      var li = btn.closest('li'); var r = li.getBoundingClientRect();
+      zap(li, (r.left + r.width*0.5) / innerWidth);
+    });
+  }
+})();
+(function(){
+  var menu = document.getElementById('menu');
+  if (!menu) return;
+  var preview = document.getElementById('preview');
+  var pImg = document.getElementById('preview-img');
+  var pCap = document.getElementById('preview-cap');
+  var canHover = window.matchMedia('(hover: hover) and (min-width: 1081px)').matches;
+
+  function show(btn){
+    if (!preview || !btn.dataset.img) return;
+    pImg.src = btn.dataset.img;
+    pImg.alt = btn.dataset.name || '';
+    pCap.textContent = btn.dataset.name || '';
+    preview.classList.add('on');
+  }
+  function hide(){ if (preview) preview.classList.remove('on'); }
+
+  menu.addEventListener('pointerover', function(e){
+    if (!canHover) return;
+    var btn = e.target.closest('.item');
+    if (btn) show(btn);
+  });
+  menu.addEventListener('pointerleave', hide);
+  menu.addEventListener('focusin', function(e){
+    var btn = e.target.closest('.item');
+    if (btn && canHover) show(btn);
+  });
+
+  // Tap / click toggles the inline photo. Works on touch and desktop alike.
+  menu.addEventListener('click', function(e){
+    var btn = e.target.closest('.item');
+    if (!btn || !btn.dataset.img) return;
+    var li = btn.closest('li');
+    var wasOpen = li.classList.contains('open');
+    Array.prototype.forEach.call(menu.querySelectorAll('li.open'), function(o){
+      o.classList.remove('open');
+    });
+    if (!wasOpen) li.classList.add('open');
+  });
+})();
+</script>
+</body>
+</html>
