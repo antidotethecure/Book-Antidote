@@ -80,6 +80,12 @@
     max-width:170px;max-height:88px;width:auto;height:auto;margin:0 auto 30px;
     display:block;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--neon) 55%,transparent));
   }
+  /* logo ships with a baked-in white background — make it a deliberate plate */
+  .logo.plate{
+    background:#fff;padding:12px 18px;border-radius:12px;max-height:96px;
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--neon) 40%,transparent),
+               0 0 34px -6px var(--neon);
+  }
   .eyebrow{
     font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;
     color:var(--neon);font-weight:700;margin-bottom:16px;
@@ -264,7 +270,7 @@
   <header class="hero">
     <div class="hero-img"><img src="img/53944c432837.jpg" alt="" aria-hidden="true"></div>
     <div class="hero-inner">
-      <img class="logo" src="img/c0b7f2ff00e2.png" alt="Storm Burger logo">
+      <img class="logo plate" src="img/c0b7f2ff00e2.png" alt="Storm Burger logo">
       
       <h1>Storm Burger</h1>
       <div class="tube"></div>
