@@ -208,6 +208,70 @@
     text-shadow:0 0 10px var(--neon),0 0 30px color-mix(in srgb,var(--neon) 60%,transparent);
   }
   .cta p{color:var(--muted);font-size:.96rem;line-height:1.55;text-wrap:balance}
+  /* ---------------- locations strip ---------------- */
+  .places{margin:26px 0 0}
+  .places-grid{
+    display:grid;gap:12px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  }
+  .place-card{
+    position:relative;border-radius:14px;overflow:hidden;
+    border:1px solid var(--line);background:var(--surface);
+    box-shadow:0 0 26px -14px var(--neon);
+  }
+  .place-card img{width:100%;height:170px;object-fit:cover;display:block;
+    transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .place-card:hover img{transform:scale(1.05)}
+  .place-card figcaption{
+    position:absolute;left:0;right:0;bottom:0;padding:22px 14px 11px;
+    font-size:.82rem;font-weight:600;color:#fff;
+    background:linear-gradient(transparent,rgba(0,0,0,.85));
+  }
+
+  /* ---------------- burger slider ---------------- */
+  .slider-wrap{margin:36px 0 0;position:relative}
+  .slider{
+    display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+    padding:4px 2px 14px;scrollbar-width:thin;
+    scrollbar-color:color-mix(in srgb,var(--neon) 60%,transparent) transparent;
+  }
+  .slider::-webkit-scrollbar{height:6px}
+  .slider::-webkit-scrollbar-thumb{
+    background:color-mix(in srgb,var(--neon) 55%,transparent);border-radius:99px}
+  .slide{
+    flex:0 0 232px;scroll-snap-align:center;border-radius:14px;overflow:hidden;
+    background:var(--surface);border:1px solid var(--line);
+    transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease;
+  }
+  .slide:hover{
+    border-color:color-mix(in srgb,var(--neon) 65%,transparent);
+    box-shadow:0 12px 40px -18px var(--neon);transform:translateY(-3px);
+  }
+  .slide img{width:100%;height:172px;object-fit:cover;display:block}
+  .slide .cap{padding:11px 13px 13px}
+  .slide .nm{
+    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-size:.92rem;line-height:1.25;letter-spacing:0.01em;
+    display:block;text-wrap:balance;
+  }
+  .slide .pr{
+    display:block;margin-top:5px;font-weight:700;font-size:.86rem;color:var(--neon);
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 0 10px color-mix(in srgb,var(--neon) 60%,transparent);
+  }
+  .snav{
+    position:absolute;top:76px;width:38px;height:38px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;z-index:3;
+    background:rgba(10,10,14,.82);color:#fff;
+    border:1px solid color-mix(in srgb,var(--neon) 55%,transparent);
+    box-shadow:0 0 18px -6px var(--neon);
+  }
+  .snav:hover{background:var(--neon);color:#08080b}
+  .snav.prev{left:-6px} .snav.next{right:-6px}
+  .snav svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;
+    stroke-linecap:round;stroke-linejoin:round}
+  @media (max-width:560px){.snav{display:none}}
+
   /* ---------------- contact ---------------- */
   .contact{
     margin:34px 0 0;padding:26px 20px 24px;border-radius:14px;
@@ -277,6 +341,20 @@
       <p class="tagline">Experience the best burgers at StormBurger. Enjoy top-quality burgers, fries, and shakes made from the finest ingredients.</p>
     </div>
   </header>
+
+  <section class="places">
+    <p class="section-label">The Locations</p>
+    <div class="places-grid">
+      <figure class="place-card">
+        <img loading="lazy" src="img/1f9b234f76f6.jpg" alt="Storm Burger Inglewood storefront">
+        <figcaption>Storm Burger Inglewood storefront</figcaption>
+      </figure>
+      <figure class="place-card">
+        <img loading="lazy" src="img/1e5f3fd0e9e4.png" alt="Storm Burger Long Beach storefront">
+        <figcaption>Storm Burger Long Beach storefront</figcaption>
+      </figure>
+    </div>
+  </section>
 
   <main>
     <p class="section-label">Selected Menu</p>
@@ -373,6 +451,50 @@
         <div class="shot"><img loading="lazy" src="img/ada7ad75e323.jpg" alt="Spicy Deluxe Chicken Sandwich"></div>
       </li>
     </ul>
+
+    <div class="slider-wrap">
+      <p class="section-label" style="margin-top:34px">Straight Off The Grill</p>
+      <button class="snav prev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="snav next" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="slider" id="slider">
+        <figure class="slide">
+          <img loading="lazy" src="img/2cb2656d9488.jpg" alt="Bacon BBQ Burger">
+          <figcaption class="cap"><span class="nm">Bacon BBQ Burger</span><span class="pr">$7.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/4a659cc28da7.jpg" alt="Double Classic StormBurger">
+          <figcaption class="cap"><span class="nm">Double Classic StormBurger</span><span class="pr">$8.49</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/9ce6773ab327.jpg" alt="Jalapeño Lightning Burger">
+          <figcaption class="cap"><span class="nm">Jalapeño Lightning Burger</span><span class="pr">$6.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/5cc4d97588b9.jpg" alt="Classic StormBurger">
+          <figcaption class="cap"><span class="nm">Classic StormBurger</span><span class="pr">$5.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/69444e135194.jpg" alt="Turkey Burger">
+          <figcaption class="cap"><span class="nm">Turkey Burger</span><span class="pr">$6.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/ca3171574cbc.jpg" alt="Chicken Sandwich">
+          <figcaption class="cap"><span class="nm">Chicken Sandwich</span><span class="pr">$6.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/a5fec3b2b365.jpg" alt="Spicy Chicken Sandwich">
+          <figcaption class="cap"><span class="nm">Spicy Chicken Sandwich</span><span class="pr">$6.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/2ff64725c2d5.jpg" alt="Deluxe Chicken Sandwich">
+          <figcaption class="cap"><span class="nm">Deluxe Chicken Sandwich</span><span class="pr">$7.99</span></figcaption>
+        </figure>
+        <figure class="slide">
+          <img loading="lazy" src="img/ada7ad75e323.jpg" alt="Spicy Deluxe Chicken Sandwich">
+          <figcaption class="cap"><span class="nm">Spicy Deluxe Chicken Sandwich</span><span class="pr">$7.99</span></figcaption>
+        </figure>
+      </div>
+    </div>
 
     <div class="cta">
       <strong>This is a sample.</strong>
@@ -605,6 +727,16 @@
     var btn = e.target.closest('.item');
     if (btn && canHover) show(btn);
   });
+
+  // Slider arrows
+  var slider = document.getElementById('slider');
+  if (slider){
+    var step = 246;
+    var prev = document.querySelector('.snav.prev');
+    var next = document.querySelector('.snav.next');
+    if (prev) prev.addEventListener('click', function(){ slider.scrollBy({left:-step, behavior:'smooth'}); });
+    if (next) next.addEventListener('click', function(){ slider.scrollBy({left: step, behavior:'smooth'}); });
+  }
 
   // Tap / click toggles the inline photo. Works on touch and desktop alike.
   menu.addEventListener('click', function(e){
