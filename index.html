@@ -1119,6 +1119,7 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <a class="stat" href="#music"><b id="statSongs">82</b> Songs</a>
     <a class="stat" href="#ebook"><b>Wealth</b> Blueprint</a>
     <a class="stat" href="#crypto"><b>All In</b> On Crypto</a>
+    <a class="stat" href="/drizzle-bowl/"><b>🎳 Drizzle</b> Bowl — Play</a>
   </div>
   <div class="cta-row">
     <a class="btn btn-gold" href="tel:+14243094068">📞 Book Your Review</a>
@@ -1831,6 +1832,11 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
     <div class="eyebrow" style="color:#e8c979">🔒 Locked · Spiritual Clearance Required</div>
     <h2>Believe <span class="neon">Me</span></h2>
     <p class="bm-sub">Most people will never hear this one. Not because it’s hidden — because they take the surface read and think they got it. <b>Believe Me</b> is a frequency, and a frequency has a gate. Seven questions, pulled fresh from a bank of 45 — reworded, reshuffled and re-lettered every single visit, so there is no answer key to pass around. Six right or the link stays shut. Pick the obvious answer and you’ll prove you weren’t ready for it.</p>
+    <div class="bm-openwrap" id="bmOpenWrap">
+      <button class="btn btn-gold bm-open" id="bmOpenTest" type="button">🔮 Take The Test — Unlock The Song ▾</button>
+      <div class="bm-openhint">Required reading + 7 questions · pass 6 of 7 and the link unseals</div>
+    </div>
+    <div id="bmCollapse" hidden>
     <div class="bm-read" id="bmRead">
       <div class="bm-readhead">
         <span class="bm-readeyebrow">📖 Required Reading</span>
@@ -1864,6 +1870,7 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
         <div class="bm-result" id="bmResult" role="status" aria-live="polite"></div>
       </div>
     </div>
+    </div><!-- /bmCollapse -->
   </div>
     <!-- full-screen denial: fires when the gate refuses -->
     <div class="bm-denied" id="bmDenied" aria-hidden="true" role="alertdialog" aria-label="Access denied">
@@ -2411,6 +2418,9 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 .bm-ack.done{opacity:.5;pointer-events:none}
 .bm-quizwrap{position:relative;transition:opacity .45s ease,filter .45s ease}
 .bm-quizwrap.locked{opacity:.3;filter:blur(2.5px) saturate(.5);pointer-events:none;user-select:none}
+.bm-openwrap{text-align:center;margin:26px 0 4px}
+.bm-open{font-size:1.02rem;padding:15px 30px}
+.bm-openhint{color:#bfae8e;font-size:.8rem;margin-top:9px}
 .bm-quizwrap.locked::after{content:"Read the summary above to unlock the test";position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;text-align:center;padding:0 24px;
   font-family:'Barlow',system-ui,sans-serif;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
@@ -7071,5 +7081,22 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 })();
 </script>
 
+<script>
+(function(){
+  var b=document.getElementById("bmOpenTest"),c=document.getElementById("bmCollapse");
+  if(!b||!c)return;
+  b.addEventListener("click",function(){
+    if(c.hidden){
+      c.hidden=false;
+      c.querySelectorAll(".reveal").forEach(function(el){el.classList.add("in");});
+      b.textContent="▴ Hide The Test";
+      setTimeout(function(){c.scrollIntoView({behavior:"smooth",block:"start"});},60);
+    }else{
+      c.hidden=true;
+      b.textContent="🔮 Take The Test — Unlock The Song ▾";
+    }
+  });
+})();
+</script>
 </body>
 </html>
