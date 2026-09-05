@@ -836,6 +836,10 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 .fm-sidehead{padding:11px 14px;border-bottom:1px solid rgba(245,166,35,.18);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .fm-sidetitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:.9rem;color:var(--cream);letter-spacing:.5px}
 .fm-count{font-family:'Barlow',sans-serif;font-size:.76rem;color:var(--mut);white-space:nowrap}
+.fm-search{padding:10px 14px 0}
+.fm-searchbox{width:100%;box-sizing:border-box;background:rgba(11,10,8,.55);border:1px solid rgba(245,166,35,.32);color:var(--cream);border-radius:10px;padding:9px 12px;font-size:.85rem;font-family:'Barlow',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s}
+.fm-searchbox::placeholder{color:var(--mut)}
+.fm-searchbox:focus{border-color:var(--syrup);box-shadow:0 0 0 2px rgba(245,166,35,.22)}
 .fm-list{overflow-y:auto;padding:8px 10px 12px;scrollbar-width:thin}
 .fm-list::-webkit-scrollbar{width:7px}
 .fm-list::-webkit-scrollbar-thumb{background:rgba(245,166,35,.35);border-radius:9px}
@@ -1222,6 +1226,9 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
             <div class="fm-sidehead">
               <div class="fm-sidetitle" id="fmSideTitle">All Spots</div>
               <div class="fm-count" id="fmSideCount"></div>
+            </div>
+            <div class="fm-search">
+              <input id="fmSearch" type="search" class="fm-searchbox" placeholder="Search a city, dish, or restaurant…" autocomplete="off" aria-label="Search food review spots">
             </div>
             <div class="fm-list" id="fmList"></div>
             <div class="fm-status" id="fmStatus" role="status" aria-live="polite"></div>
@@ -6811,9 +6818,9 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   ALL.forEach(function(r){ var k=regionOf(r); (byRegion[k]||byRegion.la).push(r); });
 
   /* Group pinned spots that share one coordinate so they never stack. */
-  function pinGroups(key){
+  function groupSpots(list){
     var m={};
-    byRegion[key].forEach(function(r){
+    list.forEach(function(r){
       var g=GEO[r.img]; if(!g) return;
       locsOf(g).forEach(function(L){
         var id=L.lat.toFixed(4)+","+L.lng.toFixed(4);
@@ -6822,8 +6829,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     });
     return Object.keys(m).map(function(k){return m[k];});
   }
+  function pinGroups(key){ return groupSpots(byRegion[key]); }
 
   var listEl=document.getElementById("fmList"),
+      searchEl=document.getElementById("fmSearch"),
       titleEl=document.getElementById("fmSideTitle"),
       countEl=document.getElementById("fmSideCount"),
       subEl=document.getElementById("fmSub"),
@@ -6873,13 +6882,13 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     return best;
   }
 
-  function renderList(regionKey){
-    var items,label;
-    if(regionKey){ items=byRegion[regionKey].slice(); label=REGIONS[regionKey].flag+" "+REGIONS[regionKey].label; }
-    else { items=ALL.slice(); label="All Spots"; }
+  function renderListItems(items,label,emptyMsg){
     titleEl.textContent=label;
     countEl.textContent=items.length+" review"+(items.length===1?"":"s");
-
+    if(!items.length){
+      listEl.innerHTML='<div class="fm-group">'+(emptyMsg||"Nothing here yet.")+'</div>';
+      listEl.scrollTop=0; return;
+    }
     var withD=[],withoutD=[];
     items.forEach(function(r){ (GEO[r.img]?withD:withoutD).push(r); });
 
@@ -6898,6 +6907,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     }
     listEl.innerHTML=html;
     listEl.scrollTop=0;
+  }
+  function renderList(regionKey){
+    if(regionKey){ renderListItems(byRegion[regionKey].slice(), REGIONS[regionKey].flag+" "+REGIONS[regionKey].label); }
+    else { renderListItems(ALL.slice(), "All Spots"); }
   }
 
   /* -------- Map -------- */
@@ -6960,13 +6973,9 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     renderList(null);
   }
 
-  function showRegion(key){
-    if(!map) return;
-    var reg=REGIONS[key]; if(!reg) return;
-    view=key; worldBtn.hidden=false; markerOf={};
-    layer.clearLayers();
-    subEl.textContent=reg.flag+" "+reg.label+" — tap a pin for the review & directions";
-    var groups=pinGroups(key), byCoord={};
+  /* Drop a set of coordinate-grouped spots onto the map as pins. Shared by the
+     region view and search. Populates markerOf and returns the plotted points. */
+  function plotGroups(groups){
     groups.forEach(function(g){
       var m=L.marker([g.lat,g.lng],{icon:pinIcon(g),riseOnHover:true}).addTo(layer);
       var head=g.items.length>1
@@ -6987,18 +6996,53 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
         body+='<a class="fm-pop-a go" href="'+esc(dirUrl(r))+'" target="_blank" rel="noopener">🧭 Directions</a>';
       }
       m.bindPopup('<div class="fm-pop">'+head+meta+body+"</div>");
-      g.items.forEach(function(r){ if(r.img) byCoord[g.lat.toFixed(4)+","+g.lng.toFixed(4)]=m; });
+      g.items.forEach(function(r){ if(r.img) markerOf[r.img]=m; });
     });
-    byRegion[key].forEach(function(r){
-      var gg=GEO[r.img]; if(!gg||!r.img) return;
-      var nl=nearestLoc(gg), mk=byCoord[nl.lat.toFixed(4)+","+nl.lng.toFixed(4)];
-      if(mk) markerOf[r.img]=mk;
-    });
-    var pts=groups.map(function(g){return [g.lat,g.lng];});
+    return groups.map(function(g){return [g.lat,g.lng];});
+  }
+
+  function showRegion(key){
+    if(!map) return;
+    var reg=REGIONS[key]; if(!reg) return;
+    view=key; worldBtn.hidden=false; markerOf={};
+    layer.clearLayers();
+    subEl.textContent=reg.flag+" "+reg.label+" — tap a pin for the review & directions";
+    var pts=plotGroups(pinGroups(key));
     if(pts.length>1) map.fitBounds(L.latLngBounds(pts).pad(0.45));
     else map.setView(pts[0]||reg.center,pts.length?13:reg.zoom);
     if(me) addMe();
     renderList(key);
+  }
+
+  /* -------- Search across name, city, address & cuisine -------- */
+  var searchActive=false;
+  function haystack(r){
+    var parts=[r.n,r.c,r.c2,catLabel(r),r.e], g=GEO[r.img];
+    if(g) locsOf(g).forEach(function(L){ parts.push(L.city,L.addr); });
+    return parts.filter(Boolean).join(" ").toLowerCase();
+  }
+  function showSearch(matches,label){
+    if(map){
+      view="search"; worldBtn.hidden=false; markerOf={};
+      layer.clearLayers();
+      var pts=plotGroups(groupSpots(matches));
+      if(pts.length>1) map.fitBounds(L.latLngBounds(pts).pad(0.4));
+      else if(pts.length===1) map.setView(pts[0],14);
+      if(me) addMe();
+    }
+    subEl.textContent=matches.length
+      ? '🔎 '+matches.length+' result'+(matches.length===1?'':'s')+' for “'+label+'”'
+      : 'No results for “'+label+'” — try a city, dish, or restaurant';
+    renderListItems(matches,'🔎 Search',
+      'No spots match “'+esc(label)+'”. Try a city (e.g. “Rowland Heights”), a dish, or a restaurant name.');
+  }
+  function runSearch(raw){
+    var label=(raw||"").trim(), q=label.toLowerCase();
+    if(!q){ if(searchActive){ searchActive=false; if(map) showWorld(); else renderList(null); } return; }
+    searchActive=true;
+    var tokens=q.split(/\s+/);
+    var matches=ALL.filter(function(r){ var h=haystack(r); return tokens.every(function(t){return h.indexOf(t)>=0;}); });
+    showSearch(matches,label);
   }
 
   function addMe(){
@@ -7009,7 +7053,12 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   }
 
   /* -------- Interactions -------- */
-  worldBtn.addEventListener("click",showWorld);
+  worldBtn.addEventListener("click",function(){ if(searchEl) searchEl.value=""; searchActive=false; showWorld(); });
+
+  if(searchEl){
+    searchEl.addEventListener("input",function(){ runSearch(searchEl.value); });
+    searchEl.addEventListener("keydown",function(e){ if(e.key==="Escape"){ searchEl.value=""; runSearch(""); } });
+  }
 
   satBtn.addEventListener("click",function(){
     if(!map||!base) return;
