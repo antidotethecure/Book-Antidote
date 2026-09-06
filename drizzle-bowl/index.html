@@ -1957,14 +1957,16 @@ function preStep(){
   if(!ballBody||S.done)return;
   const p=ballBody.position;
   if(!S.gutter&&Math.abs(p.x)>0.70&&p.y<0.09){S.gutter=true;}
-  if(!S.gutter){
-    const frac=Math.min(1,-p.z/16);
-    if(p.y<0.13&&frac>0&&frac<1.02){
-      const r=frac<0.35?0:Math.min(1,(frac-0.35)/0.4);
-      const sp=Math.max(2.5,ballBody.velocity.length());
-      ballBody.velocity.x+=S.spin*1.05*r*r*(6.5/sp)*(1/60);
-      if(ballBody.velocity.x>0.85)ballBody.velocity.x=0.85;if(ballBody.velocity.x<-0.85)ballBody.velocity.x=-0.85;
-    }
+  if(!S.gutter)steerStep(ballBody,S.spin);
+}
+function steerStep(b,spin){
+  const p=b.position;
+  const frac=Math.min(1,-p.z/16);
+  if(p.y<0.13&&frac>0&&frac<1.02){
+    const r=frac<0.35?0:Math.min(1,(frac-0.35)/0.4);
+    const sp=Math.max(2.5,b.velocity.length());
+    b.velocity.x+=spin*1.05*r*r*(6.5/sp)*(1/60);
+    if(b.velocity.x>0.85)b.velocity.x=0.85;if(b.velocity.x<-0.85)b.velocity.x=-0.85;
   }
 }
 function postStep(){
@@ -2032,24 +2034,55 @@ const pathDots=[];
  for(let i=0;i<26;i++){const d=new M(dg,new THREE.MeshBasicMaterial({color:0xf2a81d,transparent:true,opacity:0.85,depthWrite:false}));d.visible=false;pathDots.push(d);}}
 const pathTip=new M(new THREE.ConeGeometry(0.085,0.22,10),new THREE.MeshBasicMaterial({color:0xf2a81d,transparent:true,opacity:0.95}));
 const pathGrp=new THREE.Group();pathDots.forEach(d=>pathGrp.add(d));pathGrp.add(pathTip);pathGrp.visible=false;scene.add(pathGrp);
+let gWorld=null,gBall=null,gKey='';
+function ghostInit(){
+  gWorld=new CANNON.World();gWorld.gravity.set(0,-9.82,0);gWorld.solver.iterations=14;
+  const gLane=new CANNON.Material('gLane'),gB=new CANNON.Material('gBall');
+  const add2=(hx,hy,hz,x,y,z)=>{gWorld.addBody(new CANNON.Body({mass:0,material:gLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)}));};
+  add2(HALF,0.05,9.60,0,-0.05,-8.50);
+  add2(0.12,0.02,9.35,-0.80,-0.17,-8.25);add2(0.12,0.02,9.35,0.80,-0.17,-8.25);
+  add2(0.03,0.12,9.35,-0.945,-0.06,-8.25);add2(0.03,0.12,9.35,0.945,-0.06,-8.25);
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gLane,{friction:0.042,restitution:0.08}));
+  gFoodMat=new CANNON.Material('gFood');
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gFoodMat,{friction:0.38,restitution:0.50}));
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gFoodMat,gLane,{friction:0.032,restitution:0.12}));
+  gBall=new CANNON.Body({mass:7.2,material:gB,shape:new CANNON.Sphere(BR*1.09)});
+  gBall.linearDamping=0.004;gBall.angularDamping=0.010;gBall.allowSleep=false;
+  gWorld.addBody(gBall);
+}
+let gFoodMat=null,gFoods=[];
+let gPts=[];
 function showPath(ox,spin,power,on){
-  if(!on){pathGrp.visible=false;window.B3D&&(B3D.lastPath=null);return;}
-  /* run the same integrator the live ball uses, so the arrow tells the truth */
-  const charged=Math.abs((power!=null?power:0.5)-0.775)<0.016;
-  let px=ox*0.76,pz=0.55,vx=0,vz=-(5.4+(power!=null?power:0.5)*4.6+(charged?0.55:0));
-  const pts=[];
-  for(let i=0;i<720;i++){
-    px+=vx/60;pz+=vz/60;
-    const frac=Math.min(1,-pz/16);
-    if(frac>0&&frac<1.02){
-      const r=frac<0.35?0:Math.min(1,(frac-0.35)/0.4);
-      const sp=Math.max(2.5,Math.hypot(vx,vz));
-      vx+=spin*1.05*r*r*(6.5/sp)*(1/60);
-      if(vx>0.85)vx=0.85;if(vx<-0.85)vx=-0.85;
+  if(!on){pathGrp.visible=false;window.B3D&&(B3D.lastPath=null);gKey='';return;}
+  const pw=power!=null?power:0.5;
+  const fSig=foods.filter(f=>f.lane&&!f.counted).map(f=>f.body.position.x.toFixed(2)+f.body.position.z.toFixed(2)).join(';');
+  const key=ox.toFixed(3)+'|'+spin.toFixed(3)+'|'+pw.toFixed(3)+'|'+fSig;
+  if(key!==gKey){
+    gKey=key;
+    if(!gWorld)ghostInit();
+    /* ghost ball: byte-for-byte the same launch as throwBall (minus the random overthrow wobble) */
+    const charged=Math.abs(pw-0.775)<0.016;
+    const v=5.4+pw*4.6+(charged?0.55:0);
+    gBall.position.set(ox*0.76,BR+0.002,0.55);
+    gBall.quaternion.set(0,0,0,1);
+    gBall.velocity.set(0,0,-v);
+    gBall.angularVelocity.set(-v/BR,-spin*24,0);
+    /* mirror the snacks sitting on the lane — they nudge the real ball, so they nudge the ghost too */
+    gFoods.forEach(fb=>gWorld.removeBody(fb));gFoods=[];
+    foods.forEach(f=>{if(!f.lane||f.counted)return;
+      const fb=new CANNON.Body({mass:0.07,material:gFoodMat,shape:new CANNON.Box(new CANNON.Vec3(0.05,0.05,0.05)),position:f.body.position.clone()});
+      fb.quaternion.copy(f.body.quaternion);gWorld.addBody(fb);gFoods.push(fb);});
+    gPts=[];
+    let gut=false;
+    for(let i=0;i<480;i++){
+      if(!gut&&Math.abs(gBall.position.x)>0.70&&gBall.position.y<0.09)gut=true;
+      if(!gut)steerStep(gBall,spin);
+      gWorld.step(1/60);
+      if(i%3===0)gPts.push([gBall.position.x,gBall.position.z]);
+      if(gBall.position.z<-16.5||Math.abs(gBall.position.x)>0.72)break;
     }
-    if(i%7===0)pts.push([px,pz]);
-    if(pz<-16.5||Math.abs(px)>0.72)break;
   }
+  const pts=gPts;
   if(pts.length<4){pathGrp.visible=false;return;}
   for(let k=0;k<pathDots.length;k++){
     const j=Math.floor(k*(pts.length-1)/(pathDots.length-1));
