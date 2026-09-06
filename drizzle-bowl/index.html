@@ -7,6 +7,56 @@
   #gl{display:block;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1a1214;z-index:1}
 </style>
 
+<div id="marquee">
+  <div class="led-sign">
+    <span class="led-w led-w1">ANTIDOTE</span>
+    <span class="led-w led-w2">DRIZZLE</span>
+    <span class="led-w led-w3">BOWL</span>
+    <span class="led-strip"></span>
+  </div>
+  <svg class="sauceball" viewBox="0 0 240 300" aria-hidden="true">
+    <defs>
+      <radialGradient id="sbBall" cx="38%" cy="32%" r="75%">
+        <stop offset="0%" stop-color="#8ecbff"/><stop offset="45%" stop-color="#2f7de0"/><stop offset="100%" stop-color="#0a2a66"/>
+      </radialGradient>
+      <linearGradient id="sbSauce" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffd75e"/><stop offset="55%" stop-color="#f2a81d"/><stop offset="100%" stop-color="#c97a1d"/>
+      </linearGradient>
+    </defs>
+    <path d="M104 0 q6 20 -3 38 q-7 16 3 34 l14 0 q9 -18 2 -36 q-8 -18 2 -36 Z" fill="url(#sbSauce)"/>
+    <circle cx="120" cy="182" r="92" fill="url(#sbBall)"/>
+    <ellipse cx="90" cy="146" rx="30" ry="18" fill="rgba(255,255,255,.30)"/>
+    <circle cx="104" cy="168" r="7" fill="#0d1b3d"/><circle cx="124" cy="160" r="7" fill="#0d1b3d"/><circle cx="118" cy="184" r="7" fill="#0d1b3d"/>
+    <text x="152" y="216" font-family="Impact,sans-serif" font-size="52" fill="#f2a81d" stroke="#0a2a66" stroke-width="3" paint-order="stroke" text-anchor="middle">A</text>
+    <path d="M40 132 q30 -44 80 -42 q52 -2 82 40 q6 24 -14 26 q-8 16 -6 34 q-2 14 -14 12 q-10 -2 -10 -30 q-4 -12 -12 -2 q2 26 -10 27 q-12 1 -13 -25 q-3 -12 -10 -1 q1 40 -13 41 q-13 1 -12 -38 q-4 -10 -10 0 q0 22 -12 21 q-11 -1 -10 -27 q-14 -4 -16 -36 Z" fill="url(#sbSauce)"/>
+    <path d="M74 96 q46 -26 96 4 q-6 10 -18 6 q-2 12 -12 10 q-8 -2 -8 -14 q-16 -8 -30 0 q0 14 -10 14 q-10 0 -10 -12 Z" fill="#d33d35" opacity="0.85"/>
+    <circle class="sb-drop d1" cx="66" cy="210" r="6" fill="#f2a81d"/>
+    <circle class="sb-drop d2" cx="188" cy="200" r="5" fill="#f2a81d"/>
+    <circle class="sb-drop d3" cx="120" cy="60" r="5" fill="#ffd75e"/>
+  </svg>
+</div>
+<style>
+#marquee{position:fixed;right:24px;top:50%;transform:translateY(-50%);width:252px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:40;pointer-events:none}
+@media(max-width:1000px){#marquee{display:none}}
+.led-sign{background:#0d0709;border:3px solid #3a2414;border-radius:16px;padding:20px 12px 16px;width:100%;text-align:center;position:relative;box-shadow:0 0 46px rgba(242,168,29,.16),0 8px 30px rgba(0,0,0,.55),inset 0 0 20px #000}
+.led-sign::before,.led-sign::after{content:"";position:absolute;inset:6px;border-radius:11px;pointer-events:none}
+.led-sign::before{border:4px dotted #f2a81d;animation:ledchase 0.9s steps(1) infinite;filter:drop-shadow(0 0 4px #f2a81d)}
+.led-sign::after{border:4px dotted #b8322c;animation:ledchase 0.9s steps(1) infinite 0.45s;filter:drop-shadow(0 0 4px #b8322c)}
+@keyframes ledchase{0%,49%{opacity:1}50%,100%{opacity:.12}}
+.led-w{display:block;font-family:Impact,'Arial Black',sans-serif;line-height:1.06}
+.led-w1{font-size:21px;letter-spacing:.24em;color:#fbe9c4;text-shadow:0 0 6px #f2a81d,0 0 18px #f2a81d}
+.led-w2{font-size:41px;letter-spacing:.05em;color:#ffd75e;text-shadow:0 0 8px #f2a81d,0 0 24px #f2a81d,0 0 46px #b8322c;animation:ledflick 2.6s infinite}
+.led-w3{font-size:41px;letter-spacing:.14em;color:#ff5a4e;text-shadow:0 0 8px #b8322c,0 0 28px #b8322c,0 0 50px #b8322c;animation:ledflick 2.6s infinite 1.3s}
+@keyframes ledflick{0%,90%,94%,100%{opacity:1}92%{opacity:.3}}
+.led-strip{display:block;margin-top:10px;height:5px;border-radius:3px;background:repeating-linear-gradient(90deg,#f2a81d 0 10px,#0d0709 10px 16px,#b8322c 16px 26px,#0d0709 26px 32px);animation:ledroll 1.1s linear infinite;box-shadow:0 0 10px rgba(242,168,29,.5)}
+@keyframes ledroll{to{background-position:32px 0}}
+.sauceball{width:196px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))}
+.sb-drop{animation:sbfall 2.2s ease-in infinite}
+.sb-drop.d2{animation-delay:0.8s}
+.sb-drop.d3{animation:sbslide 2.2s ease-in infinite 1.4s}
+@keyframes sbfall{0%,55%{transform:translateY(0);opacity:0}60%{opacity:1}100%{transform:translateY(84px);opacity:0}}
+@keyframes sbslide{0%,50%{transform:translateY(0);opacity:0}56%{opacity:1}100%{transform:translateY(46px);opacity:.2}}
+</style>
 <div id="sideboard" hidden>
   <div class="sb-t">&#127942; WEEKLY LEADERS</div>
   <div class="sb-sub" id="sb-weeklabel"></div>
