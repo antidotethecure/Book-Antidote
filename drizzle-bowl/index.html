@@ -519,10 +519,16 @@ function weekKey(){var d=new Date();var day=(d.getDay()+6)%7;d.setDate(d.getDate
 function weekLabel(){var k=weekKey().split('-');return 'Week of '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+k[1]-1]+' '+(+k[2]);}
 function localBoard(){try{var all=JSON.parse(localStorage.getItem('adb_board')||'{}');return all[weekKey()]||[];}catch(e){return [];}}
 function localSave(name,score){try{var all=JSON.parse(localStorage.getItem('adb_board')||'{}');var w=weekKey();all[w]=(all[w]||[]).concat([{name:name,score:score}]).sort(function(a,b){return b.score-a.score;}).slice(0,10);localStorage.setItem('adb_board',JSON.stringify(all));}catch(e){}}
+function mergeBoard(remote){
+  var m={};
+  (remote||[]).forEach(function(r){var k=String(r.name||'');if(k&&(!m[k]||m[k].score<+r.score))m[k]={name:k,score:+r.score||0};});
+  localBoard().forEach(function(r){var k=String(r.name||'');if(k&&(!m[k]||m[k].score<+r.score))m[k]={name:k,score:+r.score||0};});
+  return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.score-a.score;}).slice(0,10);
+}
 function loadBoard(){
   g.board=null;
-  if(!LEADERBOARD_URL){g.board=localBoard();return;}
-  fetch(LEADERBOARD_URL+'?week='+weekKey()).then(function(r){return r.json();}).then(function(rows){g.board=rows.slice(0,10);}).catch(function(){g.board=localBoard();});
+  if(!LEADERBOARD_URL){g.board=mergeBoard([]);return;}
+  fetch(LEADERBOARD_URL+'?week='+weekKey()).then(function(r){return r.json();}).then(function(rows){g.board=mergeBoard(rows);}).catch(function(){g.board=mergeBoard([]);});
 }
 function submitScore(){
   if(g.submitted)return;g.submitted=true;
