@@ -2059,8 +2059,8 @@ const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=n
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0.03,restitution:0.08}));
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.38,restitution:0.58}));
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0.04,restitution:0.08}));
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.05,restitution:0.56}));
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.08,restitution:0.45}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.012,restitution:0.5})); /* pins slip off each other, nothing leans */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.02,restitution:0.5}));
 function sbox(hx,hy,hz,x,y,z,mat){const b=new CANNON.Body({mass:0,material:mat||mLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)});world.addBody(b);return b;}
 sbox(HALF,0.05,10.475,0,-0.05,-7.625);                  /* lane deck (front 2.85, back -18.10) */
 sbox(0.12,0.02,10.475,-0.80,-0.17,-7.625);sbox(0.12,0.02,10.475,0.80,-0.17,-7.625); /* gutter floors */
@@ -2355,11 +2355,26 @@ function postStep(){
   if(!S.done&&!S.gutter&&p.y<0.13&&v.length()>2&&nw-lastRoll>0.85){lastRoll=nw;A3.noise&&A3.noise(0.7,0.04,650);}
 }
 const upTmp=new CANNON.Vec3();
-function pinWeight(){ /* a pin that is already going over slams down hard and fast, like a real 1.5 kg pin; standing pins keep their normal tipping feel */
-  for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;
-    b.quaternion.vmult(UPV,upTmp);
-    if(upTmp.y<0.86)b.force.y-=b.mass*9.82*0.9;
-    else if(b.position.y>0.24)b.force.y-=b.mass*9.82*0.3;}
+function pinWeight(){ /* once a pin is past ~20 degrees it is going down, full stop: it never sleeps, never props on a neighbour, and it gets weight plus a push in the direction it is leaning until it is flat */
+  for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
+    b.quaternion.vmult(UPV,upTmp);const tilt=upTmp.y;
+    if(tilt<0.94&&tilt>-0.2&&b.position.y>-0.3){
+      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.30;   /* only a pin lying flat may settle */
+      b.force.y-=b.mass*9.82*1.0;
+      if(tilt>0.30){ /* still leaning: keep it rotating over toward the lean */
+        const dl=Math.hypot(upTmp.x,upTmp.z)||1e-6,nx=upTmp.z/dl,nz=-upTmp.x/dl;
+        const wn=b.angularVelocity.x*nx+b.angularVelocity.z*nz;
+        if(wn<3.0){b.angularVelocity.x+=nx*9/60;b.angularVelocity.z+=nz*9/60;}
+        b.angularDamping=0.002;
+        /* wedged against a pin or a wall and not rotating? hop it loose in the lean direction */
+        if(b.angularVelocity.length()<0.9&&b.velocity.length()<0.25){pn.stuckT=(pn.stuckT||0)+1/60;
+          if(pn.stuckT>0.35){pn.stuckT=0;b.velocity.x+=upTmp.x/dl*0.9;b.velocity.z+=upTmp.z/dl*0.9;b.velocity.y+=0.7;b.angularVelocity.x+=nx*4;b.angularVelocity.z+=nz*4;}}
+        else pn.stuckT=0;
+      }
+    }else if(b.sleepState!==CANNON.Body.SLEEPING){
+      if(!b.allowSleep){b.allowSleep=true;}
+      if(b.position.y>0.24)b.force.y-=b.mass*9.82*0.3;
+    }}
 }
 function step(dt){
   acc+=dt;let n=0;
@@ -2377,7 +2392,7 @@ function mirror(){
     if(!pn||!pn.alive){out.pins.push({up:false,gone:true,ox:0,oy:0.92,rot:0,loft:0});continue;}
     const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());
     const dsp=Math.hypot(b.position.x-(b.__spot?b.__spot.x:0),b.position.z-(b.__spot?b.__spot.z:0));
-    const up=b.position.y>-0.05&&Math.abs(b.position.x)<0.70&&b.position.z>-17.55&&(a.y>0.94||(a.y>0.72&&dsp<0.22));
+    const up=b.position.y>-0.05&&Math.abs(b.position.x)<0.70&&b.position.z>-17.55&&a.y>0.94;
     if(pn.wasUp&&!up){pn.wasUp=false;spawnPuddle(b.position.x,b.position.z,pn.fi,false);}
     out.pins.push({up,gone:b.position.y<-0.32||b.position.z<-18.0,ox:Math.max(-1.3,Math.min(1.3,b.position.x*OLDX)),oy:Math.min(1.22,zToOld(b.position.z)),
       rot:Math.atan2(a.x,Math.max(-0.4,a.y)),loft:Math.max(0,b.position.y-0.191)/0.35});
