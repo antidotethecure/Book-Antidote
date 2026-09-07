@@ -1693,27 +1693,31 @@ const bbC=document.createElement('canvas');bbC.width=1024;bbC.height=232;const b
 const bbT=new THREE.CanvasTexture(bbC);bbT.colorSpace=THREE.SRGBColorSpace;
 const bill=new M(new THREE.PlaneGeometry(2.05,0.465),new THREE.MeshBasicMaterial({map:bbT}));
 bill.position.set(0,1.02,-16.90);amb.add(bill);
-const btvC=document.createElement('canvas');btvC.width=480;btvC.height=270;const btvG=btvC.getContext('2d');
+const btvC=document.createElement('canvas');btvC.width=1280;btvC.height=720;const btvG=btvC.getContext('2d');btvG.imageSmoothingEnabled=true;try{btvG.imageSmoothingQuality='high';}catch(e){}
 btvG.imageSmoothingEnabled=true;try{btvG.imageSmoothingQuality='high';}catch(e){}
-const btvT=new THREE.CanvasTexture(btvC);btvT.colorSpace=THREE.SRGBColorSpace;
-const btvFrame=new M(new THREE.BoxGeometry(5.6,3.3,0.16),new THREE.MeshBasicMaterial({color:0x0a0a0c}));btvFrame.position.set(0,4.55,-21.7);amb.add(btvFrame);
-const btvGlow=new M(new THREE.PlaneGeometry(7.2,4.6),new THREE.MeshBasicMaterial({color:0x7fb8ff,transparent:true,opacity:0.22,blending:THREE.AdditiveBlending,depthWrite:false}));btvGlow.position.set(0,4.55,-21.75);amb.add(btvGlow);
-const btv=new M(new THREE.PlaneGeometry(5.2,2.93),new THREE.MeshBasicMaterial({map:btvT,toneMapped:false}));btv.position.set(0,4.55,-21.6);amb.add(btv);
+const btvT=new THREE.CanvasTexture(btvC);btvT.colorSpace=THREE.SRGBColorSpace;btvT.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());btvT.generateMipmaps=true;btvT.minFilter=THREE.LinearMipmapLinearFilter;btvT.magFilter=THREE.LinearFilter;
+const btvFrame=new M(new THREE.BoxGeometry(5.7,3.3,0.16),new THREE.MeshBasicMaterial({color:0x0a0a0c}));btvFrame.position.set(4.6,4.7,-21.7);amb.add(btvFrame);
+const btvGlow=new M(new THREE.PlaneGeometry(7.2,4.6),new THREE.MeshBasicMaterial({color:0x7fb8ff,transparent:true,opacity:0.22,blending:THREE.AdditiveBlending,depthWrite:false}));btvGlow.position.set(4.6,4.7,-21.75);amb.add(btvGlow);
+const btv=new M(new THREE.PlaneGeometry(5.33,3.0),new THREE.MeshBasicMaterial({map:btvT,toneMapped:false}));btv.position.set(4.6,4.7,-21.6);amb.add(btv);
 let btvLast=-1;
 function drawBTV(t){
-  if(t-btvLast<0.12)return;btvLast=t;
+  if(t-btvLast<0.10)return;btvLast=t;
   const covers=(A3.covers||[]).filter(im=>im&&im.complete&&im.naturalWidth);
-  btvG.fillStyle='#000';btvG.fillRect(0,0,480,270);
+  const W2=1280,H2=720;
+  btvG.fillStyle='#000';btvG.fillRect(0,0,W2,H2);
   if(covers.length){
     const per=6,idx=Math.floor(t/per)%covers.length,ph2=(t%per)/per,im=covers[idx];
-    const zm=1.10+ph2*0.16,ar=im.naturalWidth/im.naturalHeight;
-    let tw,th;if(ar>480/270){th=270*zm;tw=th*ar;}else{tw=480*zm;th=tw/ar;}
-    btvG.drawImage(im,240-tw/2-ph2*30,135-th/2+ph2*14,tw,th);
+    const zm=1.02+ph2*0.06,ar=im.naturalWidth/im.naturalHeight;
+    let tw,th;if(ar>W2/H2){th=H2*zm;tw=th*ar;}else{tw=W2*zm;th=tw/ar;}
+    btvG.drawImage(im,W2/2-tw/2-ph2*40,H2/2-th/2+ph2*18,tw,th);
+    /* broadcast punch: a touch of contrast + vignette so it reads crisp from the lane */
+    btvG.globalCompositeOperation='overlay';btvG.fillStyle='rgba(255,255,255,.14)';btvG.fillRect(0,0,W2,H2);btvG.globalCompositeOperation='source-over';
+    const vg=btvG.createRadialGradient(W2/2,H2/2,H2*0.45,W2/2,H2/2,H2*0.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.35)');btvG.fillStyle=vg;btvG.fillRect(0,0,W2,H2);
   }
-  btvG.fillStyle='rgba(0,0,0,.55)';btvG.fillRect(0,234,480,36);
-  if(Math.sin(t*4)>0){btvG.fillStyle='#f21d1d';btvG.beginPath();btvG.arc(20,252,7,0,7);btvG.fill();}
-  btvG.fillStyle='#fff';btvG.font='bold 17px Verdana';btvG.textAlign='left';btvG.textBaseline='middle';btvG.fillText('LIVE \u00b7 ANTIDOTE THE FOODIE',36,252);
-  btvG.fillStyle='#f2a81d';btvG.fillRect(0,266,480*((t%6)/6),4);
+  btvG.fillStyle='rgba(0,0,0,.62)';btvG.fillRect(0,H2-96,W2,96);
+  if(Math.sin(t*4)>0){btvG.fillStyle='#f21d1d';btvG.beginPath();btvG.arc(54,H2-48,18,0,7);btvG.fill();}
+  btvG.fillStyle='#fff';btvG.font='bold 44px Verdana';btvG.textAlign='left';btvG.textBaseline='middle';btvG.fillText('LIVE \u00b7 ANTIDOTE THE FOODIE',96,H2-48);
+  btvG.fillStyle='#f2a81d';btvG.fillRect(0,H2-10,W2*((t%6)/6),10);
   btvT.needsUpdate=true;
 }
 let bbLast=-1;
@@ -1776,6 +1780,7 @@ function ambient(dt,gs){
   if(RETRO){day=0;dusk=0;sky.set(0x090516);}
   renderer.setClearColor(sky,1);scene.fog.color.copy(sky);
   if(RETRO&&window.__grid){window.__grid.offset.y-=dt*0.35;}
+  if(RETRO){sun.visible=false;moon.visible=true;moon.position.set(-3.2,6.4,-23);moon.material.opacity=0.85;}
   /* lane LEDs: steady glow, a stutter-flicker every ~8.5s, swapping blue <-> purple */
   ledT+=dt;
   if(ledT>8.5){ledT=0;ledCol=(ledCol+1)%LEDCOLS.length;const c2=LEDCOLS[ledCol];
