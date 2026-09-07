@@ -1421,17 +1421,21 @@ function drawPhotoFace(mood){
   var cheer=mood==='cheese',mad=mood==='mad';
   /* precise chroma-cut, levelled, shaded head; crop-space -> bowler-space */
   var s=40/670,cx=289.4,x0=-cx*s,y0=-98-684*s,w=580*s,h=780*s;
-  var eyeY=y0+307*s,eyeL=(179-cx)*s,eyeR=(400-cx)*s,mouthX=(270-cx)*s,mouthY=y0+526*s;
+  var eyeY=y0+307*s,eyeL=(179-cx)*s,eyeR=(400-cx)*s,mouthX=(262-cx)*s,mouthY=y0+542*s;
   ctx.save();
-  if(cheer)ctx.rotate(Math.sin(g.t*10)*0.03);
+  if(cheer)ctx.rotate(Math.sin(g.t*10)*0.012);
   headShadow();
   ctx.drawImage(FACE_IMG,x0,y0,w,h);
   if(cheer){ /* the CHEESE on top of the art: big grin, both rows of teeth, eyes squeezed shut */
     ctx.save();ctx.translate(mouthX,mouthY);
-    ctx.fillStyle='#c76d5e';ctx.beginPath();ctx.ellipse(0,0,6.4,4.2,0,0,7);ctx.fill();
-    ctx.fillStyle='#3a1418';ctx.beginPath();ctx.ellipse(0,0,5.4,3.4,0,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.fillRect(-5,-2.9,10,2.5);ctx.fillRect(-3.6,1.4,7.2,1.7);
-    ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=0.6;ctx.beginPath();for(var tx2=-2.5;tx2<=2.5;tx2+=2.5){ctx.moveTo(tx2,-2.9);ctx.lineTo(tx2,-0.4);}ctx.stroke();
+    /* open-mouth clamp grin on the lip line: lips, dark mouth, two rows of teeth clipped inside the mouth */
+    ctx.fillStyle='#b8604f';ctx.beginPath();ctx.ellipse(0,0.2,6.6,4.5,0,0,7);ctx.fill();
+    ctx.fillStyle='#2e1014';ctx.beginPath();ctx.ellipse(0,0.3,5.7,3.7,0,0,7);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.ellipse(0,0.3,5.7,3.7,0,0,7);ctx.clip();
+    ctx.fillStyle='#fff';ctx.fillRect(-6,-4,12,3.0);ctx.fillRect(-6,1.6,12,2.6);
+    ctx.strokeStyle='rgba(0,0,0,.28)';ctx.lineWidth=0.6;ctx.beginPath();for(var tx2=-3.6;tx2<=3.6;tx2+=1.8){ctx.moveTo(tx2,-4);ctx.lineTo(tx2,-1);}ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='rgba(255,200,185,.3)';ctx.beginPath();ctx.ellipse(0,-3.6,5.2,0.6,0,0,7);ctx.fill();
     ctx.restore();
   }else if(mad){ /* slammed brows, red flush, pout, steam */
     ctx.fillStyle='rgba(200,40,30,.16)';ctx.beginPath();ctx.ellipse(0,y0+380*s,11.5,15,0,0,7);ctx.fill();
