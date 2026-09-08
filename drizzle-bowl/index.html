@@ -2365,18 +2365,24 @@ const upTmp=new CANNON.Vec3();
 function pinWeight(){ /* once a pin is past ~20 degrees it is going down, full stop: it never sleeps, never props on a neighbour, and it gets weight plus a push in the direction it is leaning until it is flat */
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
     b.quaternion.vmult(UPV,upTmp);const tilt=upTmp.y;
+    pn.leanT=(tilt<0.94&&tilt>0.40&&b.position.y>-0.3)?(pn.leanT||0)+1/60:0;
     if(tilt<0.94&&tilt>-0.2&&b.position.y>-0.3){
-      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.30;   /* only a pin lying flat may settle */
+      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.40;   /* only a pin lying flat (or flat on the pile) may settle */
       const hsp=Math.hypot(b.velocity.x,b.velocity.z);
       b.force.y-=b.mass*9.82*(hsp>1.0?0.15:1.0);      /* flying pins carry into the corners; slow ones slam down */
-      if(tilt>0.30){ /* still leaning: keep it rotating over toward the lean */
+      if(tilt>0.40){ /* still leaning: keep it rotating over toward the lean */
         const dl=Math.hypot(upTmp.x,upTmp.z)||1e-6,nx=upTmp.z/dl,nz=-upTmp.x/dl;
         const wn=b.angularVelocity.x*nx+b.angularVelocity.z*nz;
         if(wn<3.0){b.angularVelocity.x+=nx*9/60;b.angularVelocity.z+=nz*9/60;}
         b.angularDamping=0.002;
         /* wedged against a pin or a wall and not rotating? hop it loose in the lean direction */
         if(b.angularVelocity.length()<0.9&&b.velocity.length()<0.25){pn.stuckT=(pn.stuckT||0)+1/60;
-          if(pn.stuckT>0.35){pn.stuckT=0;b.velocity.x+=upTmp.x/dl*0.9;b.velocity.z+=upTmp.z/dl*0.9;b.velocity.y+=0.7;b.angularVelocity.x+=nx*4;b.angularVelocity.z+=nz*4;}}
+          if(pn.stuckT>0.3){pn.stuckT=0;pn.hops=(pn.hops||0)+1;
+            /* first hop along the lean, later hops back toward the middle of the deck so a wall can't hold it */
+            const tw=pn.hops>1?1:0,tx=-Math.sign(b.position.x)*0.8*tw+upTmp.x/dl*(1-tw)*0.9,tz=0.7*tw+upTmp.z/dl*(1-tw)*0.9;
+            b.velocity.x+=tx;b.velocity.z+=tz;b.velocity.y+=0.9;b.angularVelocity.x+=nx*5;b.angularVelocity.z+=nz*5;
+            if(pn.leanT>1.5){b.velocity.z-=1.4;b.velocity.y+=0.6;b.angularVelocity.x-=4;}   /* resting on the pile too long: shove it off toward the pit */
+          }}
         else pn.stuckT=0;
       }
     }else if(b.sleepState!==CANNON.Body.SLEEPING){
@@ -2410,6 +2416,7 @@ function mirror(){
 function settled(){
   if(ballBody&&!S.rest)return false;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
+    if(pn.leanT>0&&pn.leanT<3.0)return false;   /* a pin still going over is not settled */
     if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.15||b.angularVelocity.length()>0.7))return false;}
   return true;
 }
