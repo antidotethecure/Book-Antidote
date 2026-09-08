@@ -2064,7 +2064,7 @@ const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=n
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0.03,restitution:0.08}));
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.38,restitution:0.66})); /* a 14 kg ball vs 0.6 kg pins: the pins get launched */
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0.04,restitution:0.08}));
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.012,restitution:0.5})); /* pins slip off each other, nothing leans */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.012,restitution:0.66})); /* pins slip off each other, nothing leans */
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.02,restitution:0.5}));
 function sbox(hx,hy,hz,x,y,z,mat){const b=new CANNON.Body({mass:0,material:mat||mLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)});world.addBody(b);return b;}
 sbox(HALF,0.05,10.475,0,-0.05,-7.625);                  /* lane deck (front 2.85, back -18.10) */
@@ -2090,7 +2090,7 @@ let lastPinC=0;
 function makePin(i,fi){
   const l=LAYOUT[i];
   const x=l[0]*PDXm+(Math.random()-0.5)*0.012,z=Z_HEAD-l[1]*PDZm+(Math.random()-0.5)*0.008;
-  const body=new CANNON.Body({mass:0.62,material:mPin,shape:pinShape,position:new CANNON.Vec3(x,0.1905,z)});
+  const body=new CANNON.Body({mass:0.67,material:mPin,shape:pinShape,position:new CANNON.Vec3(x,0.1905,z)});
   body.__spot={x:x,z:z};
   body.allowSleep=true;body.sleepSpeedLimit=0.18;body.sleepTimeLimit=0.45;body.angularDamping=0.008;body.linearDamping=0.008;
   body.__pin=true;world.addBody(body);
@@ -2283,7 +2283,7 @@ let ballBody=null,ballMesh=null,ballShadow=null;
 const S={hit:false,gutter:false,done:false,rest:false,pit:0,age:0,rot:0,spin:0,shakeOut:0};
 let lastCrash=0,lastRoll=0;
 function removeBall(){if(ballBody){world.removeBody(ballBody);ballBody=null;}if(ballMesh){scene.remove(ballMesh);ballMesh=null;}if(ballShadow){scene.remove(ballShadow);ballShadow=null;}
-  S.hit=false;S.gutter=false;S.done=false;S.rest=false;S.pit=0;S.age=0;S.rot=0;}
+  S.hit=false;S.gutter=false;S.done=false;S.rest=false;S.pit=0;S.age=0;S.rot=0;S.pocket=false;}
 function throwBall(ox,spin,power,charged){
   removeBall();
   S.spin=spin;S.charged=!!charged;
@@ -2299,7 +2299,7 @@ function throwBall(ox,spin,power,charged){
     if(e.body.__laneFood){const f=foods.find(ff=>ff.body===e.body);
       if(f&&!f.counted){f.counted=true;bonusEvents.push({pts:f.pts,e:f.e,ox:e.body.position.x*OLDX,oy:zToOld(e.body.position.z)});}}
     else if(e.body.__pin){const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
-      const pb=e.body,dxp=pb.position.x-ballBody.position.x,ch=(S.charged?1.5:1)*(S.flat?0.32:1)*(S.hooked?1.65:1)*1.55;   /* rev-driven pin action: fan the rack outward */
+      const pb=e.body,dxp=pb.position.x-ballBody.position.x,ch=(S.charged?1.5:1)*(S.flat?0.32:1)*(S.hooked?1.65:1)*(S.pocket?1.35:1)*1.55;   /* rev-driven pin action: fan the rack outward */
       pb.wakeUp();
       const rattled=pb.__touched||pb.angularVelocity.length()>0.7||pb.velocity.length()>0.35;
       pb.__touched=true;
@@ -2316,7 +2316,9 @@ function throwBall(ox,spin,power,charged){
       }
       if(!S.hit){S.hit=true;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
         if(S.flat){ballBody.velocity.x+=(Math.random()<0.5?-1:1)*(0.9+Math.random()*0.6);ballBody.velocity.z*=0.6;}
-        {const bp=ballBody.position,shk=(S.charged?0.30:0.08)*(S.flat?0.25:1)*(S.hooked?1.5:1)*1.45; /* first contact rattles the rack; charged shots detonate it */
+        {const bp=ballBody.position;
+          S.pocket=S.hooked&&!S.flat&&Math.abs(Math.abs(bp.x)-0.11)<0.10&&(bp.x*S.spin>0);   /* entered the pocket on the hook side */
+          const shk=(S.charged?0.30:0.08)*(S.flat?0.25:1)*(S.hooked?1.5:1)*(S.pocket?1.9:1)*1.45; /* first contact rattles the rack; charged shots detonate it */
           for(const pn2 of pins){if(!pn2||!pn2.alive)continue;const q2=pn2.body.position;
             const ddx=q2.x-bp.x,ddz=q2.z-bp.z,dd=Math.max(0.35,Math.hypot(ddx,ddz));
             pn2.body.wakeUp();pn2.body.velocity.x+=ddx/dd*(shk/dd);pn2.body.velocity.z+=ddz/dd*(shk/dd)-(S.charged?0.18:0.08);
@@ -2363,17 +2365,24 @@ const upTmp=new CANNON.Vec3();
 function pinWeight(){ /* once a pin is past ~20 degrees it is going down, full stop: it never sleeps, never props on a neighbour, and it gets weight plus a push in the direction it is leaning until it is flat */
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
     b.quaternion.vmult(UPV,upTmp);const tilt=upTmp.y;
+    pn.leanT=(tilt<0.94&&tilt>0.40&&b.position.y>-0.3)?(pn.leanT||0)+1/60:0;
     if(tilt<0.94&&tilt>-0.2&&b.position.y>-0.3){
-      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.30;   /* only a pin lying flat may settle */
-      b.force.y-=b.mass*9.82*1.0;
-      if(tilt>0.30){ /* still leaning: keep it rotating over toward the lean */
+      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.40;   /* only a pin lying flat (or flat on the pile) may settle */
+      const hsp=Math.hypot(b.velocity.x,b.velocity.z);
+      b.force.y-=b.mass*9.82*(hsp>1.0?0.15:1.0);      /* flying pins carry into the corners; slow ones slam down */
+      if(tilt>0.40){ /* still leaning: keep it rotating over toward the lean */
         const dl=Math.hypot(upTmp.x,upTmp.z)||1e-6,nx=upTmp.z/dl,nz=-upTmp.x/dl;
         const wn=b.angularVelocity.x*nx+b.angularVelocity.z*nz;
         if(wn<3.0){b.angularVelocity.x+=nx*9/60;b.angularVelocity.z+=nz*9/60;}
         b.angularDamping=0.002;
         /* wedged against a pin or a wall and not rotating? hop it loose in the lean direction */
         if(b.angularVelocity.length()<0.9&&b.velocity.length()<0.25){pn.stuckT=(pn.stuckT||0)+1/60;
-          if(pn.stuckT>0.35){pn.stuckT=0;b.velocity.x+=upTmp.x/dl*0.9;b.velocity.z+=upTmp.z/dl*0.9;b.velocity.y+=0.7;b.angularVelocity.x+=nx*4;b.angularVelocity.z+=nz*4;}}
+          if(pn.stuckT>0.3){pn.stuckT=0;pn.hops=(pn.hops||0)+1;
+            /* first hop along the lean, later hops back toward the middle of the deck so a wall can't hold it */
+            const tw=pn.hops>1?1:0,tx=-Math.sign(b.position.x)*0.8*tw+upTmp.x/dl*(1-tw)*0.9,tz=0.7*tw+upTmp.z/dl*(1-tw)*0.9;
+            b.velocity.x+=tx;b.velocity.z+=tz;b.velocity.y+=0.9;b.angularVelocity.x+=nx*5;b.angularVelocity.z+=nz*5;
+            if(pn.leanT>1.5){b.velocity.z-=1.4;b.velocity.y+=0.6;b.angularVelocity.x-=4;}   /* resting on the pile too long: shove it off toward the pit */
+          }}
         else pn.stuckT=0;
       }
     }else if(b.sleepState!==CANNON.Body.SLEEPING){
@@ -2407,6 +2416,7 @@ function mirror(){
 function settled(){
   if(ballBody&&!S.rest)return false;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
+    if(pn.leanT>0&&pn.leanT<3.0)return false;   /* a pin still going over is not settled */
     if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.15||b.angularVelocity.length()>0.7))return false;}
   return true;
 }
