@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boo's Philly Cheesesteaks — Sample Menu Page</title>
+<title>Kava Hana — Sample Menu Page</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="An unofficial sample menu page designed by Antidote for Boo's Philly Cheesesteaks. Not affiliated with or endorsed by Boo's Philly Cheesesteaks.">
+<meta name="description" content="An unofficial sample menu page designed by Antidote for Kava Hana. Not affiliated with or endorsed by Kava Hana.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Karla:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Karla:wght@400;500&display=swap">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
 
@@ -34,7 +34,7 @@
 
   :root{
     --ink:#f6f4ef; --ground:#07070a; --surface:#101016; --surface-2:#16161e;
-    --neon:#0a80d2; --muted:#9a97a8; --line:#23232e;
+    --neon:#0046d2; --muted:#9a97a8; --line:#23232e;
   }
   html{-webkit-text-size-adjust:100%}
   body{
@@ -76,9 +76,9 @@
     text-shadow:0 0 10px color-mix(in srgb,var(--neon) 70%,transparent);
   }
   h1{
-    font-family:'Anton', Impact, sans-serif;font-weight:400;
+    font-family:'Archivo', system-ui, sans-serif;font-weight:700;
     font-size:clamp(1.5rem,5.6vw,2.1rem);
-    line-height:1;letter-spacing:0.01em;text-wrap:balance;
+    line-height:1;letter-spacing:-0.02em;text-wrap:balance;
     color:color-mix(in srgb,var(--neon) 24%,#fff);
     text-shadow:
       0 0 2px #fff,
@@ -138,8 +138,8 @@
     box-shadow:0 0 18px -2px var(--neon);transform:scale(1.04);
   }
   .dish{
-    font-family:'Anton', Impact, sans-serif;font-weight:400;
-    font-size:1.02rem;line-height:1.22;letter-spacing:0.01em;flex:1;
+    font-family:'Archivo', system-ui, sans-serif;font-weight:600;
+    font-size:1.02rem;line-height:1.22;letter-spacing:-0.02em;flex:1;
     text-wrap:balance;transition:color .2s ease,text-shadow .2s ease;
   }
   li:hover .dish,li.open .dish,.item:focus-visible .dish{
@@ -187,8 +187,8 @@
     box-shadow:0 0 34px -12px var(--neon);
   }
   .cta strong{
-    display:block;font-family:'Anton', Impact, sans-serif;font-weight:700;font-size:1.28rem;
-    margin-bottom:9px;letter-spacing:0.01em;color:#fff;
+    display:block;font-family:'Archivo', system-ui, sans-serif;font-weight:700;font-size:1.28rem;
+    margin-bottom:9px;letter-spacing:-0.02em;color:#fff;
     text-shadow:0 0 10px var(--neon),0 0 30px color-mix(in srgb,var(--neon) 60%,transparent);
   }
   .cta p{color:var(--muted);font-size:.96rem;line-height:1.55;text-wrap:balance}
@@ -234,8 +234,8 @@
   .slide img{width:100%;height:172px;object-fit:cover;display:block}
   .slide .cap{padding:11px 13px 13px}
   .slide .nm{
-    font-family:'Anton', Impact, sans-serif;font-weight:400;
-    font-size:.92rem;line-height:1.25;letter-spacing:0.01em;
+    font-family:'Archivo', system-ui, sans-serif;font-weight:600;
+    font-size:.92rem;line-height:1.25;letter-spacing:-0.02em;
     display:block;text-wrap:balance;
   }
   .slide .pr{
@@ -262,8 +262,8 @@
     background:var(--surface);border:1px solid var(--line);
   }
   .contact h2{
-    font-family:'Anton', Impact, sans-serif;font-weight:400;
-    font-size:1.5rem;letter-spacing:0.01em;text-align:center;color:#fff;
+    font-family:'Archivo', system-ui, sans-serif;font-weight:700;
+    font-size:1.5rem;letter-spacing:-0.02em;text-align:center;color:#fff;
     text-shadow:0 0 8px var(--neon),0 0 26px color-mix(in srgb,var(--neon) 60%,transparent);
     margin-bottom:20px;
   }
@@ -316,13 +316,13 @@
 <div class="wrap">
 
   <header class="hero">
-    <div class="hero-img"><img src="img/4ef8874f1d99.jpg" alt="" aria-hidden="true"></div>
+    <div class="hero-img"><img src="img/f893b14dab9b.png" alt="" aria-hidden="true"></div>
     <div class="hero-inner">
-      <img class="logo plate" src="img/0969b882cc5d.png" alt="Boo's Philly Cheesesteaks logo">
+      <img class="logo" src="img/61476684d9ff.png" alt="Kava Hana logo">
       
-      <h1>Boo's Philly Cheesesteaks</h1>
+      <h1>Kava Hana</h1>
       <div class="tube"></div>
-      
+      <p class="tagline">Kavahana is America’s most trusted Kava Nectar brand and LA’s 1st kava nectar bar. Enjoy Hawaiian coffee, matcha, and relaxing kava drinks in Santa Monica.</p>
     </div>
   </header>
 
@@ -330,139 +330,88 @@
 
   <main>
     <p class="section-label">Selected Menu</p>
-    <p class="hint">Hover any dish for the full shot, or tap to open it</p>
+    
     <ul id="menu">
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/2db230da975c.jpg" data-name="Boo's Cheesesteak Hoagie">
-          <img class="thumb" loading="lazy" src="img/2db230da975c.jpg" alt="Boo's Cheesesteak Hoagie">
-          <span class="dish">Boo's Cheesesteak Hoagie</span>
+      <li>
+        <button class="item" type="button" data-name="SHOP KAVA NECTAR" aria-disabled="true">
+          
+          <span class="dish">SHOP KAVA NECTAR</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/2db230da975c.jpg" alt="Boo's Cheesesteak Hoagie"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/17be0b8f2dd2.jpg" data-name="Boo's Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/17be0b8f2dd2.jpg" alt="Boo's Cheesesteak">
-          <span class="dish">Boo's Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="VISIT US" aria-disabled="true">
+          
+          <span class="dish">VISIT US</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/17be0b8f2dd2.jpg" alt="Boo's Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/30a0f5133f97.jpg" data-name="Boo's Mushroom Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/30a0f5133f97.jpg" alt="Boo's Mushroom Cheesesteak">
-          <span class="dish">Boo's Mushroom Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="ORDER TAKEOUT" aria-disabled="true">
+          
+          <span class="dish">ORDER TAKEOUT</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/30a0f5133f97.jpg" alt="Boo's Mushroom Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/9973acef41c5.jpg" data-name="Boo's Mushroom Pepper Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/9973acef41c5.jpg" alt="Boo's Mushroom Pepper Cheesesteak">
-          <span class="dish">Boo's Mushroom Pepper Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="What is kava nectar?" aria-disabled="true">
+          
+          <span class="dish">What is kava nectar?</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/9973acef41c5.jpg" alt="Boo's Mushroom Pepper Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/bf261b0b1ac9.jpg" data-name="Boo's Sweet Pepper Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/bf261b0b1ac9.jpg" alt="Boo's Sweet Pepper Cheesesteak">
-          <span class="dish">Boo's Sweet Pepper Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="Our Catering Services" aria-disabled="true">
+          
+          <span class="dish">Our Catering Services</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/bf261b0b1ac9.jpg" alt="Boo's Sweet Pepper Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/a9d6b4864ec3.jpg" data-name="Chicken Cheesesteak Hoagie">
-          <img class="thumb" loading="lazy" src="img/a9d6b4864ec3.jpg" alt="Chicken Cheesesteak Hoagie">
-          <span class="dish">Chicken Cheesesteak Hoagie</span>
+      <li>
+        <button class="item" type="button" data-name="Weddings and welcome parties" aria-disabled="true">
+          
+          <span class="dish">Weddings and welcome parties</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/a9d6b4864ec3.jpg" alt="Chicken Cheesesteak Hoagie"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/8b183d84d123.jpg" data-name="Chicken Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/8b183d84d123.jpg" alt="Chicken Cheesesteak">
-          <span class="dish">Chicken Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="Corporate events and offsites" aria-disabled="true">
+          
+          <span class="dish">Corporate events and offsites</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/8b183d84d123.jpg" alt="Chicken Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/e2d42cacf285.jpg" data-name="Chicken Mushroom Pepper Cheesesteak">
-          <img class="thumb" loading="lazy" src="img/e2d42cacf285.jpg" alt="Chicken Mushroom Pepper Cheesesteak">
-          <span class="dish">Chicken Mushroom Pepper Cheesesteak</span>
+      <li>
+        <button class="item" type="button" data-name="Brand activations and launches" aria-disabled="true">
+          
+          <span class="dish">Brand activations and launches</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/e2d42cacf285.jpg" alt="Chicken Mushroom Pepper Cheesesteak"></div>
       </li>
-      <li class="has-shot">
-        <button class="item" type="button" data-img="img/45b5d30e83d9.jpg" data-name="Chicken Mushroom">
-          <img class="thumb" loading="lazy" src="img/45b5d30e83d9.jpg" alt="Chicken Mushroom">
-          <span class="dish">Chicken Mushroom</span>
+      <li>
+        <button class="item" type="button" data-name="Learn more about Kava Nectar and Kava Plants" aria-disabled="true">
+          
+          <span class="dish">Learn more about Kava Nectar and Kava Plants</span>
         </button>
-        <div class="shot"><img loading="lazy" src="img/45b5d30e83d9.jpg" alt="Chicken Mushroom"></div>
       </li>
     </ul>
 
-    <div class="slider-wrap">
-      <p class="section-label" style="margin-top:34px">Straight Off The Grill</p>
-      <button class="snav prev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button class="snav next" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-      <div class="slider" id="slider">
-        <figure class="slide">
-          <img loading="lazy" src="img/2db230da975c.jpg" alt="Boo's Cheesesteak Hoagie">
-          <figcaption class="cap"><span class="nm">Boo's Cheesesteak Hoagie</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/17be0b8f2dd2.jpg" alt="Boo's Cheesesteak">
-          <figcaption class="cap"><span class="nm">Boo's Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/30a0f5133f97.jpg" alt="Boo's Mushroom Cheesesteak">
-          <figcaption class="cap"><span class="nm">Boo's Mushroom Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/9973acef41c5.jpg" alt="Boo's Mushroom Pepper Cheesesteak">
-          <figcaption class="cap"><span class="nm">Boo's Mushroom Pepper Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/bf261b0b1ac9.jpg" alt="Boo's Sweet Pepper Cheesesteak">
-          <figcaption class="cap"><span class="nm">Boo's Sweet Pepper Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/a9d6b4864ec3.jpg" alt="Chicken Cheesesteak Hoagie">
-          <figcaption class="cap"><span class="nm">Chicken Cheesesteak Hoagie</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/8b183d84d123.jpg" alt="Chicken Cheesesteak">
-          <figcaption class="cap"><span class="nm">Chicken Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/e2d42cacf285.jpg" alt="Chicken Mushroom Pepper Cheesesteak">
-          <figcaption class="cap"><span class="nm">Chicken Mushroom Pepper Cheesesteak</span></figcaption>
-        </figure>
-        <figure class="slide">
-          <img loading="lazy" src="img/45b5d30e83d9.jpg" alt="Chicken Mushroom">
-          <figcaption class="cap"><span class="nm">Chicken Mushroom</span></figcaption>
-        </figure>
-      </div>
-    </div>
+    
 
     <div class="cta">
       <strong>This is a sample.</strong>
       <p>A full site would carry your whole menu, your photography, hours and ordering,
-      built to look like Boo's Philly Cheesesteaks and nothing else.</p>
+      built to look like Kava Hana and nothing else.</p>
     </div>
   </main>
 
   <section class="contact">
     <h2>Contact Us</h2>
     <div class="rows">
-      <div class="row">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
-        <span class="val"><span class="lab">Locations</span>4501 Fountain Ave.<br>3377 Wilshire Blvd. #103 Los Angeles, CA 90010</span>
-      </div>
       
       <div class="row">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg></span>
+        <span class="val"><span class="lab">Call</span><a href="tel:+13103108970">+13103108970</a><br><a href="tel:3233662069">323-366-2069</a></span>
+      </div>
+      <div class="row">
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg></span>
-        <span class="val"><span class="lab">Follow</span><a href="https://instagram.com/boosphilly" rel="noopener">@boosphilly</a></span>
+        <span class="val"><span class="lab">Follow</span><a href="https://instagram.com/kavahanabar" rel="noopener">@kavahana</a></span>
       </div>
       <div class="row">
         <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>
-        <span class="val"><span class="lab">Online</span><a href="https://www.boosphilly.com/" rel="noopener">www.boosphilly.com</a></span>
+        <span class="val"><span class="lab">Online</span><a href="https://kavahana.com/" rel="noopener">kavahana.com</a></span>
       </div>
     </div>
   </section>
@@ -472,7 +421,7 @@
     <p>Sample designed by Antidote —
       <a href="https://AntidoteTheFoodie.com">AntidoteTheFoodie.com</a></p>
     <p class="disclose">Unofficial concept page. Not affiliated with or endorsed by
-      Boo's Philly Cheesesteaks. Dish names and photographs are from their own published menu.</p>
+      Kava Hana. Dish names and photographs are from their own published menu.</p>
   </footer>
 
 </div>
@@ -503,35 +452,33 @@
   }
   size();
   addEventListener('resize', size, { passive: true });
-  var NEON = '#0a80d2';
+  var NEON = '#0046d2';
   var start = performance.now();
   var raf = 0;
   function stop(){ cancelAnimationFrame(raf); finish(); }
 
-  var pops = [];
+  var puffs = [];
   function frame(now){
     var e = now - start;
     ctx.clearRect(0,0,W,H);
-    if (e < 2000){
-      for (var n=0;n<4;n++){
-        var ox=Math.random()*W, oy=H*(0.45+Math.random()*0.55);
-        for (var k=0;k<5;k++){
-          pops.push({x:ox,y:oy,vx:(Math.random()-0.5)*5.5*dpr,vy:-(1+Math.random()*4)*dpr,
-                     r:(0.9+Math.random()*1.9)*dpr,life:1});
-        }
-      }
+    if (e < 2200 && Math.random()<0.85){
+      puffs.push({x:W*(0.2+Math.random()*0.6), y:H*1.02,
+                  r:(24+Math.random()*46)*dpr, vy:-(0.5+Math.random()*1.2)*dpr,
+                  drift:(Math.random()-0.5)*0.6*dpr, life:1});
     }
-    for (var i=pops.length-1;i>=0;i--){
-      var p=pops[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.16*dpr; p.life-=0.022;
-      if (p.life<=0){ pops.splice(i,1); continue; }
-      ctx.globalAlpha=Math.max(0,p.life);
-      ctx.fillStyle= p.life>0.7 ? '#fff' : NEON;
-      ctx.shadowColor=NEON; ctx.shadowBlur=12*dpr;
+    for (var i=puffs.length-1;i>=0;i--){
+      var p=puffs[i];
+      p.y+=p.vy; p.x+=p.drift + Math.sin((p.y+e)*0.002)*0.9*dpr;
+      p.r*=1.006; p.life-=0.0065;
+      if (p.life<=0){ puffs.splice(i,1); continue; }
+      var g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+      g.addColorStop(0,'rgba(255,255,255,'+(0.16*p.life)+')');
+      g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=g;
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
     }
-    ctx.globalAlpha=1; ctx.shadowBlur=0;
-    if (e > 800) reveal();
-    if (e > 2900) return stop();
+    if (e > 900) reveal();
+    if (e > 3100) return stop();
     raf = requestAnimationFrame(frame);
   }
   raf = requestAnimationFrame(frame);
