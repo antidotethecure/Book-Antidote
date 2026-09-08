@@ -1,4 +1,5 @@
 
+<meta charset="utf-8">
 <title>Antidote Drizzle Bowl</title>
 <style>
   html,body{margin:0;padding:0;width:100%;height:100%;background:#1a1214;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:Verdana,sans-serif}
@@ -662,12 +663,24 @@ function loadBoard(){
   function fillRows(ol,rows,empty){ol.innerHTML='';
     if(!rows||!rows.length){var li0=document.createElement('li');li0.className='lb-empty';li0.textContent=empty;ol.appendChild(li0);return;}
     rows.slice(0,10).forEach(function(r){var li=document.createElement('li');var a=document.createElement('span');a.textContent=String(r.name||'').slice(0,12);var b=document.createElement('span');b.textContent=String(r.score);li.appendChild(a);li.appendChild(b);ol.appendChild(li);});}
+  var cache={week:null,all:null};
+  try{var cj=JSON.parse(localStorage.getItem('adb_board_cache')||'null');if(cj&&cj.wk===weekKey()){cache.week=cj.week;cache.all=cj.all;}}catch(e){}
+  function fetchT(url,ms){return new Promise(function(res,rej){var done=false,t=setTimeout(function(){if(!done){done=true;rej(new Error('timeout'));}},ms);
+    fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){if(!done){done=true;clearTimeout(t);res(j);}}).catch(function(e){if(!done){done=true;clearTimeout(t);rej(e);}});});}
+  function loadBoards(ms){if(!LEADERBOARD_URL)return Promise.reject(new Error('no url'));
+    return Promise.all([fetchT(LEADERBOARD_URL+'?week='+weekKey(),ms),fetchT(LEADERBOARD_URL,ms)]).then(function(r){cache.week=r[0];cache.all=r[1];
+      try{localStorage.setItem('adb_board_cache',JSON.stringify({wk:weekKey(),week:r[0],all:r[1]}));}catch(e){}return r;});}
+  /* warm the board as soon as the game opens, so the tap is instant even on a cold server */
+  setTimeout(function(){loadBoards(15000).catch(function(){setTimeout(function(){loadBoards(20000).catch(function(){});},4000);});},800);
+  function paint(){var wl=document.getElementById('lbWeekL'),al=document.getElementById('lbAllL');
+    if(cache.week||cache.all){fillRows(wl,mergeBoard(cache.week||[]),'No scores yet this week \u2014 be the first!');fillRows(al,cache.all||[],'No scores yet.');return true;}return false;}
   function openBoard(){ov.hidden=false;document.getElementById('lbWeek').textContent=weekLabel()+' \u00b7 resets Monday';
-    var wl=document.getElementById('lbWeekL'),al=document.getElementById('lbAllL');fillRows(wl,null,'Loading\u2026');fillRows(al,null,'Loading\u2026');
-    var loc=mergeBoard([]);
-    if(!LEADERBOARD_URL){fillRows(wl,loc,'No scores yet this week.');fillRows(al,[],'No scores yet.');return;}
-    fetch(LEADERBOARD_URL+'?week='+weekKey()).then(function(r){return r.json();}).then(function(rows){fillRows(wl,mergeBoard(rows),'No scores yet this week \u2014 be the first!');}).catch(function(){fillRows(wl,loc,'Could not reach the board \u2014 check your connection.');});
-    fetch(LEADERBOARD_URL).then(function(r){return r.json();}).then(function(rows){fillRows(al,rows,'No scores yet.');}).catch(function(){fillRows(al,loc,'Could not reach the board \u2014 check your connection.');});}
+    var wl=document.getElementById('lbWeekL'),al=document.getElementById('lbAllL');
+    if(!paint()){fillRows(wl,null,'Loading\u2026');fillRows(al,null,'Loading\u2026');}
+    if(!LEADERBOARD_URL){fillRows(wl,mergeBoard([]),'No scores yet this week.');fillRows(al,[],'No scores yet.');return;}
+    var tries=0;(function go(){tries++;loadBoards(tries===1?12000:20000).then(function(){paint();}).catch(function(){
+      if(tries<3){fillRows(wl,null,'Waking the scoreboard\u2026 retrying');setTimeout(go,2500);}
+      else if(!paint()){fillRows(wl,mergeBoard([]),'Could not reach the board \u2014 showing this device only. Try the standings page below.');fillRows(al,[],'Could not reach the board.');}});})();}
   btn.addEventListener('click',function(e){e.stopPropagation();openBoard();});
   document.getElementById('lbClose').addEventListener('click',function(e){e.stopPropagation();ov.hidden=true;});
   ov.addEventListener('click',function(e){if(e.target===ov)ov.hidden=true;});
@@ -1264,7 +1277,7 @@ function drawBottom(){
   var vg=ctx.createRadialGradient(W/2,BOT.y+230,150,W/2,BOT.y+230,430);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.36)');ctx.fillStyle=vg;ctx.fillRect(0,BOT.y,W,H-BOT.y);
   if(g.phase==='spin'){
     var mx=W/2,my=BOT.y+22;ctx.fillStyle='rgba(10,6,7,.75)';rr(mx-110,my-12,220,24,12);ctx.fill();ctx.strokeStyle='#f2a81d';ctx.lineWidth=1.5;ctx.stroke();
-    txt('◀ spin',mx-80,my,'bold 10px Verdana,sans-serif','#fbe9c4');txt('spin ▶',mx+80,my,'bold 10px Verdana,sans-serif','#fbe9c4');
+    txt('\u25C0 spin',mx-80,my,'bold 10px Verdana,sans-serif','#fbe9c4');txt('spin \u25B6',mx+80,my,'bold 10px Verdana,sans-serif','#fbe9c4');
     ctx.fillStyle='#5a3a1a';ctx.fillRect(mx-1,my-8,2,16);
     ctx.save();ctx.translate(mx+g.spin*95,my);ctx.fillStyle='#f2a81d';ctx.shadowColor='#f2a81d';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(0,0,8,0,7);ctx.fill();ctx.restore();
   }else if(g.phase==='power'){drawPowerBar();}
@@ -2058,18 +2071,47 @@ function ambient(dt,gs){
   drawBillboard(ambT);drawBTV(ambT);
 }
 /* ---- physics world ---- */
+/* ===== REAL BOWLING PHYSICS =====
+   6.8 kg ball, 1.53 kg pins with a low centre of mass and a pin-shaped compound collider,
+   separate materials for ball / pin / lane / gutter, 120 Hz stepping.
+   The engine's own contact friction is not Coulomb-limited (it grabs like glue), so lane and deck
+   friction are computed by hand as proper mu*N Coulomb friction: the ball skids on the oil, then
+   rolls and hooks on the dry back end, and pins slide across the deck instead of stopping dead.
+   Nothing about the pins is scripted: no kicks, no random spin, no forced topples. */
+const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,deckMu:0.09,spinDrag:0.8,hookK:22,skid:0.45};
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
-world.allowSleep=true;world.solver.iterations=14;
-const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=new CANNON.Material('pin'),mKick=new CANNON.Material('kick');
-world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0.03,restitution:0.08}));
-world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.38,restitution:0.66})); /* a 14 kg ball vs 0.6 kg pins: the pins get launched */
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0.04,restitution:0.08}));
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.012,restitution:0.66})); /* pins slip off each other, nothing leans */
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.02,restitution:0.5}));
+world.allowSleep=true;world.solver.iterations=20;
+world.defaultContactMaterial.contactEquationStiffness=1e8;world.defaultContactMaterial.contactEquationRelaxation=3;
+const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=new CANNON.Material('pin'),mKick=new CANNON.Material('kick'),mGutter=new CANNON.Material('gutter');
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0,restitution:0.05}));            /* friction done by hand (oil / dry) */
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mGutter,{friction:0.25,restitution:0.1}));
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.02,restitution:0.55,contactEquationStiffness:1e8})); /* polished ball on coated pins: low friction, so revs do not scrub the carry */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0,restitution:0.10}));             /* deck friction done by hand */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mGutter,{friction:0.1,restitution:0.1}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.01,restitution:0.85,contactEquationStiffness:1e8})); /* plastic-coated maple: slick and lively */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.15,restitution:0.35}));
+const G9=9.82;
+/* Coulomb friction at a rolling ball's contact patch: slip = v + w x r, impulse limited to mu*m*g*dt or to what stops the slip */
+function ballFriction(b,dt,mu){
+  if(b.position.y>BR+0.02)return;
+  const v=b.velocity,w=b.angularVelocity,ry=-BR;
+  const sx=v.x-w.z*ry,sz=v.z+w.x*ry;const sl=Math.hypot(sx,sz);if(sl<1e-6)return;
+  const J=Math.min(mu*b.mass*G9*dt,sl*b.mass*2/7);const ix=-sx/sl*J,iz=-sz/sl*J;
+  v.x+=ix/b.mass;v.z+=iz/b.mass;
+  const Iinv=1/(0.4*b.mass*BR*BR);w.x+=(ry*iz)*Iinv;w.z+=(-ry*ix)*Iinv;
+}
+function laneMu(z){return z>PHYS.oilEnd?PHYS.oilMu:PHYS.dryMu;}
+/* Coulomb friction for a pin touching the deck: slows its slide, bleeds its spin, nothing more */
+function deckFriction(p,dt){
+  p.updateAABB();if(p.aabb.lowerBound.y>0.012)return;
+  const v=p.velocity,sp=Math.hypot(v.x,v.z);
+  if(sp>1e-4){const J=Math.min(PHYS.deckMu*p.mass*G9*dt,sp*p.mass);v.x-=v.x/sp*J/p.mass;v.z-=v.z/sp*J/p.mass;}
+  p.angularVelocity.scale(Math.max(0,1-PHYS.spinDrag*dt),p.angularVelocity);
+}
 function sbox(hx,hy,hz,x,y,z,mat){const b=new CANNON.Body({mass:0,material:mat||mLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)});world.addBody(b);return b;}
 sbox(HALF,0.05,10.475,0,-0.05,-7.625);                  /* lane deck (front 2.85, back -18.10) */
-sbox(0.12,0.02,10.475,-0.80,-0.17,-7.625);sbox(0.12,0.02,10.475,0.80,-0.17,-7.625); /* gutter floors */
-sbox(0.03,0.12,10.475,-0.945,-0.06,-7.625);sbox(0.03,0.12,10.475,0.945,-0.06,-7.625);   /* gutter outer walls */
+sbox(0.12,0.02,10.475,-0.80,-0.17,-7.625,mGutter);sbox(0.12,0.02,10.475,0.80,-0.17,-7.625,mGutter); /* gutter floors */
+sbox(0.03,0.12,10.475,-0.945,-0.06,-7.625,mGutter);sbox(0.03,0.12,10.475,0.945,-0.06,-7.625,mGutter);   /* gutter outer walls */
 sbox(1.3,1.1,0.05,0,0.5,-18.06,mKick); /* rear cushion: pins rebound onto the deck */                        /* pit back wall */
 sbox(1.4,0.05,1.0,0,-0.62,-18.5);                       /* pit floor */
 sbox(6,0.05,6,0,-0.85,-14.5);                           /* catch floor: nothing falls out of the world */
@@ -2081,7 +2123,8 @@ const pinGeo=new THREE.LatheGeometry(pinProfile,24);
 pinGeo.rotateY(Math.PI/2);
 const LAYOUT=[[0,0],[-1,1],[1,1],[-2,2],[0,2],[2,2],[-3,3],[-1,3],[1,3],[3,3]];
 const pinMats={};function pinMat(fi){if(!pinMats[fi]){const f=(A3.foods||[])[fi];pinMats[fi]=new THREE.MeshStandardMaterial({map:pinTexture(f),roughness:0.22,metalness:0.05,emissiveMap:pinE,emissive:new THREE.Color(LEDCOLS[ledCol]),emissiveIntensity:2.2});}return pinMats[fi];}
-const pinShape=new CANNON.Cylinder(0.048,0.065,0.381,10);
+/* compound pin collider: wide base, belly, narrow neck, round head; offsets put the body origin at the real centre of mass */
+function pinShapes(){const CY=PHYS.pinCY;return [[new CANNON.Cylinder(0.052,0.052,0.17,10),0.095-CY],[new CANNON.Cylinder(0.038,0.052,0.07,10),0.215-CY],[new CANNON.Cylinder(0.022,0.030,0.07,10),0.28-CY],[new CANNON.Sphere(0.036),0.338-CY]];}
 const shadowGeo=new THREE.CircleGeometry(0.16,20);shadowGeo.rotateX(-Math.PI/2);
 const shadowMat=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.34,depthWrite:false});
 let pins=[];/* {body,grp,mesh,shadow,alive} */
@@ -2090,16 +2133,17 @@ let lastPinC=0;
 function makePin(i,fi){
   const l=LAYOUT[i];
   const x=l[0]*PDXm+(Math.random()-0.5)*0.012,z=Z_HEAD-l[1]*PDZm+(Math.random()-0.5)*0.008;
-  const body=new CANNON.Body({mass:0.67,material:mPin,shape:pinShape,position:new CANNON.Vec3(x,0.1905,z)});
+  const body=new CANNON.Body({mass:PHYS.pinM,material:mPin,position:new CANNON.Vec3(x,PHYS.pinCY,z)});
+  for(const sh of pinShapes())body.addShape(sh[0],new CANNON.Vec3(0,sh[1],0));
   body.__spot={x:x,z:z};
-  body.allowSleep=true;body.sleepSpeedLimit=0.18;body.sleepTimeLimit=0.45;body.angularDamping=0.008;body.linearDamping=0.008;
+  body.allowSleep=true;body.sleepSpeedLimit=0.15;body.sleepTimeLimit=0.5;body.angularDamping=0.05;body.linearDamping=0.05;
   body.__pin=true;world.addBody(body);
   body.addEventListener('collide',e=>{const nw=performance.now()/1000;const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
     if(e.body.__pin&&iv>1.2&&nw-lastPinC>0.12){lastPinC=nw;(A3.playCrash&&A3.playCrash(Math.min(0.7,0.2+iv/10),1.05+Math.random()*0.25))||(A3.sfx&&A3.sfx.crash());}});
-  const grp=new THREE.Group();const mesh=new M(pinGeo,pinMat(fi));mesh.position.y=-0.1905;grp.add(mesh);scene.add(grp);
+  const grp=new THREE.Group();const mesh=new M(pinGeo,pinMat(fi));mesh.position.y=-PHYS.pinCY;grp.add(mesh);scene.add(grp);
   const sh=new M(shadowGeo,shadowMat.clone());scene.add(sh);
   { /* soft light haze around the engraved channel, no solid ring */
-    const rg=new M(new THREE.TorusGeometry(0.0205,0.011,6,28),new THREE.MeshBasicMaterial({color:LEDCOLS[ledCol],transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));rg.rotation.x=Math.PI/2;rg.position.y=0.258-0.1905;grp.add(rg);pinLeds.push(rg); }
+    const rg=new M(new THREE.TorusGeometry(0.0205,0.011,6,28),new THREE.MeshBasicMaterial({color:LEDCOLS[ledCol],transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));rg.rotation.x=Math.PI/2;rg.position.y=0.258-PHYS.pinCY;grp.add(rg);pinLeds.push(rg); }
   return {body,grp,mesh,shadow:sh,alive:true,fi:fi,wasUp:true};
 }
 const SAUCEC=[0xc0392b,0xf2c037,0xf5efd8,0x6b2a1a,0xe05a1e,0x5a3a1c,0xf2a81d,0x7cb342];
@@ -2287,42 +2331,20 @@ function removeBall(){if(ballBody){world.removeBody(ballBody);ballBody=null;}if(
 function throwBall(ox,spin,power,charged){
   removeBall();
   S.spin=spin;S.charged=!!charged;
-  const wob=Math.max(0,power-0.7)*0.52*(Math.random()<0.5?-1:1)*(0.4+Math.random()*0.6)*(charged?0.35:1);
-  const v=3.75+power*2.85+(charged?0.55:0);
-  S.flat=Math.abs(spin)<0.18&&power>0.6;S.hooked=Math.abs(spin)>=0.3; /* revs carry, flat deflects */
-  ballBody=new CANNON.Body({mass:14,material:mBall,shape:new CANNON.Sphere(BR*1.09),position:new CANNON.Vec3(ox*0.76,BR+0.002,2.30)});
+  const wob=0; /* no faked release wobble: the ball goes exactly where the physics preview says */
+  const v=4.5+power*3.3+(charged?0.6:0);
+  ballBody=new CANNON.Body({mass:PHYS.ballM,material:mBall,shape:new CANNON.Sphere(BR),position:new CANNON.Vec3(ox*0.76,BR+0.002,2.30)});
   ballBody.velocity.set(wob,0,-v);
-  ballBody.angularVelocity.set(-v/BR,-spin*24,0);
-  ballBody.linearDamping=0.004;ballBody.angularDamping=0.006;
+  /* released with less roll than speed (it skids on the oil) and a tilted axis: the side component hooks it once the lane grabs */
+  ballBody.angularVelocity.set(-v/BR*PHYS.skid,0,-spin*PHYS.hookK);
+  ballBody.linearDamping=0.01;ballBody.angularDamping=0.01;
   world.addBody(ballBody);
   ballBody.addEventListener('collide',e=>{const nw=performance.now()/1000;
     if(e.body.__laneFood){const f=foods.find(ff=>ff.body===e.body);
       if(f&&!f.counted){f.counted=true;bonusEvents.push({pts:f.pts,e:f.e,ox:e.body.position.x*OLDX,oy:zToOld(e.body.position.z)});}}
     else if(e.body.__pin){const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
-      const pb=e.body,dxp=pb.position.x-ballBody.position.x,ch=(S.charged?1.5:1)*(S.flat?0.32:1)*(S.hooked?1.65:1)*(S.pocket?1.35:1)*1.55;   /* rev-driven pin action: fan the rack outward */
-      pb.wakeUp();
-      const rattled=pb.__touched||pb.angularVelocity.length()>0.7||pb.velocity.length()>0.35;
-      pb.__touched=true;
-      pb.velocity.x+=(dxp>0?1:-1)*(0.78+Math.random()*0.75)*Math.min(1,iv/5)*ch;
-      pb.velocity.z-=(0.5+Math.random()*0.55)*Math.min(1,iv/5)*ch;
-      pb.angularVelocity.y+=(Math.random()-0.5)*8;
-      /* even a slow roll-in shoves the pin — no statues */
-      if(iv<1.6){pb.velocity.x+=(dxp>0?1:-1)*0.55;pb.velocity.z-=0.5;pb.angularVelocity.x+=(Math.random()-0.5)*2.5;}
-      /* a pin that's already rattling takes the second ball hit badly */
-      if(rattled&&Math.random()<0.55){
-        pb.angularVelocity.x+=2.6+Math.random()*1.6;
-        pb.angularVelocity.z+=(dxp>0?-1:1)*(2.6+Math.random()*1.6);
-        pb.velocity.x+=(dxp>0?1:-1)*0.9;pb.velocity.z-=0.7;
-      }
+      e.body.wakeUp();
       if(!S.hit){S.hit=true;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
-        if(S.flat){ballBody.velocity.x+=(Math.random()<0.5?-1:1)*(0.9+Math.random()*0.6);ballBody.velocity.z*=0.6;}
-        {const bp=ballBody.position;
-          S.pocket=S.hooked&&!S.flat&&Math.abs(Math.abs(bp.x)-0.11)<0.10&&(bp.x*S.spin>0);   /* entered the pocket on the hook side */
-          const shk=(S.charged?0.30:0.08)*(S.flat?0.25:1)*(S.hooked?1.5:1)*(S.pocket?1.9:1)*1.45; /* first contact rattles the rack; charged shots detonate it */
-          for(const pn2 of pins){if(!pn2||!pn2.alive)continue;const q2=pn2.body.position;
-            const ddx=q2.x-bp.x,ddz=q2.z-bp.z,dd=Math.max(0.35,Math.hypot(ddx,ddz));
-            pn2.body.wakeUp();pn2.body.velocity.x+=ddx/dd*(shk/dd);pn2.body.velocity.z+=ddz/dd*(shk/dd)-(S.charged?0.18:0.08);
-            pn2.body.angularVelocity.x+=(Math.random()-0.5)*(S.charged?3:1.4);}}
         if(A3.playCrash){A3.playCrash(1.0,0.98+Math.random()*0.06);setTimeout(function(){A3.playCrash(0.5,1.12);},110);setTimeout(function(){A3.playCrash(0.3,1.22);},260);}
         else if(A3.sfx)A3.sfx.crash();}
       else if(nw-lastCrash>0.07){lastCrash=nw;(A3.playCrash&&A3.playCrash(Math.min(0.85,0.35+iv/9),0.95+Math.random()*0.25))||(A3.sfx&&A3.sfx.crash());
@@ -2337,62 +2359,34 @@ function preStep(){
   if(!ballBody||S.done)return;
   const p=ballBody.position;
   if(!S.gutter&&Math.abs(p.x)>0.70&&p.y<0.09){S.gutter=true;}
-  if(!S.gutter)steerStep(ballBody,S.spin);
+  if(!S.gutter)ballFriction(ballBody,1/PHYS.hz,laneMu(p.z));
 }
-function steerStep(b,spin){
-  const p=b.position;
-  const frac=Math.min(1,-p.z/16);
-  if(p.y<0.13&&frac>0&&frac<1.02){
-    const r=frac<0.35?0:Math.min(1,(frac-0.35)/0.4);
-    const sp=Math.max(2.5,b.velocity.length());
-    b.velocity.x+=spin*1.2*r*r*(6.5/sp)*(1/60);
-    if(b.velocity.x>0.85)b.velocity.x=0.85;if(b.velocity.x<-0.85)b.velocity.x=-0.85;
-  }
-}
+function steerStep(){}
 function postStep(){
   if(!ballBody)return;
   const p=ballBody.position,v=ballBody.velocity;
-  S.age+=1/60;S.rot+=v.length()*(1/60)*9;
+  S.age+=1/PHYS.hz;S.rot+=v.length()*(1/PHYS.hz)*9;
   if(p.z<-17.45||(S.gutter&&p.z<-17.3))S.done=true;
   if(S.age>1.2&&p.z<-16.7&&v.length()<0.4){S.done=true;}
-  if(S.done&&p.y<-0.25)S.pit+=1/60;
+  if(S.done&&p.y<-0.25)S.pit+=1/PHYS.hz;
   if(S.pit>0.45||S.age>9){S.rest=true;S.done=true;}
   if(S.age>3&&v.length()<0.12&&p.z>-15.5){S.done=true;S.rest=true;} /* stalled short (rare) */
   const nw=performance.now()/1000;
   if(!S.done&&!S.gutter&&p.y<0.13&&v.length()>2&&nw-lastRoll>0.85){lastRoll=nw;A3.noise&&A3.noise(0.7,0.04,650);}
 }
 const upTmp=new CANNON.Vec3();
-function pinWeight(){ /* once a pin is past ~20 degrees it is going down, full stop: it never sleeps, never props on a neighbour, and it gets weight plus a push in the direction it is leaning until it is flat */
+function pinStep(){
+  const dt=1/PHYS.hz;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
-    b.quaternion.vmult(UPV,upTmp);const tilt=upTmp.y;
-    pn.leanT=(tilt<0.94&&tilt>0.40&&b.position.y>-0.3)?(pn.leanT||0)+1/60:0;
-    if(tilt<0.94&&tilt>-0.2&&b.position.y>-0.3){
-      if(b.sleepState!==CANNON.Body.AWAKE)b.wakeUp();b.allowSleep=tilt<0.40;   /* only a pin lying flat (or flat on the pile) may settle */
-      const hsp=Math.hypot(b.velocity.x,b.velocity.z);
-      b.force.y-=b.mass*9.82*(hsp>1.0?0.15:1.0);      /* flying pins carry into the corners; slow ones slam down */
-      if(tilt>0.40){ /* still leaning: keep it rotating over toward the lean */
-        const dl=Math.hypot(upTmp.x,upTmp.z)||1e-6,nx=upTmp.z/dl,nz=-upTmp.x/dl;
-        const wn=b.angularVelocity.x*nx+b.angularVelocity.z*nz;
-        if(wn<3.0){b.angularVelocity.x+=nx*9/60;b.angularVelocity.z+=nz*9/60;}
-        b.angularDamping=0.002;
-        /* wedged against a pin or a wall and not rotating? hop it loose in the lean direction */
-        if(b.angularVelocity.length()<0.9&&b.velocity.length()<0.25){pn.stuckT=(pn.stuckT||0)+1/60;
-          if(pn.stuckT>0.3){pn.stuckT=0;pn.hops=(pn.hops||0)+1;
-            /* first hop along the lean, later hops back toward the middle of the deck so a wall can't hold it */
-            const tw=pn.hops>1?1:0,tx=-Math.sign(b.position.x)*0.8*tw+upTmp.x/dl*(1-tw)*0.9,tz=0.7*tw+upTmp.z/dl*(1-tw)*0.9;
-            b.velocity.x+=tx;b.velocity.z+=tz;b.velocity.y+=0.9;b.angularVelocity.x+=nx*5;b.angularVelocity.z+=nz*5;
-            if(pn.leanT>1.5){b.velocity.z-=1.4;b.velocity.y+=0.6;b.angularVelocity.x-=4;}   /* resting on the pile too long: shove it off toward the pit */
-          }}
-        else pn.stuckT=0;
-      }
-    }else if(b.sleepState!==CANNON.Body.SLEEPING){
-      if(!b.allowSleep){b.allowSleep=true;}
-      if(b.position.y>0.24)b.force.y-=b.mass*9.82*0.3;
-    }}
+    if(b.sleepState===CANNON.Body.SLEEPING)continue;
+    b.quaternion.vmult(UPV,upTmp);
+    b.allowSleep=upTmp.y>0.985||upTmp.y<0.35;   /* a pin mid-tip keeps simulating until gravity decides */
+    deckFriction(b,dt);
+  }
 }
 function step(dt){
-  acc+=dt;let n=0;
-  while(acc>=1/60&&n<8){preStep();pinWeight();world.step(1/60);postStep();acc-=1/60;n++;}
+  acc+=dt;let n=0;const h=1/PHYS.hz;
+  while(acc>=h&&n<16){preStep();pinStep();world.step(h);postStep();acc-=h;n++;}
   if(acc>0.1)acc=0.1;
 }
 /* ---- mirrors for the legacy TV / scoring / crowd ---- */
@@ -2409,14 +2403,13 @@ function mirror(){
     const up=b.position.y>-0.05&&Math.abs(b.position.x)<0.70&&b.position.z>-17.55&&a.y>0.94;
     if(pn.wasUp&&!up){pn.wasUp=false;spawnPuddle(b.position.x,b.position.z,pn.fi,false);}
     out.pins.push({up,gone:b.position.y<-0.32||b.position.z<-18.0,ox:Math.max(-1.3,Math.min(1.3,b.position.x*OLDX)),oy:Math.min(1.22,zToOld(b.position.z)),
-      rot:Math.atan2(a.x,Math.max(-0.4,a.y)),loft:Math.max(0,b.position.y-0.191)/0.35});
+      rot:Math.atan2(a.x,Math.max(-0.4,a.y)),loft:Math.max(0,b.position.y-PHYS.pinCY)/0.35});
   }
   return out;
 }
 function settled(){
   if(ballBody&&!S.rest)return false;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
-    if(pn.leanT>0&&pn.leanT<3.0)return false;   /* a pin still going over is not settled */
     if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.15||b.angularVelocity.length()>0.7))return false;}
   return true;
 }
@@ -2442,9 +2435,9 @@ function preview(show,x,spin,power){
 const camP=new THREE.Vector3(0,1.32,3.5),camL=new THREE.Vector3(0,0.15,-10);
 let lastR=0;
 const pathDots=[];
-{const dg=new THREE.CircleGeometry(0.042,12);dg.rotateX(-Math.PI/2);
- for(let i=0;i<26;i++){const d=new M(dg,new THREE.MeshBasicMaterial({color:0xf2a81d,transparent:true,opacity:0.85,depthWrite:false}));d.visible=false;pathDots.push(d);}}
-const pathTip=new M(new THREE.ConeGeometry(0.085,0.22,10),new THREE.MeshBasicMaterial({color:0xf2a81d,transparent:true,opacity:0.95}));
+{const dg=new THREE.CircleGeometry(0.06,14);dg.rotateX(-Math.PI/2);
+ for(let i=0;i<26;i++){const d=new M(dg,new THREE.MeshBasicMaterial({color:0xffc14d,transparent:true,opacity:0.95,depthWrite:false,blending:THREE.AdditiveBlending}));d.visible=false;pathDots.push(d);}}
+const pathTip=new M(new THREE.ConeGeometry(0.11,0.28,12),new THREE.MeshBasicMaterial({color:0xffc14d,transparent:true,opacity:0.98}));
 const pathGrp=new THREE.Group();pathDots.forEach(d=>pathGrp.add(d));pathGrp.add(pathTip);pathGrp.visible=false;scene.add(pathGrp);
 let gWorld=null,gBall=null,gKey='',gLastT=0;
 const gTipP=new THREE.Vector3(),gTipQ=new THREE.Quaternion();
@@ -2452,15 +2445,16 @@ function ghostInit(){
   gWorld=new CANNON.World();gWorld.gravity.set(0,-9.82,0);gWorld.solver.iterations=14;
   const gLane=new CANNON.Material('gLane'),gB=new CANNON.Material('gBall');
   const add2=(hx,hy,hz,x,y,z)=>{gWorld.addBody(new CANNON.Body({mass:0,material:gLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)}));};
-  add2(HALF,0.05,9.60,0,-0.05,-8.50);
-  add2(0.12,0.02,9.35,-0.80,-0.17,-8.25);add2(0.12,0.02,9.35,0.80,-0.17,-8.25);
-  add2(0.03,0.12,9.35,-0.945,-0.06,-8.25);add2(0.03,0.12,9.35,0.945,-0.06,-8.25);
-  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gLane,{friction:0.03,restitution:0.08}));
+  gWorld.defaultContactMaterial.contactEquationStiffness=1e8;
+  add2(HALF,0.05,10.475,0,-0.05,-7.625);
+  add2(0.12,0.02,10.475,-0.80,-0.17,-7.625);add2(0.12,0.02,10.475,0.80,-0.17,-7.625);
+  add2(0.03,0.12,10.475,-0.945,-0.06,-7.625);add2(0.03,0.12,10.475,0.945,-0.06,-7.625);
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gLane,{friction:0,restitution:0.05}));
   gFoodMat=new CANNON.Material('gFood');
   gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gFoodMat,{friction:0.38,restitution:0.50}));
   gWorld.addContactMaterial(new CANNON.ContactMaterial(gFoodMat,gLane,{friction:0.032,restitution:0.12}));
-  gBall=new CANNON.Body({mass:14,material:gB,shape:new CANNON.Sphere(BR*1.09)});
-  gBall.linearDamping=0.004;gBall.angularDamping=0.006;gBall.allowSleep=false;
+  gBall=new CANNON.Body({mass:PHYS.ballM,material:gB,shape:new CANNON.Sphere(BR)});
+  gBall.linearDamping=0.01;gBall.angularDamping=0.01;gBall.allowSleep=false;
   gWorld.addBody(gBall);
 }
 let gFoodMat=null,gFoods=[];
@@ -2476,11 +2470,11 @@ function showPath(ox,spin,power,on){
     if(!gWorld)ghostInit();
     /* ghost ball: byte-for-byte the same launch as throwBall (minus the random overthrow wobble) */
     const charged=Math.abs(pw-0.775)<0.016;
-    const v=3.75+pw*2.85+(charged?0.55:0);
+    const v=4.5+pw*3.3+(charged?0.6:0);
     gBall.position.set(ox*0.76,BR+0.002,2.30);
     gBall.quaternion.set(0,0,0,1);
     gBall.velocity.set(0,0,-v);
-    gBall.angularVelocity.set(-v/BR,-spin*24,0);
+    gBall.angularVelocity.set(-v/BR*PHYS.skid,0,-spin*PHYS.hookK);
     /* mirror the snacks sitting on the lane — they nudge the real ball, so they nudge the ghost too */
     gFoods.forEach(fb=>gWorld.removeBody(fb));gFoods=[];
     foods.forEach(f=>{if(!f.lane||f.counted)return;
@@ -2488,11 +2482,11 @@ function showPath(ox,spin,power,on){
       fb.quaternion.copy(f.body.quaternion);gWorld.addBody(fb);gFoods.push(fb);});
     gPts=[];
     let gut=false;
-    for(let i=0;i<480;i++){
+    for(let i=0;i<PHYS.hz*8;i++){
       if(!gut&&Math.abs(gBall.position.x)>0.70&&gBall.position.y<0.09)gut=true;
-      if(!gut)steerStep(gBall,spin);
-      gWorld.step(1/60);
-      if(i%3===0)gPts.push([gBall.position.x,gBall.position.z]);
+      if(!gut)ballFriction(gBall,1/PHYS.hz,laneMu(gBall.position.z));
+      gWorld.step(1/PHYS.hz);
+      if(i%6===0)gPts.push([gBall.position.x,gBall.position.z]);
       if(gBall.position.z<-16.5||Math.abs(gBall.position.x)>0.72)break;
     }
   }
@@ -2501,7 +2495,7 @@ function showPath(ox,spin,power,on){
   for(let k=0;k<pathDots.length;k++){
     const j=Math.floor(k*(pts.length-1)/(pathDots.length-1));
     const d=pathDots[k];d.visible=true;
-    d.position.set(pts[j][0],0.02,pts[j][1]);
+    if(!pathGrp.visible)d.position.set(pts[j][0],0.02,pts[j][1]);else{d.position.x+=(pts[j][0]-d.position.x)*0.35;d.position.z+=(pts[j][1]-d.position.z)*0.35;d.position.y=0.02;}
     const sc2=1.15-0.55*(j/(pts.length-1));d.scale.set(sc2,1,sc2);
     d.material.opacity=0.9-0.35*(j/(pts.length-1));
   }
@@ -2541,7 +2535,7 @@ function render(gs){
     pn.grp.visible=pn.body.position.y>-0.45;
     pn.shadow.visible=pn.grp.visible&&pn.body.position.y<0.6;
     if(pn.shadow.visible){pn.shadow.position.set(pn.body.position.x,0.002,pn.body.position.z);
-      const lift=Math.max(0,pn.body.position.y-0.19);pn.shadow.scale.setScalar(1+lift*1.5);pn.shadow.material.opacity=0.34/(1+lift*4);}}
+      const lift=Math.max(0,pn.body.position.y-PHYS.pinCY);pn.shadow.scale.setScalar(1+lift*1.5);pn.shadow.material.opacity=0.34/(1+lift*4);}}
   for(const t of tables){if(t.broken)continue;t.grp.position.copy(t.body.position);t.grp.quaternion.copy(t.body.quaternion);}
   for(const d of debris){d.mesh.position.copy(d.body.position);d.mesh.quaternion.copy(d.body.quaternion);d.mesh.visible=d.body.position.y>-0.5;}
   for(const f of foods){f.mesh.position.copy(f.body.position);f.mesh.position.y+=0.035;f.mesh.visible=f.body.position.y>-0.4;}
