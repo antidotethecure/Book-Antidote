@@ -690,14 +690,15 @@ function loadBoard(){
 })();
 /* HALFTIME ad: a reel of review clips (four different reviews, ~15 s) followed by the follow-me promo (~8 s).
    The reel is shuffled every game so no two halftimes play the same reviews. */
-var AD_CLIPS=[['clamp-fatimas-grill-hotcheeto-taco',"FATIMA'S GRILL"],['clamp-gritz-n-wafflez-chicken','GRITZ N WAFFLEZ'],['clamp-serving-spoon-french-toast','THE SERVING SPOON'],
-  ['clamp-stormburger-cheesepull','STORM BURGER'],['clamp-stormburger-jaw','STORM BURGER'],['clamp-wangs-spiral-potato','WANGS N THANGS'],['clamp-wangs-wings-basket','WANGS N THANGS'],
-  ['clamp-wax-smash-burger','WAX SMASHBURGERS'],['driz-griddle-cafe-syrup-pour','THE GRIDDLE CAFE'],['driz-griddle-cafe-syrup-shot','THE GRIDDLE CAFE'],['driz-ny-gyro-antidote-pour','NEW YORK CHICKEN & GYRO'],['driz-ny-gyro-highpour-foot-on-table','NEW YORK CHICKEN & GYRO']];
+/* (the short move clips were replaced by 15-second review clips, see AD_REVIEWS) */
 var AD_DIR='ads/',adWarm=[];
-function pickReel(){ /* four clips, four different reviews, random order */
-  var pool=AD_CLIPS.slice().sort(function(){return Math.random()-0.5;}),seen={},out=[];
-  pool.forEach(function(c){if(out.length<4&&!seen[c[1]]){seen[c[1]]=1;out.push({src:AD_DIR+c[0]+'.mp4',tag:c[1],kind:'review'});}});
-  return out;}
+/* 15-second review clips: one plays before the follow-me promo; a different review each game */
+var AD_REVIEWS=[['review-storm','STORM BURGER'],['review-wangs','WANGS N THANGS'],['review-griddle','THE GRIDDLE CAFE'],['review-nygyro','NEW YORK CHICKEN & GYRO'],['review-fatimas',"FATIMA'S GRILL"],['review-gritz','GRITZ N WAFFLEZ'],['review-spoon','THE SERVING SPOON'],['review-wax','WAX SMASHBURGERS']];
+function pickReel(){ /* one 15 s review clip (not the same as last game), then the promo is appended at play time */
+  var last='';try{last=localStorage.getItem('adb_last_review')||'';}catch(e){}
+  var pool=AD_REVIEWS.filter(function(r){return r[0]!==last;});var r=pool[Math.floor(Math.random()*pool.length)];
+  try{localStorage.setItem('adb_last_review',r[0]);}catch(e){}
+  return [{src:AD_DIR+r[0]+'.mp4',tag:r[1],kind:'review'}];}
 function warmReel(){ /* start fetching this game's clips early so halftime starts instantly */
   adWarm.forEach(function(v){try{v.removeAttribute('src');v.load();}catch(e){}});adWarm=[];
   (g.reel||[]).forEach(function(c){try{var v=document.createElement('video');v.preload='auto';v.muted=true;v.src=c.src;v.load();adWarm.push(v);}catch(e){}});}
@@ -724,7 +725,7 @@ function showHalftime(){
         tap.onclick=function(e){e.stopPropagation();wantSound=true;v.muted=false;tap.hidden=true;var p3=v.play();if(p3&&p3.catch)p3.catch(function(){});};
         var p2=v.play();if(p2&&p2.catch)p2.catch(function(){tap.textContent='TAP TO PLAY';tap.onclick=function(e){e.stopPropagation();v.muted=false;tap.hidden=true;var p4=v.play();if(p4&&p4.catch)p4.catch(next);};});}
       else next();});
-    clipTimer=setTimeout(function(){if(!ended&&(v.paused||v.readyState<2)&&tap.hidden)next();},9000); /* review clip never started: move on */
+    clipTimer=setTimeout(function(){if(!ended&&(v.paused||v.readyState<2)&&tap.hidden)next();},12000); /* review clip never started: move on */
   }
   skip.onclick=function(e){e.stopPropagation();fin();};
   tap.hidden=true;next();
@@ -2150,7 +2151,7 @@ function ambient(dt,gs){
    friction are computed by hand as proper mu*N Coulomb friction: the ball skids on the oil, then
    rolls and hooks on the dry back end, and pins slide across the deck instead of stopping dead.
    Nothing about the pins is scripted: no kicks, no random spin, no forced topples. */
-const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,deckMu:0.42,spinDrag:0.6,hookK:22,skid:0.45}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
+const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,deckMu:0.5,spinDrag:0.6,hookK:22,skid:0.45}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
 world.allowSleep=true;world.solver.iterations=20;
 world.defaultContactMaterial.contactEquationStiffness=1e8;world.defaultContactMaterial.contactEquationRelaxation=3;
@@ -2158,10 +2159,10 @@ const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=n
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0,restitution:0.05}));            /* friction done by hand (oil / dry) */
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mGutter,{friction:0.25,restitution:0.1}));
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.02,restitution:0.55,contactEquationStiffness:1e8})); /* polished ball on coated pins: low friction, so revs do not scrub the carry */
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0,restitution:0.10}));             /* deck friction done by hand */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0,restitution:0.02}));             /* deck friction done by hand; a pin landing on the boards does not bounce */
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mGutter,{friction:0.1,restitution:0.1}));
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.01,restitution:0.85,contactEquationStiffness:1e8})); /* plastic-coated maple: slick and lively */
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.15,restitution:0.35}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.15,restitution:0.2}));
 const G9=9.82;
 /* Coulomb friction at a rolling ball's contact patch: slip = v + w x r, impulse limited to mu*m*g*dt or to what stops the slip */
 function ballFriction(b,dt,mu){
@@ -2178,7 +2179,8 @@ const fImp=new CANNON.Vec3(),fPt=new CANNON.Vec3();
 function deckFriction(p,dt){
   p.updateAABB();if(p.aabb.lowerBound.y>0.035)return;   /* a pin skimming a hair above the boards still drags on them */
   const v=p.velocity,sp=Math.hypot(v.x,v.z);
-  if(sp>1e-4){const J=Math.min(PHYS.deckMu*p.mass*G9*dt,sp*p.mass);
+  const mu=PHYS.deckMu*(sp>1.5?1.35:1);   /* a pin skating fast catches its base edge harder */
+  if(sp>1e-4){const J=Math.min(mu*p.mass*G9*dt,sp*p.mass);
     /* friction acts where the pin touches the deck, under its centre of mass: a shoved pin trips over its own base instead of gliding upright */
     fImp.set(-v.x/sp*J,0,-v.z/sp*J);fPt.set(0,p.aabb.lowerBound.y-p.position.y,0);p.applyImpulse(fImp,fPt);}
   p.angularVelocity.scale(Math.max(0,1-PHYS.spinDrag*dt),p.angularVelocity);
@@ -2456,6 +2458,13 @@ function pinStep(){
     if(b.sleepState===CANNON.Body.SLEEPING)continue;
     b.quaternion.vmult(UPV,upTmp);
     b.allowSleep=upTmp.y>0.985||upTmp.y<0.35;   /* a pin mid-tip keeps simulating until gravity decides */
+    if(upTmp.y<0.35)pn.down=true;               /* it has been flat: from here the boards soak up its tumble */
+    if(pn.down&&b.aabb.lowerBound.y<0.04){
+      /* on the deck after falling: the landing is dead. Rotation that would lift it is bled off hard, any upward
+         velocity is killed, and it weighs into the boards; it can still roll and spin on its side */
+      const w=b.angularVelocity;w.x*=0.6;w.z*=0.6;if(b.velocity.y>0)b.velocity.y*=0.25;
+      b.force.y-=b.mass*9.82*(upTmp.y>0.35?1.2:0.4);
+    }
     deckFriction(b,dt);
   }
 }
