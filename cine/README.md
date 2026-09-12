@@ -40,7 +40,7 @@ Every `data-cine-*` attribute becomes an option (`data-cine-image` → `image`).
 
 | type | what happens | options |
 |---|---|---|
-| `cheese-drip` | Molten cheese pours down over the screen, then the whole sheet drops away to reveal the next section | `kicker`, `title` |
+| `cheese-drip` | Molten cheese pours down over the screen as one continuous fluid (GPU shader: sheet, tongues, bulbs and falling drops melt into each other, lit as a wet surface), then runs off the bottom. Falls back to a canvas drawing where WebGL2 is unavailable | `kicker`, `title` |
 | `star-zoom` | Starts tight on the food, pulls back to the Walk of Fame star, then the co-sign faces fly in and orbit | `image`, `fx`, `fy` (start focus 0–1), `faces` (array of URLs or a function) |
 | `stream-cam` | Inside a stream viewfinder (REC, LIVE count, bitrate, rolling chat), pulls out to the whole set | `image`, `fx`, `fy`, `chat` (array of strings) |
 | `stage-zoom` | Tight on the mic, pulls out under sweeping stage lights, then the crowd photo wraps in | `image`, `crowd` |
@@ -61,6 +61,6 @@ CINE.register('my-scene',{
 ## Behaviour
 
 - Scenes only render while near the viewport, so a page with many scenes stays cheap.
-- Canvas is capped at 1.5× device pixel ratio.
+- Canvas is capped at 1.5× device pixel ratio. A scene can declare `gl:true` to get a WebGL2 canvas (plus a 2D overlay for captions); if WebGL2 is missing or its shaders fail, the engine swaps in the `<type>-2d` renderer when one is registered.
 - `prefers-reduced-motion: reduce` removes the scenes entirely; the page reads normally.
 - Images are loaded lazily per scene. Use the same relative paths the page already uses.
