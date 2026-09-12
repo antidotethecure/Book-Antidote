@@ -2672,19 +2672,21 @@ function showPath(ox,spin,power,on){
   pathGrp.visible=true;
   if(window.B3D)B3D.lastPath=pts.filter((p,i)=>i%2===0).map(p=>[p[0]*OLDX,zToOld(p[1])]);
 }
-/* ---- the bowler: a lofted human figure seen from behind, drawn in its own pass over the lane ---- */
+/* ---- the bowler: an anatomically proportioned, skinned human figure seen from behind, drawn in its own pass over the lane ----
+   Proportions (1.80 m adult male, 7.5 heads): crown 1.80, chin 1.56, acromion 1.47, nipple line 1.31, navel 1.08, crotch 0.85,
+   knee 0.50, ankle 0.07. Biacromial width 0.40, chest depth 0.24, upper arm 0.32, forearm 0.27, hand 0.19, thigh 0.44, shin 0.43. */
 const bScene=new THREE.Scene();
-const BCAM_D=7.6,BCAM_FOV=30;
+const BCAM_D=7.6,BCAM_FOV=30,BSCALE=0.9;
 const bCam=new THREE.PerspectiveCamera(BCAM_FOV,LW/VH,0.05,40);
 bCam.position.set(0,2.05,BCAM_D);bCam.lookAt(0,1.98,0);
 const bPxPerM=VH/(2*BCAM_D*Math.tan(BCAM_FOV*Math.PI/360));
-bScene.add(new THREE.HemisphereLight(0xfff1e2,0x2a1c18,0.85));
-const bKey=new THREE.DirectionalLight(0xfff3e4,1.75);bKey.position.set(-2.6,5.2,6.5);bScene.add(bKey);
-const bFill=new THREE.DirectionalLight(0xffd9b8,0.42);bFill.position.set(3.2,2.4,4);bScene.add(bFill);
-const bRim=new THREE.DirectionalLight(LEDCOLS[0],3.4);bRim.position.set(0.6,2.6,-6);bScene.add(bRim); /* the lane neon catches his shoulders and scalp */
+bScene.add(new THREE.HemisphereLight(0xfff1e2,0x2a1c18,0.7));
+const bKey=new THREE.DirectionalLight(0xfff3e4,1.9);bKey.position.set(-3.2,5.6,5.5);bScene.add(bKey);      /* key: high left, behind the camera */
+const bFill=new THREE.DirectionalLight(0xffd9b8,0.35);bFill.position.set(3.5,1.8,4);bScene.add(bFill);
+const bRim=new THREE.DirectionalLight(LEDCOLS[0],3.6);bRim.position.set(0.8,2.4,-6);bScene.add(bRim);      /* lane neon on the shoulders and scalp */
+const bUnder=new THREE.DirectionalLight(0xf2a81d,0.45);bUnder.position.set(-1.5,-0.5,-3);bScene.add(bUnder); /* the lane wood bounces warm light up */
 /* materials */
-const skinMat=new THREE.MeshStandardMaterial({color:0xa86f4c,roughness:0.6,metalness:0.0});
-const denimFlat=new THREE.MeshStandardMaterial({color:0x2b3b54,roughness:0.92,metalness:0});
+const skinMat=new THREE.MeshStandardMaterial({color:0xa66d4a,roughness:0.58,metalness:0.0});
 const shirtT=bake(512,512,(g,w,h)=>{
   g.fillStyle='#141216';g.fillRect(0,0,w,h);
   const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'rgba(255,255,255,.06)');gr.addColorStop(1,'rgba(0,0,0,.18)');g.fillStyle=gr;g.fillRect(0,0,w,h);
@@ -2696,7 +2698,10 @@ const shirtT=bake(512,512,(g,w,h)=>{
   const LG=A3.logo;if(LG&&LG.complete&&LG.naturalWidth){g.save();g.beginPath();g.arc(w/2,262,58,0,7);g.clip();g.drawImage(LG,w/2-58,204,116,116);g.restore();}
 });
 shirtT.colorSpace=THREE.SRGBColorSpace;shirtT.anisotropy=4;
-const shirtMat=new THREE.MeshStandardMaterial({map:shirtT,roughness:0.70,metalness:0});
+const shirtMat=new THREE.MeshStandardMaterial({map:shirtT,roughness:0.72,metalness:0});
+const knitT=bake(128,128,(g,w,h)=>{g.fillStyle='#141216';g.fillRect(0,0,w,h);for(let i=0;i<1800;i++){g.fillStyle='rgba(255,255,255,'+(Math.random()*0.05)+')';g.fillRect(Math.random()*w,Math.random()*h,1.5,1.5);}});
+knitT.colorSpace=THREE.SRGBColorSpace;knitT.wrapS=knitT.wrapT=THREE.RepeatWrapping;knitT.repeat.set(2,2);
+const sleeveMat=new THREE.MeshStandardMaterial({map:knitT,roughness:0.72,metalness:0});
 const denimT=bake(256,256,(g,w,h)=>{
   g.fillStyle='#22324b';g.fillRect(0,0,w,h);
   for(let i=0;i<6000;i++){g.fillStyle='rgba(255,255,255,'+(Math.random()*0.10)+')';g.fillRect(Math.random()*w,Math.random()*h,1,3);}
@@ -2704,12 +2709,16 @@ const denimT=bake(256,256,(g,w,h)=>{
   g.strokeStyle='#c98a3a';g.lineWidth=1.4;[0.25,0.75].forEach(u=>{g.beginPath();g.moveTo(u*w,0);g.lineTo(u*w,h);g.stroke();g.strokeStyle='rgba(0,0,0,.35)';g.beginPath();g.moveTo(u*w+3,0);g.lineTo(u*w+3,h);g.stroke();g.strokeStyle='#c98a3a';});
 });
 denimT.colorSpace=THREE.SRGBColorSpace;denimT.wrapS=denimT.wrapT=THREE.RepeatWrapping;denimT.repeat.set(1,2);
-const denimMat=new THREE.MeshStandardMaterial({map:denimT,roughness:0.92,metalness:0});
+const denimMat=new THREE.MeshStandardMaterial({map:denimT,roughness:0.9,metalness:0});
+const denimFlat=new THREE.MeshStandardMaterial({color:0x2b3b54,roughness:0.9,metalness:0});
 const goldMat=new THREE.MeshStandardMaterial({color:0xd9a428,roughness:0.32,metalness:0.7});
 const soleMat=new THREE.MeshStandardMaterial({color:0xefe6d4,roughness:0.55,metalness:0});
 const darkMat=new THREE.MeshStandardMaterial({color:0x1a1416,roughness:0.6,metalness:0.1});
-/* loft: a smooth skin over elliptical cross-sections (y up). u runs around, seam at the front; v runs bottom→top */
-function loft(secs,N,mat,disp){
+const gauss=(v,w)=>Math.exp(-(v*v)/(w*w));
+const sstep=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
+/* loft: a smooth skin over elliptical cross-sections stacked in y (ascending). u runs around with the seam at the front, v bottom→top.
+   disp(a,y,x,z,sec) may push the ring outward/inward to sculpt muscle. Returns a BufferGeometry with merged seam normals. */
+function loftGeo(secs,N,disp){
   const rings=secs.length,pos=[],uv=[],idx=[],y0=secs[0].y,y1=secs[rings-1].y;
   for(let i=0;i<rings;i++){const s=secs[i];const arc=[0];
     for(let j=1;j<=N;j++){const a0=(j-1)/N*Math.PI*2,a1=j/N*Math.PI*2;arc.push(arc[j-1]+Math.hypot(Math.sin(a1)*s.rx-Math.sin(a0)*s.rx,Math.cos(a1)*s.rz-Math.cos(a0)*s.rz));}
@@ -2719,7 +2728,7 @@ function loft(secs,N,mat,disp){
   for(let i=0;i<rings-1;i++)for(let j=0;j<N;j++){const a=i*(N+1)+j,b=a+N+1;idx.push(a,a+1,b,a+1,b+1,b);}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
   const nr=geo.attributes.normal;for(let i=0;i<rings;i++){const a=i*(N+1),b=a+N;const nx=nr.getX(a)+nr.getX(b),ny=nr.getY(a)+nr.getY(b),nz=nr.getZ(a)+nr.getZ(b),l=Math.hypot(nx,ny,nz)||1;nr.setXYZ(a,nx/l,ny/l,nz/l);nr.setXYZ(b,nx/l,ny/l,nz/l);}
-  nr.needsUpdate=true;return new THREE.Mesh(geo,mat);
+  nr.needsUpdate=true;return geo;
 }
 /* loft along z (for the sneakers): sections are ellipses in x/y */
 function loftZ(secs,N,mat){
@@ -2730,120 +2739,180 @@ function loftZ(secs,N,mat){
   const nr=geo.attributes.normal;for(let i=0;i<rings;i++){const a=i*(N+1),b=a+N;const nx=nr.getX(a)+nr.getX(b),ny=nr.getY(a)+nr.getY(b),nz=nr.getZ(a)+nr.getZ(b),l=Math.hypot(nx,ny,nz)||1;nr.setXYZ(a,nx/l,ny/l,nz/l);nr.setXYZ(b,nx/l,ny/l,nz/l);}
   nr.needsUpdate=true;return new THREE.Mesh(geo,mat);
 }
-const gauss=(v,w)=>Math.exp(-(v*v)/(w*w));
-/* the back: spine groove, shoulder blades, lats and the erector ridges — read from behind */
+/* skin weights by height: zones=[{b:boneIndex,y0,y1}] ascending; vertices blend across a zone edge over ±blend so joints bend as one skin */
+function skinByY(geo,zones,blend){
+  const p=geo.attributes.position,n=p.count,si=new Uint16Array(n*4),sw=new Float32Array(n*4);
+  for(let i=0;i<n;i++){const y=p.getY(i);let k=zones.findIndex(z=>y>=z.y0&&y<z.y1);if(k<0)k=y<zones[0].y0?0:zones.length-1;
+    const z=zones[k];let wA=1,bB=z.b,wB=0;
+    if(k>0&&y-z.y0<blend){const t=sstep(-blend,blend,y-z.y0);wA=t;bB=zones[k-1].b;wB=1-t;}
+    else if(k<zones.length-1&&z.y1-y<blend){const t=sstep(-blend,blend,z.y1-y);wA=t;bB=zones[k+1].b;wB=1-t;}
+    si[i*4]=z.b;si[i*4+1]=bB;sw[i*4]=wA;sw[i*4+1]=wB;}
+  geo.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));geo.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));return geo;
+}
+/* ---- sculpting: what a t-shirt and a pair of jeans show of the muscles underneath, viewed from behind ---- */
 function torsoDisp(a,y,x,z,s){
-  const back=Math.max(0,z/s.rz);                 /* 1 at the spine, 0 at the sides */
-  const front=Math.max(0,-z/s.rz);
-  let d=0;
-  d-=0.017*gauss(x,0.028)*back*gauss(y-1.28,0.26);                                  /* spine furrow */
-  d+=0.015*gauss(Math.abs(x)-0.085,0.048)*gauss(y-1.37,0.08)*back;                   /* scapulae */
-  d+=0.006*gauss(Math.abs(x)-0.045,0.03)*gauss(y-1.15,0.12)*back;                     /* erector ridges */
-  d+=0.008*gauss(Math.abs(x)-0.17,0.06)*gauss(y-1.30,0.10)*back;                      /* lats flare */
-  d+=0.009*gauss(Math.abs(x)-0.07,0.05)*gauss(y-1.39,0.06)*front;                     /* pecs */
-  d-=0.004*gauss(x,0.02)*front*gauss(y-1.37,0.12);                                    /* sternum */
+  const back=Math.max(0,z/s.rz),front=Math.max(0,-z/s.rz);let d=0;
+  d-=0.012*gauss(x,0.024)*back*gauss(y-1.22,0.30);                                    /* spinal furrow */
+  d-=0.008*gauss(x,0.03)*back*gauss(y-1.08,0.09);                                     /* deeper in the lumbar */
+  d+=0.007*gauss(Math.abs(x)-0.038,0.028)*gauss(y-1.10,0.14)*back;                    /* erector spinae columns */
+  d+=0.013*gauss(Math.abs(x)-0.072,0.045)*gauss(y-1.35,0.075)*back;                   /* scapulae */
+  d+=0.005*gauss(Math.abs(x)-0.052,0.012)*gauss(y-1.33,0.06)*back;                    /* vertebral border of the blades */
+  d+=0.009*gauss(Math.abs(x)-0.150,0.05)*gauss(y-1.27,0.11)*back;                     /* latissimus flare */
+  { const ty=1.53-(Math.abs(x)-0.06)/0.13*0.07; d+=0.008*gauss(y-ty,0.035)*sstep(0.03,0.09,Math.abs(x))*sstep(0.19,0.11,Math.abs(x))*back; } /* trapezius ridge, neck to acromion */
+  d+=0.009*gauss(Math.abs(x)-0.07,0.05)*gauss(y-1.36,0.06)*front;                     /* pectorals */
+  d-=0.004*gauss(x,0.02)*front*gauss(y-1.34,0.12);                                    /* sternum */
+  d+=0.0025*Math.sin(y*140+x*30)*gauss(y-1.0,0.08);                                   /* hem folds where the tee bunches at the waist */
   const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];
 }
+function pelvisDisp(a,y,x,z,s){
+  const back=Math.max(0,z/s.rz);let d=0;
+  d+=0.016*gauss(Math.abs(x)-0.078,0.06)*gauss(y-0.86,0.065)*back;                    /* glutes */
+  d-=0.010*gauss(x,0.018)*back*sstep(0.94,0.80,y);                                    /* the cleft */
+  d-=0.005*gauss(y-0.795,0.02)*back*sstep(0.02,0.07,Math.abs(x));                     /* gluteal fold */
+  const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];
+}
+function armDisp(side){return (a,y,x,z,s)=>{ /* x is relative to the arm axis; +z is the back of the arm */
+  const back=Math.max(0,z/s.rz),out=Math.max(0,side*x/s.rx),inn=Math.max(0,-side*x/s.rx);let d=0;
+  d+=0.007*gauss(y-1.27,0.06)*back*sstep(0.2,0.9,gauss(x,0.03));                      /* triceps long head */
+  d+=0.004*gauss(y-1.22,0.05)*out;                                                    /* lateral head */
+  d-=0.004*gauss(y-1.245,0.02)*back*gauss(x,0.025);                                   /* the horseshoe's tendon flat */
+  d+=0.006*gauss(y-1.15,0.02)*back*gauss(x,0.02);                                     /* olecranon point */
+  d+=0.006*gauss(y-1.08,0.05)*out*sstep(-0.2,1,back+out);                             /* brachioradialis / extensors */
+  d+=0.004*gauss(y-1.30,0.06)*inn*(1-back);                                           /* biceps belly */
+  const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];};}
+function legDisp(side){return (a,y,x,z,s)=>{
+  const back=Math.max(0,z/s.rz),inn=Math.max(0,-side*x/s.rx),out=Math.max(0,side*x/s.rx);let d=0;
+  d+=0.010*gauss(y-0.34,0.06)*back*gauss(x,0.04);                                     /* gastrocnemius */
+  d+=0.006*gauss(y-0.31,0.05)*back*inn;                                               /* the medial head is bigger and sits lower */
+  d-=0.006*gauss(y-0.50,0.03)*back*gauss(x,0.03);                                     /* back of the knee */
+  d+=0.008*gauss(y-0.68,0.08)*back*gauss(x,0.05);                                     /* hamstrings */
+  d-=0.004*gauss(y-0.66,0.10)*back*gauss(x,0.012);                                    /* the groove between them */
+  d+=0.005*gauss(y-0.75,0.08)*out;                                                    /* vastus lateralis */
+  d+=0.003*Math.sin(y*90)*gauss(y-0.52,0.05)*(1-back);                                /* denim creases behind the knee */
+  const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];};}
 function makeBowler(){
   const G=new THREE.Group();
-  /* torso (shirt) — sections from the hip line up through the traps */
-  const torso=loft([
-    {y:0.90,rx:0.165,rz:0.115,cz:0.0},{y:0.98,rx:0.160,rz:0.110},{y:1.06,rx:0.152,rz:0.104},{y:1.14,rx:0.158,rz:0.108},
-    {y:1.22,rx:0.170,rz:0.115},{y:1.30,rx:0.184,rz:0.122},{y:1.37,rx:0.198,rz:0.126},{y:1.43,rx:0.212,rz:0.124},
-    {y:1.475,rx:0.228,rz:0.118,cz:0.004},{y:1.505,rx:0.205,rz:0.105,cz:0.006},{y:1.535,rx:0.150,rz:0.088,cz:0.006},{y:1.56,rx:0.085,rz:0.066,cz:0.004}],48,shirtMat,torsoDisp);
-  G.add(torso);
-  /* neck + head (bald, with the occipital shape and a narrowing nape) */
-  const neck=loft([{y:1.53,rx:0.060,rz:0.058,cz:0.004},{y:1.575,rx:0.054,rz:0.053,cz:0.002},{y:1.62,rx:0.052,rz:0.052,cz:-0.002},{y:1.655,rx:0.056,rz:0.056,cz:-0.004}],28,skinMat);
-  G.add(neck);
-  const headGrp=new THREE.Group();headGrp.position.set(0,1.735,-0.006);G.add(headGrp);
-  const hg=new THREE.SphereGeometry(1,44,34);{const p=hg.attributes.position;
+  /* skeleton: bind pose standing, arms at the sides. World bind positions → local offsets */
+  const BP={pelvis:[0,0.95,0],spine:[0,1.08,0],chest:[0,1.28,0],neck:[0,1.52,0],head:[0,1.60,0],
+    shL:[0.185,1.47,0],elL:[0.185,1.15,0],wrL:[0.185,0.88,0],shR:[-0.185,1.47,0],elR:[-0.185,1.15,0],wrR:[-0.185,0.88,0],
+    hpL:[0.095,0.92,0],knL:[0.095,0.50,0],anL:[0.095,0.07,0],hpR:[-0.095,0.92,0],knR:[-0.095,0.50,0],anR:[-0.095,0.07,0]};
+  const PAR={spine:'pelvis',chest:'spine',neck:'chest',head:'neck',shL:'chest',elL:'shL',wrL:'elL',shR:'chest',elR:'shR',wrR:'elR',hpL:'pelvis',knL:'hpL',anL:'knL',hpR:'pelvis',knR:'hpR',anR:'knR'};
+  const bones=[],B={},BI={};
+  for(const k of Object.keys(BP)){const b=new THREE.Bone();b.name=k;const p=BP[k],q=PAR[k]?BP[PAR[k]]:[0,0,0];b.position.set(p[0]-q[0],p[1]-q[1],p[2]-q[2]);B[k]=b;BI[k]=bones.length;bones.push(b);}
+  for(const k of Object.keys(PAR))B[PAR[k]].add(B[k]);
+  G.add(B.pelvis);G.updateMatrixWorld(true);
+  const skel=new THREE.Skeleton(bones);
+  const skinned=(geo,mat)=>{const m=new THREE.SkinnedMesh(geo,mat);m.frustumCulled=false;G.add(m);m.updateMatrixWorld(true);m.bind(skel);return m;};
+  /* torso: tee over the trunk, hips to the collar */
+  skinned(skinByY(loftGeo([
+    {y:0.905,rx:0.170,rz:0.114},{y:0.98,rx:0.162,rz:0.109},{y:1.06,rx:0.153,rz:0.104},{y:1.14,rx:0.158,rz:0.108},
+    {y:1.22,rx:0.167,rz:0.114},{y:1.30,rx:0.176,rz:0.120},{y:1.37,rx:0.181,rz:0.122},{y:1.42,rx:0.186,rz:0.121},
+    {y:1.465,rx:0.192,rz:0.116,cz:0.004},{y:1.495,rx:0.168,rz:0.102,cz:0.007},{y:1.525,rx:0.118,rz:0.084,cz:0.008},{y:1.55,rx:0.072,rz:0.066,cz:0.006}],44,torsoDisp),
+    [{b:BI.pelvis,y0:-9,y1:1.03},{b:BI.spine,y0:1.03,y1:1.24},{b:BI.chest,y0:1.24,y1:9}],0.07),shirtMat);
+  /* jeans: pelvis and seat */
+  skinned(skinByY(loftGeo([{y:0.775,rx:0.172,rz:0.118},{y:0.83,rx:0.178,rz:0.125},{y:0.885,rx:0.178,rz:0.123},{y:0.94,rx:0.172,rz:0.116},{y:0.985,rx:0.166,rz:0.111}],36,pelvisDisp),
+    [{b:BI.pelvis,y0:-9,y1:9}],0.05),denimMat);
+  const belt=new THREE.Mesh(new THREE.TorusGeometry(0.155,0.011,6,48),darkMat);belt.scale.set(1,0.68,1);belt.position.set(0,0.99,0);belt.rotation.x=Math.PI/2;B.pelvis.attach(belt);
+  const buckle=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.022,0.008),goldMat);buckle.position.set(0,0.99,-0.115);B.pelvis.attach(buckle);
+  /* neck */
+  skinned(skinByY(loftGeo([{y:1.50,rx:0.064,rz:0.062,cz:0.004},{y:1.54,rx:0.060,rz:0.058,cz:0.0},{y:1.58,rx:0.057,rz:0.056,cz:-0.004},{y:1.62,rx:0.060,rz:0.060,cz:-0.007}],32),
+    [{b:BI.chest,y0:-9,y1:1.51},{b:BI.neck,y0:1.51,y1:1.59},{b:BI.head,y0:1.59,y1:9}],0.03),skinMat);
+  /* head: a bald skull — parietal width, occipital bulge, mastoids, nape tapering into the neck, jaw narrowing under the ears */
+  const hg=new THREE.SphereGeometry(1,44,32);{const p=hg.attributes.position;
     for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
-      let rx=0.077,ry=0.105,rz=0.096;
-      const occ=1+0.09*Math.max(0,z)*Math.max(0,-y+0.35);          /* occipital bulge low at the back */
-      const nape=y<-0.25?1-0.42*Math.min(1,(-y-0.25)/0.75)*(0.4+0.6*Math.max(0,z)):1;  /* tapers into the neck */
-      const jaw=y<-0.2&&z<0?1-0.16*Math.min(1,(-y-0.2)/0.8):1;
-      const top=y>0.55?1-0.05*(y-0.55):1;
-      p.setXYZ(i,x*rx*nape*jaw*top,y*ry*(y>0?top:1),z*rz*occ*nape);}
+      const rx=0.080,ry=0.118,rz=0.100;
+      const occ=1+0.075*sstep(-0.1,0.6,z)*gauss(y+0.05,0.5);                     /* occiput, low and back */
+      const par=1+0.035*gauss(y-0.3,0.35)*sstep(0.2,0.9,Math.abs(x));             /* parietal eminences */
+      const mast=1+0.03*gauss(y+0.38,0.12)*gauss(Math.abs(x)-0.85,0.15)*sstep(-0.1,0.4,z);
+      const nape=y<-0.35?1-0.45*sstep(-0.35,-1,y)*(0.35+0.65*sstep(-0.2,0.6,z)):1;  /* the skull base curves into the neck */
+      const jaw=(y<-0.15&&z<0.1)?1-0.22*sstep(-0.15,-0.9,y):1;
+      const top=y>0.6?1-0.04*sstep(0.6,1,y):1;
+      p.setXYZ(i,x*rx*par*nape*jaw*mast,y*ry*(y>0?top:1),z*rz*occ*nape*mast);}
     hg.computeVertexNormals();}
-  const head=new THREE.Mesh(hg,skinMat);headGrp.add(head);
-  [-1,1].forEach(s=>{const ear=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),skinMat);ear.scale.set(0.011,0.031,0.021);ear.position.set(s*0.076,-0.008,0.008);ear.rotation.y=s*0.25;ear.rotation.z=s*-0.1;headGrp.add(ear);
-    const cup=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),darkMat);cup.scale.set(0.004,0.016,0.011);cup.position.set(s*0.082,-0.006,-0.002);headGrp.add(cup);});
-  /* rope chain */
-  const chain=new THREE.Mesh(new THREE.TorusGeometry(0.062,0.0045,8,48),goldMat);chain.position.set(0,1.578,-0.004);chain.rotation.x=Math.PI/2+0.36;G.add(chain);
-  /* arms */
+  const head=new THREE.Mesh(hg,skinMat);head.position.set(0,1.685,-0.008);B.head.attach(head);
+  [-1,1].forEach(s=>{const ear=new THREE.Mesh(new THREE.SphereGeometry(1,18,14),skinMat);ear.scale.set(0.012,0.033,0.023);ear.position.set(s*0.081,1.668,-0.004);ear.rotation.y=s*0.3;ear.rotation.z=s*-0.12;B.head.attach(ear);
+    const cup=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),darkMat);cup.scale.set(0.004,0.017,0.012);cup.position.set(s*0.087,1.669,-0.013);B.head.attach(cup);});
+  const chain=new THREE.Mesh(new THREE.TorusGeometry(0.066,0.0045,8,56),goldMat);chain.position.set(0,1.545,-0.004);chain.rotation.x=Math.PI/2+0.38;B.neck.attach(chain);
+  /* arms: one continuous skin from the deltoid to the wrist, bending at the elbow; the tee sleeve over the top */
   const arms={};
   [['L',1],['R',-1]].forEach(([k,s])=>{
-    const sh=new THREE.Group();sh.position.set(s*0.222,1.455,0.0);G.add(sh);
-    const sleeve=loft([{y:0.045,rx:0.070,rz:0.072},{y:0.0,rx:0.071,rz:0.073},{y:-0.07,rx:0.066,rz:0.068},{y:-0.13,rx:0.061,rz:0.063},{y:-0.145,rx:0.058,rz:0.060}],28,shirtMat);sh.add(sleeve);
-    const delt=new THREE.Mesh(new THREE.SphereGeometry(0.066,20,14),shirtMat);delt.position.set(s*-0.004,0.012,0);delt.scale.set(1,1.06,0.96);sh.add(delt);
-    const upper=loft([{y:-0.10,rx:0.055,rz:0.056},{y:-0.17,rx:0.052,rz:0.055,cz:0.004},{y:-0.24,rx:0.045,rz:0.046},{y:-0.30,rx:0.040,rz:0.042}],24,skinMat);sh.add(upper);
-    const el=new THREE.Group();el.position.set(0,-0.30,0);sh.add(el);
-    const elbow=new THREE.Mesh(new THREE.SphereGeometry(0.0385,18,12),skinMat);elbow.scale.set(1,1.1,1.02);el.add(elbow);
-    const fore=loft([{y:0.0,rx:0.040,rz:0.041},{y:-0.06,rx:0.046,rz:0.045},{y:-0.14,rx:0.040,rz:0.038},{y:-0.22,rx:0.033,rz:0.030},{y:-0.27,rx:0.030,rz:0.024}],24,skinMat);el.add(fore);
-    const wr=new THREE.Group();wr.position.set(0,-0.27,0);el.add(wr);
-    const palm=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),skinMat);palm.scale.set(0.040,0.052,0.018);palm.position.set(0,-0.045,0);wr.add(palm);
-    for(let f=0;f<4;f++){const fg=new THREE.Mesh(new THREE.CapsuleGeometry(0.0085,0.036,4,8),skinMat);fg.position.set((f-1.5)*0.018,-0.108,-0.008);fg.rotation.x=-0.55;wr.add(fg);}
-    const th=new THREE.Mesh(new THREE.CapsuleGeometry(0.009,0.03,4,8),skinMat);th.position.set(s*0.036,-0.06,-0.012);th.rotation.z=s*0.9;th.rotation.x=-0.5;wr.add(th);
-    if(k==='L'){const watch=new THREE.Mesh(new THREE.TorusGeometry(0.031,0.0065,8,28),goldMat);watch.position.set(0,-0.245,0);watch.rotation.x=Math.PI/2;el.add(watch);
-      const face=new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.006,20),darkMat);face.position.set(0,-0.245,0.03);face.rotation.x=Math.PI/2;el.add(face);}
-    arms[k]={sh,el,wr};
+    const X=s*0.185,sh=BI['sh'+k],el=BI['el'+k],wr=BI['wr'+k];
+    const ad=armDisp(s);const shift=f=>(a,y,x,z,sec)=>{const o=f(a,y,x,z,sec);return o;};
+    const armSecs=[{y:0.875,rx:0.030,rz:0.020},{y:0.93,rx:0.034,rz:0.026},{y:1.00,rx:0.041,rz:0.035},{y:1.06,rx:0.047,rz:0.043},{y:1.11,rx:0.044,rz:0.042},
+      {y:1.15,rx:0.040,rz:0.041,cz:0.004},{y:1.19,rx:0.042,rz:0.044},{y:1.26,rx:0.048,rz:0.051},{y:1.33,rx:0.052,rz:0.054},{y:1.385,rx:0.054,rz:0.056}].map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
+    skinned(skinByY(loftGeo(armSecs,28,shift(ad)),[{b:wr,y0:-9,y1:0.90},{b:el,y0:0.90,y1:1.15},{b:sh,y0:1.15,y1:9}],0.045),skinMat);
+    const slv=[{y:1.335,rx:0.061,rz:0.063},{y:1.38,rx:0.063,rz:0.065},{y:1.43,rx:0.066,rz:0.068},{y:1.475,rx:0.063,rz:0.066,cx:-s*0.008},{y:1.51,rx:0.050,rz:0.056,cx:-s*0.026},{y:1.53,rx:0.030,rz:0.040,cx:-s*0.05}].map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
+    skinned(skinByY(loftGeo(slv,28,(a,y,x,z,sec)=>{const d=0.006*gauss(y-1.44,0.05)*Math.max(0,s*x/sec.rx);const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];}),[{b:sh,y0:-9,y1:1.49},{b:BI.chest,y0:1.49,y1:9}],0.03),sleeveMat);
+    /* hand: back of the hand, knuckles, four fingers and a thumb, hanging from the wrist bone */
+    const hand=new THREE.Group();hand.position.set(X,0.88,0);
+    const palm=new THREE.Mesh(loftGeo([{y:-0.105,rx:0.038,rz:0.013},{y:-0.09,rx:0.042,rz:0.016},{y:-0.05,rx:0.043,rz:0.017},{y:-0.015,rx:0.036,rz:0.017},{y:0.0,rx:0.031,rz:0.019}],24),skinMat);hand.add(palm);
+    for(let f=0;f<4;f++){const len=[0.062,0.072,0.066,0.052][f];const fg=new THREE.Group();fg.position.set((f-1.5)*0.019*(1),-0.10,0.002);
+      const seg=new THREE.Mesh(new THREE.CapsuleGeometry(0.0082,len*0.55,4,10),skinMat);seg.position.y=-len*0.3;fg.add(seg);
+      const tip=new THREE.Group();tip.position.y=-len*0.58;const t2=new THREE.Mesh(new THREE.CapsuleGeometry(0.0075,len*0.4,4,10),skinMat);t2.position.y=-len*0.22;tip.add(t2);fg.add(tip);
+      fg.userData.tip=tip;hand.add(fg);hand.userData['f'+f]=fg;}
+    const th=new THREE.Group();th.position.set(-s*0.036,-0.03,-0.012);const t1=new THREE.Mesh(new THREE.CapsuleGeometry(0.0095,0.03,4,10),skinMat);t1.position.y=-0.02;th.add(t1);th.rotation.z=-s*0.75;th.rotation.x=0.5;hand.add(th);hand.userData.th=th;
+    B['wr'+k].attach(hand);
+    if(k==='L'){const watch=new THREE.Mesh(new THREE.TorusGeometry(0.031,0.0065,8,32),goldMat);watch.position.set(X,0.905,0);watch.rotation.x=Math.PI/2;B.elL.attach(watch);
+      const face=new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.006,20),darkMat);face.position.set(X,0.905,0.028);face.rotation.x=Math.PI/2;B.elL.attach(face);}
+    arms[k]={sh:B['sh'+k],el:B['el'+k],wr:B['wr'+k],hand};
   });
-  /* the ball in his right hand */
-  const hb=new THREE.Mesh(ballGeo,ballMat);hb.position.set(0,-0.135,-0.03);arms.R.wr.add(hb);arms.R.ball=hb;
-  /* hips + legs (jeans) */
-  const waist=loft([{y:0.80,rx:0.172,rz:0.128},{y:0.86,rx:0.176,rz:0.128},{y:0.92,rx:0.170,rz:0.118},{y:0.96,rx:0.163,rz:0.112}],40,denimMat,(a,y,x,z,s)=>{const back=Math.max(0,z/s.rz);const d=0.012*gauss(Math.abs(x)-0.07,0.05)*gauss(y-0.85,0.05)*back-0.006*gauss(x,0.02)*back;const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];});
-  G.add(waist);
-  const belt=new THREE.Mesh(new THREE.TorusGeometry(0.152,0.012,6,40),darkMat);belt.scale.set(1,0.72,1);belt.position.y=0.965;belt.rotation.x=Math.PI/2;G.add(belt);
-  const buckle=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.024,0.008),goldMat);buckle.position.set(0,0.965,-0.118);G.add(buckle);
+  const hb=new THREE.Mesh(ballGeo,ballMat);hb.position.set(-0.185,0.72,-0.02);B.wrR.attach(hb);arms.R.ball=hb;
+  /* legs: one skin hip to ankle, bending at the knee */
   const legs={};
   [['L',1],['R',-1]].forEach(([k,s])=>{
-    const hp=new THREE.Group();hp.position.set(s*0.092,0.86,0);G.add(hp);
-    const thigh=loft([{y:0.0,rx:0.092,rz:0.100,cz:0.006},{y:-0.10,rx:0.088,rz:0.097,cz:0.004},{y:-0.22,rx:0.080,rz:0.086},{y:-0.34,rx:0.068,rz:0.072},{y:-0.42,rx:0.062,rz:0.066}],32,denimMat);hp.add(thigh);
-    const kn=new THREE.Group();kn.position.set(0,-0.42,0);hp.add(kn);
-    const knee=new THREE.Mesh(new THREE.SphereGeometry(0.057,18,12),denimFlat);knee.scale.set(0.98,1.06,1.0);kn.add(knee);
-    const shin=loft([{y:0.0,rx:0.060,rz:0.064},{y:-0.09,rx:0.062,rz:0.070,cz:0.010},{y:-0.18,rx:0.056,rz:0.062,cz:0.008},{y:-0.30,rx:0.046,rz:0.048},{y:-0.40,rx:0.042,rz:0.044}],32,denimMat);kn.add(shin);
-    const ft=new THREE.Group();ft.position.set(0,-0.40,0);kn.add(ft);
-    const ankle=new THREE.Mesh(new THREE.SphereGeometry(0.036,14,10),skinMat);ankle.position.y=-0.01;ft.add(ankle);
-    /* gold sneaker: upper, cream sole, heel tab */
-    const up=loftZ([{z:0.075,rx:0.036,ry:0.045,cy:-0.015},{z:0.03,rx:0.044,ry:0.05,cy:-0.02},{z:-0.03,rx:0.047,ry:0.046,cy:-0.024},{z:-0.10,rx:0.046,ry:0.036,cy:-0.03},{z:-0.16,rx:0.038,ry:0.024,cy:-0.036},{z:-0.19,rx:0.02,ry:0.012,cy:-0.042}],20,goldMat);ft.add(up);
-    const sole=loftZ([{z:0.082,rx:0.036,ry:0.013,cy:-0.048},{z:0.03,rx:0.048,ry:0.014,cy:-0.048},{z:-0.06,rx:0.05,ry:0.014,cy:-0.048},{z:-0.14,rx:0.044,ry:0.013,cy:-0.048},{z:-0.198,rx:0.022,ry:0.010,cy:-0.048}],20,soleMat);ft.add(sole);
-    const tab=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.03,0.008),darkMat);tab.position.set(0,-0.012,0.075);ft.add(tab);
-    for(let i=0;i<3;i++){const lace=new THREE.Mesh(new THREE.TorusGeometry(0.02,0.0025,6,16,Math.PI),soleMat);lace.position.set(0,0.008-i*0.006,-0.055-i*0.028);lace.rotation.x=-0.35;ft.add(lace);}
-    legs[k]={hp,kn,ft};
+    const X=s*0.095,hp=BI['hp'+k],kn=BI['kn'+k],an=BI['an'+k];
+    const secs=[{y:0.06,rx:0.037,rz:0.041},{y:0.12,rx:0.041,rz:0.047},{y:0.20,rx:0.049,rz:0.057},{y:0.30,rx:0.058,rz:0.070,cz:0.008},{y:0.38,rx:0.059,rz:0.067,cz:0.004},
+      {y:0.46,rx:0.057,rz:0.061},{y:0.50,rx:0.059,rz:0.062},{y:0.55,rx:0.065,rz:0.069},{y:0.65,rx:0.076,rz:0.083,cz:0.004},{y:0.75,rx:0.085,rz:0.093},{y:0.84,rx:0.089,rz:0.097,cx:-s*0.006},{y:0.905,rx:0.087,rz:0.095,cx:-s*0.012}]
+      .map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
+    skinned(skinByY(loftGeo(secs,32,legDisp(s)),[{b:an,y0:-9,y1:0.09},{b:kn,y0:0.09,y1:0.50},{b:hp,y0:0.50,y1:0.86},{b:BI.pelvis,y0:0.86,y1:9}],0.05),denimMat);
+    /* gold sneaker on the ankle bone */
+    const ft=new THREE.Group();ft.position.set(X,0.07,0);
+    const up=loftZ([{z:0.085,rx:0.038,ry:0.048,cy:-0.02},{z:0.035,rx:0.047,ry:0.053,cy:-0.024},{z:-0.03,rx:0.050,ry:0.049,cy:-0.028},{z:-0.10,rx:0.049,ry:0.039,cy:-0.034},{z:-0.16,rx:0.041,ry:0.026,cy:-0.041},{z:-0.195,rx:0.022,ry:0.013,cy:-0.048}],22,goldMat);ft.add(up);
+    const sole=loftZ([{z:0.092,rx:0.038,ry:0.013,cy:-0.056},{z:0.035,rx:0.051,ry:0.014,cy:-0.056},{z:-0.06,rx:0.053,ry:0.014,cy:-0.056},{z:-0.14,rx:0.047,ry:0.013,cy:-0.056},{z:-0.203,rx:0.024,ry:0.010,cy:-0.056}],22,soleMat);ft.add(sole);
+    const tab=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.032,0.008),darkMat);tab.position.set(0,-0.015,0.085);ft.add(tab);
+    for(let i=0;i<3;i++){const lace=new THREE.Mesh(new THREE.TorusGeometry(0.021,0.0025,6,16,Math.PI),soleMat);lace.position.set(0,0.004-i*0.006,-0.055-i*0.03);lace.rotation.x=-0.35;ft.add(lace);}
+    const cuff=new THREE.Mesh(new THREE.TorusGeometry(0.045,0.006,6,28),denimFlat);cuff.scale.set(1,1,1.1);cuff.position.set(0,-0.005,0);cuff.rotation.x=Math.PI/2;ft.add(cuff);
+    B['an'+k].attach(ft);
+    legs[k]={hp:B['hp'+k],kn:B['kn'+k],an:B['an'+k]};
   });
   /* contact shadow */
   const shT=bake(128,128,(g,w,h)=>{const r=g.createRadialGradient(64,64,4,64,64,62);r.addColorStop(0,'rgba(0,0,0,.75)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,w,h);});
-  const shadow=new THREE.Mesh(new THREE.PlaneGeometry(0.95,0.6),new THREE.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(0,0.004,-0.05);G.add(shadow);
-  G.userData={torso,headGrp,arms,legs,shadow};
+  const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1.0,0.62),new THREE.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(0,0.004,-0.05);G.add(shadow);
+  G.userData={B,arms,legs,shadow};
   return G;
 }
-const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(0.86);bRoot.position.y=0.22;bRoot.add(bowler);bScene.add(bRoot);
+const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
 let bVis=false,bRollT=0,bLastPhase='';
-/* pose the figure for the phase; everything else is idle breathing */
+/* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
+function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation.x=c*0.9;g.userData.tip.rotation.x=c*1.1;}h.userData.th.rotation.x=0.5+c*0.6;}
 function poseBowler(gs,dt,nw){
-  const U=bowler.userData,A=U.arms,L=U.legs;
+  const U=bowler.userData,B=U.B,A=U.arms,L=U.legs;
   const cheer=gs.cheer>0,ph=gs.phase;
   const tp=ph==='throw'?Math.min(1,(gs.throwT||0)/0.55):(ph==='roll'?1:0);
   const rl=ph==='roll'?bRollT:0;
   const br=Math.sin(nw*1.7)*0.5+0.5;
   /* target joint angles */
-  let t={lean:-0.05,bob:0,ax:{L:-0.92,R:-1.05},az:{L:0.22,R:-0.28},el:{L:-1.55,R:-1.75},hip:{L:-0.10,R:-0.10},knee:{L:0.18,R:0.18},headX:0.08,headY:0,hz:0};
-  if(cheer){t={lean:0.05,bob:Math.abs(Math.sin(nw*15))*0.09,ax:{L:-2.75,R:-2.75},az:{L:0.35,R:-0.35},el:{L:-0.35,R:-0.35},hip:{L:-0.05,R:-0.05},knee:{L:0.1,R:0.1},headX:-0.18,headY:Math.sin(nw*6)*0.08,hz:0};}
+  let t={lean:-0.05,spine:-0.03,bob:0,hz:0,
+    shL:[0.42,0,0.26],elL:1.25,shR:[0.55,0,-0.30],elR:1.15,curl:0.75,
+    hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0};
+  if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,0.35],elL:0.25,shR:[2.9,0,-0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
   else if(ph==='throw'||ph==='roll'){
-    const back=Math.min(1,tp/0.5),fwd=Math.max(0,(tp-0.5)/0.5);
-    const sw=back<1?THREE.MathUtils.lerp(-1.05,1.35,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(1.35,-1.55,Math.sin(fwd*Math.PI/2)); /* right arm: back, then through */
-    const fol=Math.min(1,rl/0.35);
-    t={lean:-0.12-0.22*tp-0.08*fol,bob:-0.06*tp-0.05*fwd,ax:{L:-0.55-0.5*fwd,R:sw-0.7*fol},az:{L:0.9+0.5*fwd,R:-0.12},el:{L:-0.9,R:-0.15-0.25*fwd},
-       hip:{L:-0.55-0.35*fwd,R:0.18+0.32*tp},knee:{L:0.55+0.35*fwd,R:0.12},headX:0.28+0.1*tp,headY:0,hz:-0.10*tp};
+    const back=Math.min(1,tp/0.5),fwd=Math.max(0,(tp-0.5)/0.5),fol=Math.min(1,rl/0.35);
+    const swR=back<1?THREE.MathUtils.lerp(0.55,-1.35,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(-1.35,1.55,Math.sin(fwd*Math.PI/2))+0.5*fol;
+    t={lean:-0.14-0.22*tp-0.06*fol,spine:-0.06-0.08*tp,bob:-0.05*tp-0.05*fwd,hz:-0.10*tp,
+       shL:[0.25+0.45*fwd,0,0.75+0.55*fwd],elL:0.9-0.4*fwd,shR:[swR,0,-0.16],elR:1.15-1.0*back+0.1*fwd,curl:tp<0.98?0.8:0.2,
+       hpL:0.55+0.35*fwd,knL:-0.55-0.4*fwd,hpR:-0.25-0.35*tp,knR:-0.15,headX:0.26+0.1*tp,headY:0};
   }
   const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?16:7));
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
-  lp(bowler.rotation,'x',t.lean);
+  lp(bowler.rotation,'x',t.lean);lp(B.spine.rotation,'x',t.spine);
   bowler.position.y+=(t.bob-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
-  ['L','R'].forEach(s=>{lp(A[s].sh.rotation,'x',t.ax[s]);lp(A[s].sh.rotation,'z',t.az[s]);lp(A[s].el.rotation,'x',t.el[s]);
-    lp(L[s].hp.rotation,'x',t.hip[s]);lp(L[s].kn.rotation,'x',t.knee[s]);L[s].ft.rotation.x=-L[s].hp.rotation.x-L[s].kn.rotation.x;});
-  lp(U.headGrp.rotation,'x',t.headX);lp(U.headGrp.rotation,'y',t.headY+Math.sin(nw*0.7)*0.04);
-  U.torso.scale.y=1+0.006*br;U.torso.position.y=-0.9*0.006*br;
+  ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);
+    lp(L[s].hp.rotation,'x',t['hp'+s]);lp(L[s].kn.rotation,'x',t['kn'+s]);L[s].an.rotation.x=-L[s].hp.rotation.x-L[s].kn.rotation.x-bowler.rotation.x;});
+  A.R.wr.rotation.x=-0.3;A.L.wr.rotation.x=-0.2;
+  curlHand(A.R.hand,t.curl);curlHand(A.L.hand,0.35);
+  lp(B.head.rotation,'x',t.headX);lp(B.head.rotation,'y',t.headY+Math.sin(nw*0.7)*0.04);
+  B.chest.scale.y=1+0.008*br;B.chest.rotation.x=-0.01*br;
   A.R.ball.visible=!(ph==='roll'||ph==='settle'||ph==='result')&&!(ph==='throw'&&tp>=0.98)&&!cheer;
   U.shadow.scale.setScalar(1-0.35*Math.max(0,bowler.position.y));
 }
@@ -2852,10 +2921,10 @@ function renderBowler(gs,dt,nw){
   if(ph!==bLastPhase){if(ph==='roll')bRollT=0;bLastPhase=ph;}
   if(ph==='roll')bRollT+=dt;
   bVis=(ph==='aim'||ph==='spin'||ph==='power'||ph==='throw'||(ph==='roll'&&bRollT<0.62&&camP.z>3.2))&&!gs.over; /* gone once the camera leaves the approach */
-  bRoot.position.y=0.22-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:0); /* the camera rolls past him: he drops out of frame */
+  bRoot.position.y=0.20-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:0); /* the camera rolls past him: he drops out of frame */
   if(!bVis)return;
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2;
-  bowler.position.x+=((px/(bPxPerM*0.86))-bowler.position.x)*Math.min(1,dt*10);
+  bowler.position.x+=((px/(bPxPerM*BSCALE))-bowler.position.x)*Math.min(1,dt*10);
   poseBowler(gs,dt,nw);
   bRim.color.set(LEDCOLS[ledCol]);
   renderer.autoClear=false;renderer.clearDepth();renderer.render(bScene,bCam);renderer.autoClear=true;
