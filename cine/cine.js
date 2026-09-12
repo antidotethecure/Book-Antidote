@@ -34,7 +34,7 @@ function caption(ctx,W,H,kicker,title,a,mono,display){
 }
 function vignette(ctx,W,H,a){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+a+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
 /* ---------------- 1. CHEESE DRIP — thick molten cheese: a sagging sheet, teardrop drips on thin necks, wet highlights, drops that let go ---------------- */
-R['cheese-drip']={
+R['cheese-drip-2d']={
   init(s){const rnd=()=>Math.random();const mk=(n,back)=>{const arr=[];let x=0.02+rnd()*0.03;while(x<0.98&&arr.length<n){const w=(back?0.075:0.055)+rnd()*0.06;
       arr.push({x:x+w/2,w0:w*(back?0.78:0.72),len:0.18+Math.pow(rnd(),0.7)*0.8,spd:0.7+rnd()*0.6,ph:rnd()*6.3,det:0.32+rnd()*0.4,drop:rnd()<0.55,wob:0.6+rnd()*0.8});x+=w*(0.9+rnd()*0.6);}return arr;};
     s.front=mk(18,false);s.back=mk(9,true);s.off=document.createElement('canvas');},
@@ -92,6 +92,108 @@ R['cheese-drip']={
     ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.18*(1-run);const gl=ctx.createLinearGradient(0,0,0,H);gl.addColorStop(0,'rgba(255,170,40,.6)');gl.addColorStop(1,'rgba(255,170,40,0)');ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);ctx.restore();
     const a=Math.min(1,pour*2.2)*(1-sm(p,0.62,0.75));
     caption(ctx,W,H,s.o.kicker||'',s.o.title||'',a,s.mono,s.display);}
+};
+/* ---------------- 1. CHEESE DRIP (GPU) — one continuous fluid field: sheet, tongues, bulbs and falling drops melt into each other, lit as a wet surface ---------------- */
+const CHEESE_VS='#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}';
+const CHEESE_FS=`#version 300 es
+precision highp float;
+out vec4 O;
+uniform vec2 R;uniform float T,SHIFT,BASEF,BASEB,GLOW;uniform int N;
+uniform vec4 A[32];   /* cx, y0, L, w0            (px) */
+uniform vec4 B[32];   /* rb, wn, sway, dropY(-1)  (px) */
+uniform vec4 C[32];   /* back(0/1), dropR, pinch, det */
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*f*(f*(f*6.0-15.0)+10.0);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float smin(float a,float b,float k){float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0);return mix(b,a,h)-k*h*(1.0-h);}
+/* signed distance to the liquid of one layer (negative inside). rr receives a local radius for the shading */
+float field(vec2 p,float back,float base,out float rr){
+  float x=p.x,y=p.y;
+  /* the sheet edge sags and dips toward every drip */
+  float e=base+sin(x*0.011+T*0.35)*R.y*0.007+sin(x*0.029+1.7)*R.y*0.004+(noise(vec2(x*0.02,T*0.2))-0.5)*R.y*0.012;
+  for(int i=0;i<32;i++){if(i>=N)break;if(C[i].x!=back)continue;float u=(x-A[i].x)/(A[i].w*1.7);e+=exp(-u*u)*A[i].w*0.5;}
+  float d=y-e;rr=R.y*0.045;
+  for(int i=0;i<32;i++){if(i>=N)break;if(C[i].x!=back)continue;
+    float cx=A[i].x,y0=A[i].y-A[i].w*0.4,L=A[i].z,w0=A[i].w*0.5,rb=B[i].x,wn=B[i].y*0.5,sw=B[i].z,pinch=C[i].z;
+    float by=y0+L;                                     /* bulb centre */
+    float s=clamp((y-y0)/max(L,1.0),0.0,1.0);
+    float xc=cx+sw*s*s;                                /* the tongue sways more toward the tip */
+    float r=mix(w0,wn,smoothstep(0.0,0.75,s));
+    r*=1.0-pinch*smoothstep(0.55,0.92,s)*0.95;          /* the neck thins before a drop lets go */
+    r+=(noise(vec2(cx*0.1,y*0.02-T*0.35))-0.5)*w0*0.05;  /* viscous ripple down the tongue */
+    float dt=length(vec2(x-xc,clamp(y,y0,by)-y))-r;     /* capsule-ish tongue */
+    float db=length(vec2(x-xc,y-by))-rb;                 /* the bulb */
+    float dd=smin(dt,db,rb*0.9);
+    float k=w0*0.9;float nd=smin(d,dd,k);
+    if(nd<d){float wgt=clamp((d-nd)/max(k,1.0),0.0,1.0);rr=mix(rr,max(rb,w0),wgt);}
+    d=nd;
+    if(B[i].w>0.0){float dr=length(vec2(x-xc,y-B[i].w))-C[i].y;float top=length(vec2(x-xc,y-B[i].w+C[i].y*1.1))-C[i].y*0.45;dr=smin(dr,top,C[i].y*0.8);
+      float nd2=smin(d,dr,C[i].y*0.6);if(nd2<d){rr=mix(rr,C[i].y,clamp((d-nd2)/max(C[i].y*0.6,1.0),0.0,1.0));}d=nd2;}
+  }
+  return d;
+}
+vec3 shade(vec2 p,float d,float rr,float back,vec2 gr){
+  float t=clamp(-d/max(rr,4.0),0.0,1.0);                 /* 0 at the edge, 1 deep inside */
+  float h=sqrt(max(0.0,1.0-(1.0-t)*(1.0-t)));            /* spherical cap height */
+  float dh=(1.0-t)/max(h,0.06);                            /* slope of a round cross-section: steep at the edge, flat on the crown */
+  vec3 n=normalize(vec3(gr*dh,1.0));
+  vec3 L1=normalize(vec3(-0.45,-0.55,0.72)),L2=normalize(vec3(0.6,0.2,0.5)),V=vec3(0,0,1);
+  float dif=max(dot(n,L1),0.0)*0.85+max(dot(n,L2),0.0)*0.25;
+  float spec=pow(max(dot(n,normalize(L1+V)),0.0),90.0)*1.0+pow(max(dot(n,normalize(L1+V)),0.0),12.0)*0.22+pow(max(dot(n,normalize(L2+V)),0.0),30.0)*0.14;
+  float fres=pow(1.0-max(n.z,0.0),4.0);
+  float flow=noise(vec2(p.x*0.035,p.y*0.006-T*0.35))*0.12+noise(vec2(p.x*0.12,p.y*0.02-T*0.9))*0.05;
+  vec3 c1=vec3(1.0,0.78,0.22),c2=vec3(0.93,0.60,0.12);          /* cheddar: bright melt to a deeper orange in the shadows */
+  vec3 base=mix(c1,c2,clamp(p.y/R.y*0.6+0.2,0.0,1.0))*(1.0+flow-0.06);
+  vec3 col=base*(0.36+0.70*dif);
+  col+=vec3(1.0,0.95,0.8)*spec;
+  col*=1.0-fres*0.38;                                     /* thick edge goes darker */
+  col+=vec3(1.0,0.55,0.15)*0.10*(1.0-t);                  /* thin edges glow warm (subsurface) */
+  if(back>0.5)col*=0.62;
+  return col;
+}
+void main(){
+  vec2 p=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y)-vec2(0.0,SHIFT);
+  float rrB,rrF;float dB=field(p,1.0,BASEB,rrB);float dF=field(p,0.0,BASEF,rrF);
+  vec2 gB=vec2(dFdx(dB),dFdy(dB));vec2 gF=vec2(dFdx(dF),dFdy(dF));
+  float aa=1.2;float mB=1.0-smoothstep(-aa,aa,dB);float mF=1.0-smoothstep(-aa,aa,dF);
+  vec3 cB=shade(p,dB,rrB,1.0,gB);vec3 cF=shade(p,dF,rrF,0.0,gF);
+  /* the front layer drops a soft shadow onto the back layer and the stage */
+  float rrS;float dS=field(p-vec2(5.0,14.0),0.0,BASEF,rrS);float sh=(1.0-smoothstep(-2.0,18.0,dS))*0.42;
+  cB*=1.0-sh;
+  vec3 col=mix(cB,cF,mF);float a=max(mB,mF);
+  /* warm light spill onto the dark below */
+  float g=exp(-max(min(dB,dF),0.0)/(R.y*0.05))*0.35*GLOW;
+  col=col*a+vec3(1.0,0.62,0.18)*g*(1.0-a);a=clamp(a+g*0.9*(1.0-a)+sh*(1.0-a)*0.45,0.0,1.0);
+  col=mix(col,vec3(0.0),sh*(1.0-max(mB,mF))*0.6*0.0);
+  O=vec4(col,a);
+}`;
+R['cheese-drip']={gl:true,
+  init(s){const rnd=()=>Math.random();const port=s.W<s.H,ws=port?2.1:1;  /* portrait screens: fewer, fatter tongues so they stay thick */
+    const mk=(n,back)=>{const arr=[];let x=0.02+rnd()*0.03;while(x<0.98&&arr.length<n){const w=((back?0.075:0.055)+rnd()*0.06)*ws;
+      arr.push({x:x+w/2,w0:w*(back?0.78:0.72),len:0.18+Math.pow(rnd(),0.7)*0.8,ph:rnd()*6.3,det:0.32+rnd()*0.4,drop:rnd()<0.6,wob:0.6+rnd()*0.8,back:back?1:0});x+=w*(0.9+rnd()*0.6);}return arr;};
+    s.drips=mk(port?9:18,false).concat(mk(port?5:9,true));
+    const gl=s.gl;const P=gl.createProgram();const mkS=(t,src)=>{const sh=gl.createShader(t);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));gl.attachShader(P,sh);};
+    mkS(gl.VERTEX_SHADER,CHEESE_VS);mkS(gl.FRAGMENT_SHADER,CHEESE_FS);gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
+    gl.useProgram(P);const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(P,'a');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    s.P=P;s.U={};['R','T','SHIFT','BASEF','BASEB','GLOW','N','A','B','C'].forEach(k=>s.U[k]=gl.getUniformLocation(P,k));
+    s.FA=new Float32Array(32*4);s.FB=new Float32Array(32*4);s.FC=new Float32Array(32*4);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);},
+  draw(s,p,t){const {gl,W,H,dpr,ctx}=s;
+    const pour=Math.pow(sm(p,0,0.62),1.15),run=Math.pow(sm(p,0.66,1),1.8);const shift=run*H*2.6;
+    const baseF=H*0.085*(0.35+0.65*pour)+H*0.03,baseB=H*0.13*(0.35+0.65*pour)+H*0.03;
+    const {FA,FB,FC}=s;let n=0;
+    for(const d of s.drips){const cx=d.x*W,w0=d.w0*W;const grow=Math.pow(clamp(pour*1.15-(1-d.len)*0.12,0,1),1.7);const L=H*d.len*grow+w0*0.6;
+      const rb=w0*(0.44+0.14*grow),wn=w0*(0.92-0.3*grow),sway=Math.sin(t*d.wob+d.ph)*w0*0.35*grow;
+      const y0=(d.back?baseB:baseF);
+      let dropY=-1,dropR=0,pinch=0;
+      if(d.drop){const q=seg(pour,d.det,d.det+0.34);pinch=sm(q,0,0.35);if(q>0.3){const q2=(q-0.3)/0.7;dropR=rb*0.55*(0.7+0.3*q2);dropY=y0+L+rb*0.4+q2*q2*H*1.0;}}
+      FA.set([cx,y0,L,w0],n*4);FB.set([rb,wn,sway,dropY],n*4);FC.set([d.back,dropR,pinch,d.det],n*4);n++;}
+    gl.viewport(0,0,s.cv.width,s.cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(s.P);
+    gl.uniform2f(s.U.R,s.cv.width,s.cv.height);gl.uniform1f(s.U.T,t);gl.uniform1f(s.U.SHIFT,shift*dpr);gl.uniform1f(s.U.BASEF,baseF*dpr);gl.uniform1f(s.U.BASEB,baseB*dpr);gl.uniform1f(s.U.GLOW,1-run);gl.uniform1i(s.U.N,n);
+    /* px → device px */
+    const sc=(arr,idx)=>{for(let i=0;i<n;i++)for(const j of idx)arr[i*4+j]*=dpr;};sc(FA,[0,1,2,3]);sc(FB,[0,1,2,3]);sc(FC,[1]);for(let i=0;i<n;i++){if(FB[i*4+3]<0)FB[i*4+3]=-1;}
+    gl.uniform4fv(s.U.A,FA);gl.uniform4fv(s.U.B,FB);gl.uniform4fv(s.U.C,FC);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    ctx.clearRect(0,0,W,H);const a=Math.min(1,pour*2.2)*(1-sm(p,0.62,0.75));caption(ctx,W,H,s.o.kicker||'',s.o.title||'',a,s.mono,s.display);}
 };
 /* ---------------- 2. STAR ZOOM — tight on the food, pull back over the Walk of Fame star, faces fly in ---------------- */
 R['star-zoom']={
@@ -204,12 +306,16 @@ function build(o){
   const wrap=document.createElement('div');wrap.className='cine cine-'+o.type;wrap.style.height=(o.length||200)+'vh';
   const pin=document.createElement('div');pin.className='cine-pin';const cv=document.createElement('canvas');cv.className='cine-cv';pin.appendChild(cv);wrap.appendChild(pin);
   target.parentNode.insertBefore(wrap,target);
-  const s={o,el:wrap,pin,cv,ctx:cv.getContext('2d'),W:0,H:0,img:null,ready:false,inview:false,mono:o.mono||"'JetBrains Mono',monospace",display:o.display||"'Orbitron','Anton',Impact,sans-serif"};
+  let gl=null,cv2=null;
+  if(R[o.type].gl){try{gl=cv.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'});}catch(e){gl=null;}
+    if(gl){cv2=document.createElement('canvas');cv2.className='cine-cv';pin.appendChild(cv2);}else if(R[o.type+'-2d'])o=Object.assign({},o,{type:o.type+'-2d'});}
+  const s={o,el:wrap,pin,cv,cv2,gl,ctx:(cv2||cv).getContext('2d'),W:0,H:0,img:null,ready:false,inview:false,mono:o.mono||"'JetBrains Mono',monospace",display:o.display||"'Orbitron','Anton',Impact,sans-serif"};
   loadImg(o.image).then(i=>{s.img=i;});
   return s;
 }
-function size(s){const dpr=Math.min(devicePixelRatio||1,1.5);const w=innerWidth,h=innerHeight;if(s.W===w&&s.H===h&&s.dpr===dpr)return;s.W=w;s.H=h;s.dpr=dpr;s.cv.width=Math.round(w*dpr);s.cv.height=Math.round(h*dpr);s.ctx.setTransform(dpr,0,0,dpr,0,0);
-  if(!s.ready){R[s.o.type].init(s);s.ready=true;}}
+function size(s){const dpr=Math.min(devicePixelRatio||1,1.5);const w=innerWidth,h=innerHeight;if(s.W===w&&s.H===h&&s.dpr===dpr)return;s.W=w;s.H=h;s.dpr=dpr;s.cv.width=Math.round(w*dpr);s.cv.height=Math.round(h*dpr);
+  if(s.cv2){s.cv2.width=s.cv.width;s.cv2.height=s.cv.height;}s.ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(!s.ready){try{R[s.o.type].init(s);}catch(e){console.warn('cine: '+s.o.type+' failed, falling back: '+(e&&e.message||e));if(s.gl&&R[s.o.type+'-2d']){s.gl=null;s.o=Object.assign({},s.o,{type:s.o.type+'-2d'});s.cv.style.display='none';s.ctx.setTransform(dpr,0,0,dpr,0,0);R[s.o.type].init(s);} /* the 2D overlay canvas becomes the scene canvas */}s.ready=true;}}
 function tick(){raf=0;const t=performance.now()/1000;let any=false;
   for(const s of scenes){if(!s.inview)continue;any=true;size(s);const r=s.el.getBoundingClientRect();const p=clamp(-r.top/(r.height-innerHeight),0,1);R[s.o.type].draw(s,p,t);}
   if(any)raf=requestAnimationFrame(tick);}
