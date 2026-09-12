@@ -33,38 +33,64 @@ function caption(ctx,W,H,kicker,title,a,mono,display){
   ctx.restore();
 }
 function vignette(ctx,W,H,a){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+a+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
-/* ---------------- 1. CHEESE DRIP — molten cheese curtain that pours down and drops away ---------------- */
+/* ---------------- 1. CHEESE DRIP — thick molten cheese: a sagging sheet, teardrop drips on thin necks, wet highlights, drops that let go ---------------- */
 R['cheese-drip']={
-  init(s){const n=Math.round(clamp(s.W/54,12,34));s.drips=[];let x=0;const cols=[];for(let i=0;i<n;i++){cols.push(0.6+Math.random()*1.2);}const tot=cols.reduce((a,b)=>a+b,0);
-    for(let i=0;i<n;i++){const w=cols[i]/tot;s.drips.push({x:x+w/2,w:w*0.92,len:0.35+Math.random()*0.75,ph:Math.random()*6.3,sp:0.6+Math.random()*0.8,back:Math.random()<0.4});x+=w;}},
+  init(s){const rnd=()=>Math.random();const mk=(n,back)=>{const arr=[];let x=0.02+rnd()*0.03;while(x<0.98&&arr.length<n){const w=(back?0.075:0.055)+rnd()*0.06;
+      arr.push({x:x+w/2,w0:w*(back?0.78:0.72),len:0.18+Math.pow(rnd(),0.7)*0.8,spd:0.7+rnd()*0.6,ph:rnd()*6.3,det:0.32+rnd()*0.4,drop:rnd()<0.55,wob:0.6+rnd()*0.8});x+=w*(0.9+rnd()*0.6);}return arr;};
+    s.front=mk(18,false);s.back=mk(9,true);s.off=document.createElement('canvas');},
   draw(s,p,t){const {ctx,W,H}=s;ctx.clearRect(0,0,W,H);
-    const pour=sm(p,0,0.5),drop=sm(p,0.55,1);            /* pour down, then the whole sheet drops off the bottom */
-    const shift=drop*H*2.4;                                 /* far enough that the sheet and the longest drip clear the bottom */
-    const layer=(back)=>{
-      const top=back?'#c9781a':'#ffc531',mid=back?'#e8921d':'#ffd558',edge=back?'#a45d10':'#e39a1a';
-      ctx.save();ctx.translate(0,shift);
-      const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,top);g.addColorStop(0.55,mid);g.addColorStop(1,edge);ctx.fillStyle=g;
-      ctx.beginPath();const sheet=H*(back?0.14:0.09)*pour+H*0.02;ctx.moveTo(0,-H);ctx.lineTo(W,-H);ctx.lineTo(W,sheet);
-      /* wavy sheet edge with drips hanging off it */
-      const ds=s.drips.filter(d=>d.back===back);
-      for(let i=ds.length-1;i>=0;i--){const d=ds[i];const cx=d.x*W,hw=d.w*W/2*(back?1.25:1);
-        const L=sheet+H*d.len*(0.15+0.85*ease(pour))*(1+0.04*Math.sin(t*d.sp+d.ph));
-        ctx.lineTo(cx+hw,sheet);ctx.bezierCurveTo(cx+hw,L-hw*0.2,cx+hw*1.05,L+hw*0.4,cx,L+hw*0.55);ctx.bezierCurveTo(cx-hw*1.05,L+hw*0.4,cx-hw,L-hw*0.2,cx-hw,sheet);}
-      ctx.lineTo(0,sheet);ctx.closePath();ctx.fill();
-      if(!back){/* gloss: a soft highlight down the left of each drip and a shine on the sheet */
-        ctx.globalCompositeOperation='lighter';
-        for(const d of ds){const cx=d.x*W,hw=d.w*W/2;const L=sheet+H*d.len*(0.15+0.85*ease(pour));
-          const hg=ctx.createLinearGradient(cx-hw,0,cx,0);hg.addColorStop(0,'rgba(255,255,255,0)');hg.addColorStop(0.5,'rgba(255,250,200,.35)');hg.addColorStop(1,'rgba(255,255,255,0)');
-          ctx.fillStyle=hg;ctx.fillRect(cx-hw*0.9,sheet,hw*0.8,L-sheet);
-          ctx.fillStyle='rgba(255,255,255,.28)';ctx.beginPath();ctx.ellipse(cx-hw*0.25,L+hw*0.05,hw*0.28,hw*0.16,-0.5,0,7);ctx.fill();}
-        const sg=ctx.createLinearGradient(0,0,0,sheet);sg.addColorStop(0,'rgba(255,255,255,.22)');sg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=sg;ctx.fillRect(0,-H,W,sheet+H);
-        ctx.globalCompositeOperation='source-over';
-        /* bubbles in the melt */
-        for(let i=0;i<18;i++){const bx=((i*97)%100)/100*W,by=(((i*61)%100)/100)*sheet*0.9;ctx.fillStyle='rgba(180,90,10,.18)';ctx.beginPath();ctx.arc(bx,by,2+(i%4),0,7);ctx.fill();}
-      }
-      ctx.restore();};
-    layer(true);layer(false);
-    const a=Math.min(1,pour*2)*(1-sm(p,0.5,0.7));
+    const pour=Math.pow(sm(p,0,0.62),1.15);              /* slow, heavy pour */
+    const run=Math.pow(sm(p,0.66,1),1.8);                /* then it all runs down off the bottom, gathering speed */
+    const shift=run*H*2.6;
+    /* offscreen liquid pass: silhouette first, then shading clipped to it */
+    const off=s.off;if(off.width!==s.cv.width||off.height!==s.cv.height){off.width=s.cv.width;off.height=s.cv.height;}
+    const o=off.getContext('2d');o.setTransform(s.dpr,0,0,s.dpr,0,0);o.clearRect(0,0,W,H);
+    const layer=(drips,back)=>{
+      const base=H*(back?0.13:0.085)*(0.35+0.65*pour)+H*0.03;
+      /* the sheet edge: a smooth sag that dips toward every drip */
+      const N=Math.max(60,Math.round(W/8)),edge=new Float32Array(N+1);
+      for(let k=0;k<=N;k++){const x=k/N;let y=base+Math.sin(x*11+t*0.35)*H*0.006+Math.sin(x*29+1.7)*H*0.004;
+        for(const d of drips){const u=(x-d.x)/(d.w0*1.6);y+=Math.exp(-u*u)*d.w0*W*0.55*Math.min(1,pour*1.5);}edge[k]=y;}
+      const dripGeo=drips.map(d=>{const cx=d.x*W,w0=d.w0*W;const k=Math.round(d.x*N);const y0=edge[Math.max(0,Math.min(N,k))];
+        const grow=Math.pow(clamp(pour*1.15-(1-d.len)*0.12,0,1),1.7);const L=H*d.len*grow+w0*0.6;const rb=w0*(0.44+0.14*grow),wn=w0*(0.92-0.3*grow);
+        const sway=Math.sin(t*d.wob+d.ph)*w0*0.06*grow;return {d,cx,w0,y0,L,rb,wn,sway,by:y0+L-rb};});
+      o.save();o.translate(0,shift);
+      /* silhouette */
+      o.beginPath();o.moveTo(0,-H*2);o.lineTo(0,edge[0]);for(let k=1;k<=N;k++)o.lineTo(k/N*W,edge[k]);o.lineTo(W,-H*2);o.closePath();
+      for(const g of dripGeo){const {cx,w0,y0,L,rb,wn,sway,by}=g;
+        o.moveTo(cx-w0/2,y0-2);o.bezierCurveTo(cx-w0/2,y0+L*0.45,cx-wn/2+sway*0.5,by-rb*2.6,cx-wn/2+sway,by-rb*1.1);
+        o.quadraticCurveTo(cx-rb*1.02+sway,by-rb*0.7,cx-rb+sway,by);o.arc(cx+sway,by,rb,Math.PI,0,true);
+        o.quadraticCurveTo(cx+rb*1.02+sway,by-rb*0.7,cx+wn/2+sway,by-rb*1.1);o.bezierCurveTo(cx+wn/2+sway*0.5,by-rb*2.6,cx+w0/2,y0+L*0.45,cx+w0/2,y0-2);o.closePath();}
+      /* drops that have let go of the bulb and are falling */
+      for(const g of dripGeo){const d=g.d;if(!d.drop)continue;const q=seg(pour,d.det,d.det+0.32);if(q<=0)continue;const r=g.rb*0.55*(0.6+0.4*q),fy=g.by+g.rb*0.3+q*q*H*0.9;
+        o.moveTo(g.cx+g.sway,fy-r*1.9);o.quadraticCurveTo(g.cx+g.sway+r*1.05,fy-r*0.6,g.cx+g.sway+r,fy);o.arc(g.cx+g.sway,fy,r,0,Math.PI,false);o.quadraticCurveTo(g.cx+g.sway-r*1.05,fy-r*0.6,g.cx+g.sway,fy-r*1.9);o.closePath();}
+      const c1=back?'#c77a1c':'#f5b62a',c2=back?'#d98a22':'#ffc63c',c3=back?'#a95f0e':'#e3941c';
+      const g=o.createLinearGradient(0,-H,0,H*1.2);g.addColorStop(0,c1);g.addColorStop(0.5,c2);g.addColorStop(1,c3);o.fillStyle=g;o.fill();
+      /* shading, clipped to the liquid: cylinder shade on every drip, a darker rim, highlights */
+      o.globalCompositeOperation='source-atop';
+      for(const gd of dripGeo){const {cx,w0,y0,L,rb,by,sway}=gd;const lg=o.createLinearGradient(cx-rb,0,cx+rb,0);
+        lg.addColorStop(0,'rgba(110,50,0,.62)');lg.addColorStop(0.16,'rgba(255,236,170,.30)');lg.addColorStop(0.32,'rgba(255,255,255,0)');lg.addColorStop(0.72,'rgba(140,65,0,.22)');lg.addColorStop(1,'rgba(95,40,0,.66)');
+        o.fillStyle=lg;o.fillRect(cx-rb-2+sway,y0-4,rb*2+4,by-y0+rb+4);
+        /* bulb: darker underside, wet specular */
+        const rg=o.createRadialGradient(cx+sway-rb*0.3,by-rb*0.35,rb*0.1,cx+sway,by,rb*1.05);rg.addColorStop(0,'rgba(255,255,255,.42)');rg.addColorStop(0.4,'rgba(255,240,200,.06)');rg.addColorStop(0.85,'rgba(120,55,0,.10)');rg.addColorStop(1,'rgba(90,40,0,.30)');
+        o.fillStyle=rg;o.beginPath();o.arc(cx+sway,by,rb*1.06,0,7);o.fill();
+        if(by-y0>4){o.fillStyle='rgba(255,255,255,.22)';o.beginPath();o.ellipse(cx-w0*0.2,y0+(by-y0)*0.5,w0*0.06,(by-y0)*0.42,0,0,7);o.fill();}}
+      /* the sheet: soft top light, a darker band right above the edge so it reads thick */
+      o.save();o.beginPath();o.moveTo(0,-H*2);o.lineTo(0,edge[0]);for(let k=1;k<=N;k++)o.lineTo(k/N*W,edge[k]);o.lineTo(W,-H*2);o.closePath();o.clip(); /* sheet-only shading: no seam across the drips */
+      for(let k=0;k<14;k++){const x=((k*173)%1000)/1000*W;const wg=o.createLinearGradient(x-W*0.02,0,x+W*0.02,0);wg.addColorStop(0,'rgba(255,255,255,0)');wg.addColorStop(0.5,'rgba(255,240,180,.10)');wg.addColorStop(1,'rgba(255,255,255,0)');o.fillStyle=wg;o.fillRect(x-W*0.02,-H*2,W*0.04,H*2.3);}
+      const sg=o.createLinearGradient(0,-H,0,H*0.25);sg.addColorStop(0,'rgba(255,255,255,.18)');sg.addColorStop(0.75,'rgba(255,255,255,0)');sg.addColorStop(1,'rgba(120,55,0,.25)');o.fillStyle=sg;o.fillRect(0,-H*2,W,H*2.3);o.restore();
+      o.lineWidth=3;o.strokeStyle='rgba(95,42,0,.32)';o.beginPath();o.moveTo(0,edge[0]);for(let k=1;k<=N;k++)o.lineTo(k/N*W,edge[k]);o.stroke();
+      o.lineWidth=1.5;o.strokeStyle='rgba(255,245,200,.35)';o.beginPath();o.moveTo(0,edge[0]-4);for(let k=1;k<=N;k++)o.lineTo(k/N*W,edge[k]-4);o.stroke();
+      if(back){o.fillStyle='rgba(60,25,0,.22)';o.fillRect(0,-H*2,W,H*4);}   /* the back layer sits in shadow */
+      o.globalCompositeOperation='source-over';o.restore();};
+    /* back layer is painted, then composited with a shadow; front layer on top with its own shadow */
+    layer(s.back,true);
+    ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=26;ctx.shadowOffsetY=12;ctx.drawImage(off,0,0,W,H);ctx.restore();
+    o.setTransform(s.dpr,0,0,s.dpr,0,0);o.clearRect(0,0,W,H);layer(s.front,false);
+    ctx.save();ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=30;ctx.shadowOffsetY=16;ctx.drawImage(off,0,0,W,H);ctx.restore();
+    /* warm spill of light from the cheese onto the dark below */
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.18*(1-run);const gl=ctx.createLinearGradient(0,0,0,H);gl.addColorStop(0,'rgba(255,170,40,.6)');gl.addColorStop(1,'rgba(255,170,40,0)');ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);ctx.restore();
+    const a=Math.min(1,pour*2.2)*(1-sm(p,0.62,0.75));
     caption(ctx,W,H,s.o.kicker||'',s.o.title||'',a,s.mono,s.display);}
 };
 /* ---------------- 2. STAR ZOOM — tight on the food, pull back over the Walk of Fame star, faces fly in ---------------- */
