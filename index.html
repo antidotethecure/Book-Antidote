@@ -978,6 +978,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 .sticky-bar{background:rgba(9,12,24,.62) !important;border-top:1px solid var(--line);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<link rel="stylesheet" href="cine/cine.css">
 </head>
 <body>
 <canvas id="fx3d" aria-hidden="true"></canvas><div id="fxVeil" aria-hidden="true"></div>
@@ -7305,6 +7306,18 @@ if(!reduce&&'IntersectionObserver' in window){
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:0.08});
   targets.forEach((el,i)=>{el.classList.add('f-reveal');el.style.transitionDelay=((i%5)*60)+'ms';io.observe(el);});
 }
+</script>
+<script src="cine/cine.js"></script>
+<script>
+/* CINE scenes for this site. To reuse on another business: change the images, copy and section ids — or mark sections up with data-cine attributes (see cine/README.md). */
+CINE.mount({scenes:[
+  {type:'cheese-drip',before:'#about',length:180,kicker:'Drizzle. Bite. Repeat.',title:'The whole download'},
+  {type:'star-zoom',before:'#celebs',image:'assets/media/5e362e890cf9.jpg',fx:0.5,fy:0.2,kicker:'Co-signed by the culture',title:'Celebrity connections',faces:function(){return [].slice.call(document.querySelectorAll('#celebGrid img')).map(function(i){return i.currentSrc||i.src;});}},
+  {type:'stream-cam',before:'#kick',image:'kick-studio.webp',fx:0.3,fy:0.36,kicker:'Live from the kitchen',title:'Antidote on Kick'},
+  {type:'stage-zoom',before:'#music',image:'stage-canyon.jpg',crowd:'hero-crowd.jpg',fx:0.5,fy:0.42,kicker:'Before the food',title:'There was the mic'},
+  {type:'book-close',before:'#ebook',image:'assets/media/3127225439d1.jpg',kicker:'Beyond the plate',title:'Wealth Blueprint'},
+  {type:'coin-rain',before:'#crypto',image:'assets/media/091deb07aa93.jpg',fx:0.55,fy:0.5,kicker:'The other grind',title:'All in on crypto'}
+]});
 </script>
 </body>
 </html>

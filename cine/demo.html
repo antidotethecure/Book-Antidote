@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CINE template — drop any business in</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Space+Grotesk:wght@400;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cine.css">
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#05060b;color:#f3f5ff;font-family:'Space Grotesk',system-ui,sans-serif}
+  section{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:14vh 8vw;box-sizing:border-box;background:#05060b}
+  .k{font:500 .76rem 'JetBrains Mono',monospace;letter-spacing:.3em;text-transform:uppercase;color:#5ee7ff}
+  .k::before{content:'// '}
+  h1,h2{font-family:'Orbitron',sans-serif;text-transform:uppercase;margin:.3em 0;font-size:clamp(2rem,6vw,4.4rem);line-height:1}
+  p{max-width:62ch;color:#98a2c3;font-size:1.05rem}
+  .faces{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .faces img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #f5a623}
+</style>
+</head>
+<body>
+<!-- 1. Replace the section copy and the image paths below. 2. Keep the data-cine attributes (or delete one to skip that scene). 3. Done. -->
+<section id="top">
+  <div class="k">Your business</div>
+  <h1>Brand name<br>goes here</h1>
+  <p>Scroll. Each section below is introduced by a full-screen scene that plays as you move.</p>
+</section>
+
+<section id="about" data-cine="cheese-drip" data-cine-length="180" data-cine-kicker="Tagline here" data-cine-title="The whole story">
+  <div class="k">About</div><h2>Who we are</h2><p>Swap this for your copy. The cheese curtain above pours over the screen and drops away into this section.</p>
+</section>
+
+<section id="team" data-cine="star-zoom" data-cine-image="../assets/media/5e362e890cf9.jpg" data-cine-fx="0.5" data-cine-fy="0.2"
+         data-cine-kicker="Co-signed" data-cine-title="Our people" data-cine-faces="#team .faces img">
+  <div class="k">Team</div><h2>Meet the crew</h2>
+  <div class="faces"><!-- these faces fly in and orbit during the scene -->
+    <img src="../celeb-rayj.jpg" alt=""><img src="../celeb-rayj-boxing.jpg" alt=""><img src="../thumbnail.png" alt="">
+  </div>
+</section>
+
+<section id="live" data-cine="stream-cam" data-cine-image="../kick-studio.webp" data-cine-fx="0.3" data-cine-fy="0.36" data-cine-kicker="Live" data-cine-title="Behind the scenes">
+  <div class="k">Live</div><h2>Watch us work</h2><p>The stream viewfinder pulls out to reveal the whole set.</p>
+</section>
+
+<section id="events" data-cine="stage-zoom" data-cine-image="../stage-canyon.jpg" data-cine-crowd="../hero-crowd.jpg" data-cine-kicker="Events" data-cine-title="On stage">
+  <div class="k">Events</div><h2>Where we show up</h2><p>Tight on the moment, then the crowd wraps in.</p>
+</section>
+
+<section id="guide" data-cine="book-close" data-cine-image="../assets/media/3127225439d1.jpg" data-cine-kicker="Resource" data-cine-title="The playbook">
+  <div class="k">Guide</div><h2>Get the playbook</h2><p>The book opens, closes, and the money starts coming in.</p>
+</section>
+
+<section id="invest" data-cine="coin-rain" data-cine-image="../assets/media/091deb07aa93.jpg" data-cine-fx="0.55" data-cine-fy="0.5" data-cine-kicker="Invest" data-cine-title="The long game">
+  <div class="k">Invest</div><h2>Money in motion</h2><p>Coins and cash pour down over the hero photo.</p>
+</section>
+
+<script src="cine.js"></script>
+<script>CINE.mount();</script>
+</body>
+</html>
