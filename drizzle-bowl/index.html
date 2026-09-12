@@ -1605,7 +1605,9 @@ function drawBowler(){
   g.bowlerX+=(g.x-g.bowlerX)*0.35;
   var eh=HALF_BOT*0.95;
   if(USE3D&&window.B3D&&B3D.ok&&B3D.edgePx){try{eh=Math.max(50,Math.min(230,B3D.edgePx(LANE_BOT+62)-28));}catch(e){}}
-  var bx=W/2+g.bowlerX*eh,by=LANE_BOT+62;g.bowlerPx=bx;
+  var bx=W/2+g.bowlerX*eh,by=LANE_BOT+62;
+  if(USE3D&&window.B3D&&B3D.ok&&B3D.bowlerPx){try{bx=B3D.bowlerPx(g.bowlerX);}catch(e){}}
+  g.bowlerPx=bx;
   if(USE3D&&window.B3D&&B3D.ok)return; /* the lofted 3D bowler stands in for him */
   var back=g.phase==='throw'||g.phase==='roll'||g.phase==='settle',cheer=g.cheer>0,throwP=g.phase==='throw'?Math.min(1,g.throwT/0.55):0;
   ctx.save();ctx.translate(bx,by);
@@ -1811,6 +1813,7 @@ const ledArrows=[],ledGlows=[],pinLeds=[],ballLeds=[];
    const gl3=new M(tg,new THREE.MeshBasicMaterial({color:0x4d8bf0,transparent:true,opacity:0.35,blending:THREE.AdditiveBlending,depthWrite:false}));
    gl3.rotation.x=-Math.PI/2;gl3.position.copy(m2.position);gl3.position.y=0.0045;gl3.scale.set(1.8,1.8,1);scene.add(gl3);ledGlows.push(gl3);}}
 const ledStrips=[];
+const ledSpillT=bake(128,4,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(0.5,'rgba(255,255,255,1)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}); /* light falls off across the boards */
 /* the strips carry a scrolling light pattern: chase, pulse, rain, sweep; the pattern changes with every colour swap */
 const ledPatC=document.createElement('canvas');ledPatC.width=32;ledPatC.height=1024;const ledPatG=ledPatC.getContext('2d');
 const ledPatT=new THREE.CanvasTexture(ledPatC);ledPatT.wrapS=ledPatT.wrapT=THREE.RepeatWrapping;ledPatT.repeat.set(1,6);ledPatT.colorSpace=THREE.SRGBColorSpace;
@@ -1827,9 +1830,11 @@ function drawLedPattern(k){const g=ledPatG,w=32,h=1024;g.clearRect(0,0,w,h);g.fi
   ledPatT.needsUpdate=true;}
 drawLedPattern(0);
 [-1,1].forEach(s2=>{
-  const st=new M(new THREE.BoxGeometry(0.03,0.008,20.4),new THREE.MeshBasicMaterial({color:0x8fb8ff,map:ledPatT,toneMapped:false}));st.position.set(s2*(HALF-0.03),0.006,-7.4);scene.add(st);ledStrips.push(st);
-  const gl2=new M(new THREE.BoxGeometry(0.18,0.004,20.4),new THREE.MeshBasicMaterial({color:0x4d8bf0,map:ledPatT,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gl2.position.set(s2*(HALF-0.03),0.0045,-7.4);scene.add(gl2);ledGlows.push(gl2);
-  const gl4=new M(new THREE.BoxGeometry(0.42,0.003,20.4),new THREE.MeshBasicMaterial({color:0x4d8bf0,map:ledPatT,transparent:true,opacity:0.28,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gl4.position.set(s2*(HALF-0.03),0.004,-7.4);scene.add(gl4);ledGlows.push(gl4);
+  /* the strip is set into a channel routed along the lane edge: a dark bezel, the diffuser flush with the wood, and light spilling across the boards */
+  const bez=new M(new THREE.BoxGeometry(0.052,0.006,20.4),new THREE.MeshStandardMaterial({color:0x0b0709,roughness:0.5,metalness:0.3}));bez.position.set(s2*(HALF-0.03),0.0005,-7.4);scene.add(bez);
+  const st=new M(new THREE.BoxGeometry(0.03,0.004,20.4),new THREE.MeshBasicMaterial({color:0x8fb8ff,map:ledPatT,toneMapped:false}));st.position.set(s2*(HALF-0.03),0.002,-7.4);scene.add(st);ledStrips.push(st);
+  const gl2=new M(new THREE.PlaneGeometry(0.30,20.4),new THREE.MeshBasicMaterial({color:0x4d8bf0,map:ledPatT,alphaMap:ledSpillT,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gl2.rotation.x=-Math.PI/2;gl2.position.set(s2*(HALF-0.03),0.0042,-7.4);scene.add(gl2);ledGlows.push(gl2);
+  const gl4=new M(new THREE.PlaneGeometry(0.70,20.4),new THREE.MeshBasicMaterial({color:0x4d8bf0,map:ledPatT,alphaMap:ledSpillT,transparent:true,opacity:0.42,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gl4.rotation.x=-Math.PI/2;gl4.position.set(s2*(HALF-0.03),0.0041,-7.4);scene.add(gl4);ledGlows.push(gl4);
 });
 const ledLight=new THREE.PointLight(0x4d8bf0,8,16,1.3);ledLight.position.set(0,0.35,-6);scene.add(ledLight);
 let ledT=3,ledCol=0;const LEDCOLS=[0x4d8bf0,0x9b4dff];
@@ -2766,7 +2771,7 @@ function torsoDisp(a,y,x,z,s){
 }
 function pelvisDisp(a,y,x,z,s){
   const back=Math.max(0,z/s.rz);let d=0;
-  d+=0.016*gauss(Math.abs(x)-0.078,0.06)*gauss(y-0.86,0.065)*back;                    /* glutes */
+  d+=0.019*gauss(Math.abs(x)-0.080,0.062)*gauss(y-0.86,0.065)*back;                    /* glutes */
   d-=0.010*gauss(x,0.018)*back*sstep(0.94,0.80,y);                                    /* the cleft */
   d-=0.005*gauss(y-0.795,0.02)*back*sstep(0.02,0.07,Math.abs(x));                     /* gluteal fold */
   const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];
@@ -2790,6 +2795,7 @@ function legDisp(side){return (a,y,x,z,s)=>{
   d+=0.005*gauss(y-0.75,0.08)*out;                                                    /* vastus lateralis */
   d+=0.003*Math.sin(y*90)*gauss(y-0.52,0.05)*(1-back);                                /* denim creases behind the knee */
   const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];};}
+const heavier=(secs,w)=>secs.map(o=>Object.assign({},o,{rx:o.rx*w,rz:o.rz*w}));
 function makeBowler(){
   const G=new THREE.Group();
   /* skeleton: bind pose standing, arms at the sides. World bind positions → local offsets */
@@ -2804,13 +2810,13 @@ function makeBowler(){
   const skel=new THREE.Skeleton(bones);
   const skinned=(geo,mat)=>{const m=new THREE.SkinnedMesh(geo,mat);m.frustumCulled=false;G.add(m);m.updateMatrixWorld(true);m.bind(skel);return m;};
   /* torso: tee over the trunk, hips to the collar */
-  skinned(skinByY(loftGeo([
+  skinned(skinByY(loftGeo(heavier([
     {y:0.905,rx:0.170,rz:0.114},{y:0.98,rx:0.162,rz:0.109},{y:1.06,rx:0.153,rz:0.104},{y:1.14,rx:0.158,rz:0.108},
     {y:1.22,rx:0.167,rz:0.114},{y:1.30,rx:0.176,rz:0.120},{y:1.37,rx:0.181,rz:0.122},{y:1.42,rx:0.186,rz:0.121},
-    {y:1.465,rx:0.192,rz:0.116,cz:0.004},{y:1.495,rx:0.168,rz:0.102,cz:0.007},{y:1.525,rx:0.118,rz:0.084,cz:0.008},{y:1.55,rx:0.072,rz:0.066,cz:0.006}],44,torsoDisp),
+    {y:1.465,rx:0.192,rz:0.116,cz:0.004},{y:1.495,rx:0.168,rz:0.102,cz:0.007},{y:1.525,rx:0.118,rz:0.084,cz:0.008},{y:1.55,rx:0.072,rz:0.066,cz:0.006}],1.05),44,torsoDisp),
     [{b:BI.pelvis,y0:-9,y1:1.03},{b:BI.spine,y0:1.03,y1:1.24},{b:BI.chest,y0:1.24,y1:9}],0.07),shirtMat);
   /* jeans: pelvis and seat */
-  skinned(skinByY(loftGeo([{y:0.775,rx:0.172,rz:0.118},{y:0.83,rx:0.178,rz:0.125},{y:0.885,rx:0.178,rz:0.123},{y:0.94,rx:0.172,rz:0.116},{y:0.985,rx:0.166,rz:0.111}],36,pelvisDisp),
+  skinned(skinByY(loftGeo(heavier([{y:0.775,rx:0.172,rz:0.118},{y:0.83,rx:0.178,rz:0.125},{y:0.885,rx:0.178,rz:0.123},{y:0.94,rx:0.172,rz:0.116},{y:0.985,rx:0.166,rz:0.111}],1.06),36,pelvisDisp),
     [{b:BI.pelvis,y0:-9,y1:9}],0.05),denimMat);
   const belt=new THREE.Mesh(new THREE.TorusGeometry(0.155,0.011,6,48),darkMat);belt.scale.set(1,0.68,1);belt.position.set(0,0.99,0);belt.rotation.x=Math.PI/2;B.pelvis.attach(belt);
   const buckle=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.022,0.008),goldMat);buckle.position.set(0,0.99,-0.115);B.pelvis.attach(buckle);
@@ -2840,9 +2846,9 @@ function makeBowler(){
     const ad=armDisp(s);const shift=f=>(a,y,x,z,sec)=>{const o=f(a,y,x,z,sec);return o;};
     const armSecs=[{y:0.875,rx:0.030,rz:0.020},{y:0.93,rx:0.034,rz:0.026},{y:1.00,rx:0.041,rz:0.035},{y:1.06,rx:0.047,rz:0.043},{y:1.11,rx:0.044,rz:0.042},
       {y:1.15,rx:0.040,rz:0.041,cz:0.004},{y:1.19,rx:0.042,rz:0.044},{y:1.26,rx:0.048,rz:0.051},{y:1.33,rx:0.052,rz:0.054},{y:1.385,rx:0.054,rz:0.056}].map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
-    skinned(skinByY(loftGeo(armSecs,28,shift(ad)),[{b:wr,y0:-9,y1:0.90},{b:el,y0:0.90,y1:1.15},{b:sh,y0:1.15,y1:9}],0.045),skinMat);
+    skinned(skinByY(loftGeo(heavier(armSecs,1.06),28,shift(ad)),[{b:wr,y0:-9,y1:0.90},{b:el,y0:0.90,y1:1.15},{b:sh,y0:1.15,y1:9}],0.045),skinMat);
     const slv=[{y:1.335,rx:0.061,rz:0.063},{y:1.38,rx:0.063,rz:0.065},{y:1.43,rx:0.066,rz:0.068},{y:1.475,rx:0.063,rz:0.066,cx:-s*0.008},{y:1.51,rx:0.050,rz:0.056,cx:-s*0.026},{y:1.53,rx:0.030,rz:0.040,cx:-s*0.05}].map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
-    skinned(skinByY(loftGeo(slv,28,(a,y,x,z,sec)=>{const d=0.006*gauss(y-1.44,0.05)*Math.max(0,s*x/sec.rx);const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];}),[{b:sh,y0:-9,y1:1.49},{b:BI.chest,y0:1.49,y1:9}],0.03),sleeveMat);
+    skinned(skinByY(loftGeo(heavier(slv,1.04),28,(a,y,x,z,sec)=>{const d=0.006*gauss(y-1.44,0.05)*Math.max(0,s*x/sec.rx);const l=Math.hypot(x,z)||1;return [x+x/l*d,z+z/l*d];}),[{b:sh,y0:-9,y1:1.49},{b:BI.chest,y0:1.49,y1:9}],0.03),sleeveMat);
     /* hand: back of the hand, knuckles, four fingers and a thumb, hanging from the wrist bone */
     const hand=new THREE.Group();hand.position.set(X,0.88,0);
     const palm=new THREE.Mesh(loftGeo([{y:-0.105,rx:0.038,rz:0.013},{y:-0.09,rx:0.042,rz:0.016},{y:-0.05,rx:0.043,rz:0.017},{y:-0.015,rx:0.036,rz:0.017},{y:0.0,rx:0.031,rz:0.019}],24),skinMat);hand.add(palm);
@@ -2864,7 +2870,7 @@ function makeBowler(){
     const secs=[{y:0.06,rx:0.037,rz:0.041},{y:0.12,rx:0.041,rz:0.047},{y:0.20,rx:0.049,rz:0.057},{y:0.30,rx:0.058,rz:0.070,cz:0.008},{y:0.38,rx:0.059,rz:0.067,cz:0.004},
       {y:0.46,rx:0.057,rz:0.061},{y:0.50,rx:0.059,rz:0.062},{y:0.55,rx:0.065,rz:0.069},{y:0.65,rx:0.076,rz:0.083,cz:0.004},{y:0.75,rx:0.085,rz:0.093},{y:0.84,rx:0.089,rz:0.097,cx:-s*0.006},{y:0.905,rx:0.087,rz:0.095,cx:-s*0.012}]
       .map(o=>Object.assign({},o,{cx:X+(o.cx||0)}));
-    skinned(skinByY(loftGeo(secs,32,legDisp(s)),[{b:an,y0:-9,y1:0.09},{b:kn,y0:0.09,y1:0.50},{b:hp,y0:0.50,y1:0.86},{b:BI.pelvis,y0:0.86,y1:9}],0.05),denimMat);
+    skinned(skinByY(loftGeo(heavier(secs,1.06),32,legDisp(s)),[{b:an,y0:-9,y1:0.09},{b:kn,y0:0.09,y1:0.50},{b:hp,y0:0.50,y1:0.86},{b:BI.pelvis,y0:0.86,y1:9}],0.05),denimMat);
     /* gold sneaker on the ankle bone */
     const ft=new THREE.Group();ft.position.set(X,0.07,0);
     const up=loftZ([{z:0.085,rx:0.038,ry:0.048,cy:-0.02},{z:0.035,rx:0.047,ry:0.053,cy:-0.024},{z:-0.03,rx:0.050,ry:0.049,cy:-0.028},{z:-0.10,rx:0.049,ry:0.039,cy:-0.034},{z:-0.16,rx:0.041,ry:0.026,cy:-0.041},{z:-0.195,rx:0.022,ry:0.013,cy:-0.048}],22,goldMat);ft.add(up);
@@ -2883,6 +2889,8 @@ function makeBowler(){
 }
 const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
 let bVis=false,bRollT=0,bLastPhase='';
+const bProj=new THREE.Vector3(),HAND_PX=0.185*BSCALE*bPxPerM;
+function bowlerScreenX(x){bProj.set((x||0)*0.76,BR,2.30).project(cam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point, eased in at the edges so he stays in frame */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
 function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation.x=c*0.9;g.userData.tip.rotation.x=c*1.1;}h.userData.th.rotation.x=0.5+c*0.6;}
 function poseBowler(gs,dt,nw){
@@ -2893,15 +2901,15 @@ function poseBowler(gs,dt,nw){
   const br=Math.sin(nw*1.7)*0.5+0.5;
   /* target joint angles */
   let t={lean:-0.05,spine:-0.03,bob:0,hz:0,
-    shL:[0.42,0,0.26],elL:1.25,shR:[0.55,0,-0.30],elR:1.15,curl:0.75,
+    shL:[0.62,0,-0.34],elL:1.55,shR:[0.55,0,-0.28],elR:1.15,curl:0.75,
     hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0};
   if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,0.35],elL:0.25,shR:[2.9,0,-0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
   else if(ph==='throw'||ph==='roll'){
     const back=Math.min(1,tp/0.5),fwd=Math.max(0,(tp-0.5)/0.5),fol=Math.min(1,rl/0.35);
-    const swR=back<1?THREE.MathUtils.lerp(0.55,-1.35,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(-1.35,1.55,Math.sin(fwd*Math.PI/2))+0.5*fol;
-    t={lean:-0.14-0.22*tp-0.06*fol,spine:-0.06-0.08*tp,bob:-0.05*tp-0.05*fwd,hz:-0.10*tp,
+    const swR=back<1?THREE.MathUtils.lerp(0.55,-1.45,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(-1.45,0.32,Math.sin(fwd*Math.PI/2))+1.35*sstep(0,1,fol); /* straight down the lane: rotation about x only, release near the bottom */
+    t={lean:-0.14-0.24*tp-0.05*fol,spine:-0.06-0.08*tp,bob:-0.06*tp-0.10*fwd,hz:-0.12*tp,
        shL:[0.25+0.45*fwd,0,0.75+0.55*fwd],elL:0.9-0.4*fwd,shR:[swR,0,-0.16],elR:1.15-1.0*back+0.1*fwd,curl:tp<0.98?0.8:0.2,
-       hpL:0.55+0.35*fwd,knL:-0.55-0.4*fwd,hpR:-0.25-0.35*tp,knR:-0.15,headX:0.26+0.1*tp,headY:0};
+       hpL:0.6+0.4*fwd,knL:-0.6-0.55*fwd,hpR:-0.25-0.4*tp,knR:-0.12,headX:0.26+0.1*tp,headY:0};
   }
   const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?16:7));
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
@@ -2975,7 +2983,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={ok:true,rack,throwBall,setFire:function(v){fireOn=!!v;},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireOn=!!v;},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
