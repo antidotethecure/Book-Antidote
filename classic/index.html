@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<base href="/">
 <meta charset="UTF-8">
 <meta name="color-scheme" content="dark only">
 <meta name="theme-color" content="#0b0a08">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script id="fmLeaflet" defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<title>Antidote The Foodie 🍴</title>
+<title>Classic · Antidote The Foodie 🍴</title>
 <meta name="description" content="Anthony Suggs, aka Antidote The Foodie. Compton and Long Beach. Rapper, food reviewer, and the man behind the Clamp and the Antidote Drizzle. Food reviews, an 82-record catalog, crypto, credit repair and the Wealth Blueprint, all in one place.">
 
 <!-- Facebook / Open Graph -->
@@ -897,90 +898,8 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 #music{position:relative}
 .mus-notes-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style id="futureTheme">
-/* ================= FUTURE THEME — dark glass over a live 3D stage ================= */
-:root{--ink:#05060b;--coal:#0a0d17;--card:#0f1220;--cream:#f3f5ff;--mut:#98a2c3;--syrup:#f5a623;--syrup-hi:#ffd166;--syrup-deep:#c47a0a;--cyan:#5ee7ff;--vio:#8b5cf6;--line:rgba(255,255,255,.11);--glass:linear-gradient(160deg,rgba(255,255,255,.085),rgba(255,255,255,.025))}
-html{scroll-behavior:smooth;background:var(--ink)}
-body{background:var(--ink) !important;color:var(--cream);font-family:'Space Grotesk','Barlow',system-ui,sans-serif}
-::selection{background:rgba(94,231,255,.35)}
-::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:#05060b}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2a3355,#5ee7ff);border-radius:8px;border:2px solid #05060b}
-/* the stage: a fixed 3D canvas everything else floats over */
-#fx3d{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 28%,#161c3a 0%,#0a0d1c 42%,#05060b 78%)}
-#fxVeil{position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(5,6,11,0) 0%,rgba(5,6,11,.35) 100%)}
-header.hero,section[id],.marquee,footer,.africa{position:relative;z-index:1;background:transparent !important}
-/* ---------- type ---------- */
-h1,h2,h3{font-family:'Orbitron','Anton',Impact,sans-serif;letter-spacing:.02em;text-transform:uppercase;font-weight:800}
-h2{line-height:1.02;font-size:clamp(1.8rem,5vw,3rem)}
-.eyebrow{font-family:'JetBrains Mono','Courier Prime',monospace !important;font-size:.76rem !important;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan) !important;text-shadow:0 0 14px rgba(94,231,255,.45) !important;font-weight:500}
-.eyebrow::before{content:'// ';opacity:.7}
-.neon{background:linear-gradient(92deg,#ffe8a8 0%,#f5a623 35%,#fff3cc 52%,#e39a1a 70%,#ffd166 100%);-webkit-background-clip:text;background-clip:text;color:transparent !important;text-shadow:none !important;filter:drop-shadow(0 0 14px rgba(245,166,35,.35))}
-.neon-g{color:var(--cyan) !important;text-shadow:0 0 12px rgba(94,231,255,.7) !important}
-.neon-p{color:#c084fc !important;text-shadow:0 0 12px rgba(192,132,252,.7) !important}
-p,li{color:var(--cream)}
-/* ---------- nav: floating glass pill ---------- */
-nav{top:10px;left:10px;right:10px;border-radius:999px;background:rgba(9,12,24,.58) !important;border:1px solid var(--line);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);padding:8px 10px 8px 14px !important;box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 0 1px rgba(94,231,255,.06) inset}
-.logo{font-family:'Orbitron',sans-serif;font-size:.86rem;letter-spacing:.14em;color:#fff}
-.logo span{color:var(--syrup)}
-.nav-book{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup)) !important;color:#140d00 !important;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 8px 24px rgba(245,166,35,.35)}
-/* ---------- hero over the stage: copy left, the emblem lives on the right ---------- */
-.hero{min-height:100svh;padding:120px 16px 120px;overflow:visible;align-items:flex-start;text-align:left}
-.hero-core{align-items:flex-start;max-width:min(760px,62vw);margin-left:max(18px,calc((100vw - 1100px)/2))}
-.hero .stats,.hero .cta-row,.hero .scroll-hint{align-self:flex-start;margin-left:max(18px,calc((100vw - 1100px)/2))}
-.hero .stats{justify-content:flex-start}
-.hero .stats::before{display:none}
-@media(max-width:820px){.hero{align-items:center;text-align:center;justify-content:flex-end;padding-top:150px;padding-bottom:96px}.hero-core{align-items:center;max-width:100%;margin-left:0}.hero .stats,.hero .cta-row,.hero .scroll-hint{align-self:center;margin-left:0}.hero .scroll-hint{display:none}}
-.hero-bg,.driz-bottles,.hero-driz,.drip-edge,.hero::before,.hero::after,canvas.hero-portrait{display:none !important}
-.hero-core{gap:8px}
-.hero .eyebrow{margin-bottom:22px}
-.hero h1{font-size:clamp(2.9rem,11.5vw,8.4rem);line-height:.9;letter-spacing:.01em;margin:0;color:transparent !important;background:linear-gradient(180deg,#ffffff 0%,#dfe6ff 42%,#8d9ad0 50%,#f2f5ff 58%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;text-shadow:none !important;-webkit-text-stroke:0 !important;filter:drop-shadow(0 12px 40px rgba(0,0,0,.6))}
-.hero h1 .l2{display:block;color:transparent !important;background:linear-gradient(180deg,#fff0c4 0%,#f5a623 44%,#8a5307 50%,#ffe29a 58%,#f5a623 100%);-webkit-background-clip:text;background-clip:text;text-shadow:none !important;-webkit-text-stroke:0 !important;paint-order:normal !important}
-.tagline{font-family:'JetBrains Mono',monospace;font-size:clamp(.9rem,2.4vw,1.15rem);letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-top:18px;text-shadow:none}
-.tagline i{color:var(--syrup);font-style:normal}.tagline b{color:var(--cyan)}
-.stats{margin-top:34px;gap:10px}
-.stat{background:var(--glass) !important;border:1px solid var(--line) !important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--cream) !important;font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.06em;box-shadow:0 8px 30px rgba(0,0,0,.35);transition:transform .25s,border-color .25s,box-shadow .25s}
-.stat b{color:var(--cyan)}
-.stat:hover{transform:translateY(-3px);border-color:rgba(94,231,255,.55) !important;box-shadow:0 0 0 1px rgba(94,231,255,.25),0 14px 40px rgba(94,231,255,.15)}
-.cta-row{margin-top:28px}
-.scroll-hint{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.32em;color:var(--mut);animation:none}
-.scroll-hint::after{content:'';display:block;width:1px;height:44px;margin:10px auto 0;background:linear-gradient(180deg,var(--cyan),transparent);animation:fxline 2.2s ease-in-out infinite}
-@keyframes fxline{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-/* ---------- buttons ---------- */
-.btn{font-family:'Space Grotesk',sans-serif;letter-spacing:.02em;transition:transform .2s,box-shadow .25s,border-color .25s}
-.btn-gold{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup)) !important;color:#140d00 !important;box-shadow:0 0 0 1px rgba(255,255,255,.28) inset,0 10px 34px rgba(245,166,35,.38)}
-.btn-gold:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(255,255,255,.35) inset,0 16px 44px rgba(245,166,35,.5)}
-.btn-ghost{background:var(--glass) !important;border:1px solid var(--line) !important;color:#fff !important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.btn-ghost:hover{border-color:rgba(94,231,255,.6) !important;box-shadow:0 0 24px rgba(94,231,255,.2);transform:translateY(-2px)}
-/* ---------- glass cards everywhere ---------- */
-.move,.celeb,.collab,.rcard,.book-card,.yelp-card,.yq,.shop-card,.ep,.ep4-inner,.cn-soc,.clip,.chip,.dz-prize,.mbill,.bill,.sm,.sp,.soon,.kick-live,.kick-art,.fm-shell,.wall-frame,.cy-frame,.dz-art,.churro-banner,.seal,[class*="-card"]{
-  background:var(--glass) !important;border:1px solid var(--line) !important;border-radius:18px;box-shadow:0 0 0 1px rgba(94,231,255,.04) inset,0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s}
-.move:hover,.celeb:hover,.collab:hover,.rcard:hover,.shop-card:hover,.ep:hover,.clip:hover{transform:translateY(-5px);border-color:rgba(94,231,255,.45) !important;box-shadow:0 0 0 1px rgba(94,231,255,.2),0 30px 70px rgba(0,0,0,.5),0 0 40px rgba(94,231,255,.12)}
-.chip{border-radius:999px}.chip.on{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup)) !important;color:#140d00 !important;border-color:transparent !important}
-.dz-art{padding:0;overflow:hidden}
-/* section headers get a thin data-line */
-section[id] > .wrap > .eyebrow:first-child::after,section[id] > .wrap > .eyebrow:first-of-type::after{content:'';display:block;width:72px;height:1px;margin-top:10px;background:linear-gradient(90deg,var(--cyan),transparent)}
-section[id]{padding-top:10px}
-section[id]::before{content:'';position:absolute;left:50%;top:0;width:min(1100px,92vw);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent)}
-/* phone + inputs */
-.phone{font-family:'Orbitron',sans-serif;color:var(--syrup);letter-spacing:.06em;text-shadow:0 0 24px rgba(245,166,35,.45)}
-input,textarea,select{background:rgba(255,255,255,.05) !important;border:1px solid var(--line) !important;color:var(--cream) !important;border-radius:12px}
-input:focus,textarea:focus{border-color:rgba(94,231,255,.6) !important;outline:none;box-shadow:0 0 0 3px rgba(94,231,255,.15)}
-/* footer */
-footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.35)) !important}
-.foot-social a{font-family:'JetBrains Mono',monospace;letter-spacing:.1em;font-size:.8rem;color:var(--mut)}
-.foot-social a:hover{color:var(--cyan)}
-/* reveal */
-.f-reveal{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
-.f-reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.f-reveal{opacity:1;transform:none;transition:none}.scroll-hint::after{animation:none}}
-@media(max-width:640px){nav{top:8px;left:8px;right:8px}.logo{font-size:.74rem;white-space:nowrap;letter-spacing:.1em}.logo span{display:none}.nav-book{padding:8px 13px;font-size:.84rem;white-space:nowrap}.hero{padding-top:104px}.hero h1{font-size:clamp(2.6rem,13.5vw,4.6rem)}}
-/* sticky action bar: glass */
-.sticky-bar{background:rgba(9,12,24,.62) !important;border-top:1px solid var(--line);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
-</style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
-<canvas id="fx3d" aria-hidden="true"></canvas><div id="fxVeil" aria-hidden="true"></div>
 
 <nav>
   <a class="logo" href="#top" aria-label="Antidote The Foodie — home"><img class="nav-crest" data-img="LOGO" alt="Antidote The Foodie logo">ANTIDOTE <span>FOOD REVIEW</span> LEGACY</a>
@@ -7224,87 +7143,6 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     }
   });
 })();
-</script>
-<script type="module">
-/* ================= FUTURE STAGE — a live 3D emblem that turns with the scroll and leans with the pointer ================= */
-import * as THREE from 'three';
-import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-const cv=document.getElementById('fx3d');
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setClearColor(0x000000,0);
-renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x070911,0.075);
-const cam=new THREE.PerspectiveCamera(38,1,0.1,80);cam.position.set(0,0.2,9);
-const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
-scene.add(new THREE.HemisphereLight(0xdfe8ff,0x0a0c18,0.5));
-const key=new THREE.DirectionalLight(0xfff1d6,2.2);key.position.set(3,5,4);scene.add(key);
-const rimC=new THREE.PointLight(0x5ee7ff,60,30,1.8);rimC.position.set(-5,2,-2);scene.add(rimC);
-const rimV=new THREE.PointLight(0x8b5cf6,50,30,1.8);rimV.position.set(5,-3,-3);scene.add(rimV);
-/* the emblem: an extruded A with a drizzle tail, gold, mirror-polished */
-const rig=new THREE.Group();scene.add(rig);
-const A=new THREE.Shape();
-[[-1,-1],[-0.42,-1],[-0.27,-0.52],[0.27,-0.52],[0.42,-1],[1,-1],[0.34,1],[-0.34,1]].forEach((p,i)=>i?A.lineTo(p[0],p[1]):A.moveTo(p[0],p[1]));A.closePath();
-const hole=new THREE.Path();hole.moveTo(-0.13,-0.16);hole.lineTo(0.13,-0.16);hole.lineTo(0,0.36);hole.closePath();A.holes.push(hole);
-const gold=new THREE.MeshPhysicalMaterial({color:0xf2b233,metalness:1,roughness:0.18,clearcoat:1,clearcoatRoughness:0.08,envMapIntensity:1.6});
-const chrome=new THREE.MeshPhysicalMaterial({color:0xdfe6ff,metalness:1,roughness:0.12,envMapIntensity:1.8});
-const aMesh=new THREE.Mesh(new THREE.ExtrudeGeometry(A,{depth:0.42,bevelEnabled:true,bevelThickness:0.07,bevelSize:0.06,bevelSegments:5,curveSegments:8}),gold);
-aMesh.geometry.center();rig.add(aMesh);
-/* a drop of drizzle falling off the crossbar */
-const drop=new THREE.Mesh(new THREE.SphereGeometry(0.16,32,24),gold);drop.scale.set(1,1.35,1);drop.position.set(0.55,-1.28,0.05);rig.add(drop);
-/* orbit rings: neon */
-const ringMat=(c)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false});
-const r1=new THREE.Mesh(new THREE.TorusGeometry(2.05,0.014,8,160),ringMat(0x5ee7ff));r1.rotation.x=Math.PI/2.4;rig.add(r1);
-const r2=new THREE.Mesh(new THREE.TorusGeometry(2.45,0.01,8,160),ringMat(0x8b5cf6));r2.rotation.x=Math.PI/1.6;r2.rotation.y=0.5;rig.add(r2);
-const r3=new THREE.Mesh(new THREE.TorusGeometry(1.55,0.035,12,120),chrome);r3.rotation.x=Math.PI/2;rig.add(r3);
-/* satellites: small gold drops on the rings */
-const sats=[];for(let i=0;i<5;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.075,20,14),i%2?chrome:gold);rig.add(m);sats.push({m,r:i%2?2.45:2.05,ph:i*1.3,sp:0.35+i*0.08,ring:i%2?r2:r1});}
-/* particle field */
-const N=420,pp=new Float32Array(N*3),sz=new Float32Array(N);
-for(let i=0;i<N;i++){pp[i*3]=(Math.random()-0.5)*26;pp[i*3+1]=(Math.random()-0.5)*16;pp[i*3+2]=-2-Math.random()*22;sz[i]=Math.random();}
-const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pp,3));pg.setAttribute('a',new THREE.BufferAttribute(sz,1));
-const pmat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{t:{value:0}},
-  vertexShader:'attribute float a;varying float v;uniform float t;void main(){v=a;vec3 p=position;p.y+=sin(t*0.4+a*20.0)*0.25;vec4 mv=modelViewMatrix*vec4(p,1.0);gl_PointSize=(1.0+a*2.2)*(70.0/-mv.z);gl_Position=projectionMatrix*mv;}',
-  fragmentShader:'varying float v;void main(){float d=length(gl_PointCoord-0.5);if(d>0.5)discard;float s=smoothstep(0.5,0.0,d);vec3 c=mix(vec3(0.37,0.9,1.0),vec3(1.0,0.75,0.3),step(0.7,v));gl_FragColor=vec4(c,s*0.42);}'});
-scene.add(new THREE.Points(pg,pmat));
-/* the floor grid */
-const grid=new THREE.GridHelper(60,60,0x2b3f7a,0x141b33);grid.position.y=-3.2;grid.material.transparent=true;grid.material.opacity=0.55;scene.add(grid);
-/* state */
-let px=0,py=0,tx=0,ty=0,sp=0,t0=performance.now(),vis=true;
-addEventListener('pointermove',e=>{tx=(e.clientX/innerWidth-0.5)*2;ty=(e.clientY/innerHeight-0.5)*2;},{passive:true});
-addEventListener('touchmove',e=>{const t=e.touches[0];if(t){tx=(t.clientX/innerWidth-0.5)*2;ty=(t.clientY/innerHeight-0.5)*2;}},{passive:true});
-document.addEventListener('visibilitychange',()=>{vis=!document.hidden;});
-function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
-addEventListener('resize',resize);resize();
-function frame(){
-  if(!vis){requestAnimationFrame(frame);return;}
-  const now=performance.now(),t=(now-t0)/1000;
-  const s=scrollY/Math.max(1,innerHeight);          /* scroll progress in screens */
-  sp+=(s-sp)*0.08;px+=(tx-px)*0.06;py+=(ty-py)*0.06;
-  const mobile=innerWidth<700;
-  /* hero: centred and big; past the hero it slides to the side, shrinks and keeps turning through every section */
-  const k=Math.min(1,sp);
-  /* desktop: beside the title on the right, then it stays on the right rail and shrinks; phone: above the title, then off to the top-right corner */
-  if(!mobile){rig.position.x=2.55+0.6*k;rig.position.y=-0.15+0.45*k-Math.sin(sp*1.7)*0.3;rig.scale.setScalar(0.92*(1-0.38*k));}
-  else{rig.position.x=1.15*k;rig.position.y=2.3-0.35*k-Math.sin(sp*1.7)*0.2;rig.scale.setScalar(0.42*(1-0.25*k));}
-  rig.rotation.y=t*0.35+sp*1.6+px*0.45;rig.rotation.x=Math.sin(t*0.5)*0.12+py*0.3-0.1*k;
-  aMesh.rotation.z=Math.sin(t*0.7)*0.05;
-  drop.position.y=-1.28-((t*0.6)%1)*0.5;drop.scale.y=1.35+((t*0.6)%1)*0.5;drop.material.opacity=1;
-  r1.rotation.z=t*0.25;r2.rotation.z=-t*0.18;r3.rotation.y=t*0.5;
-  for(const q of sats){const a=q.ph+t*q.sp;q.m.position.set(Math.cos(a)*q.r,0,Math.sin(a)*q.r);q.m.position.applyEuler(q.ring.rotation);}
-  pmat.uniforms.t.value=t;grid.position.z=(t*0.6)%1;grid.rotation.y=0;
-  cam.position.x=px*0.35;cam.position.y=0.2+py*0.2-sp*0.15;cam.lookAt(rig.position.x*0.4,rig.position.y*0.3,0);
-  rimC.color.setHSL(0.52+0.05*Math.sin(t*0.3),0.9,0.65);
-  renderer.render(scene,cam);
-  if(!reduce)requestAnimationFrame(frame);
-}
-frame();
-/* reveal-on-scroll for headings and cards */
-const targets=document.querySelectorAll('section[id] h2,section[id] .eyebrow,section[id] h3,.move,.celeb,.collab,.rcard,.book-card,.shop-card,.ep,.clip,[class*="-card"]');
-if(!reduce&&'IntersectionObserver' in window){
-  const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:0.08});
-  targets.forEach((el,i)=>{el.classList.add('f-reveal');el.style.transitionDelay=((i%5)*60)+'ms';io.observe(el);});
-}
 </script>
 </body>
 </html>
