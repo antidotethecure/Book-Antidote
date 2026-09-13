@@ -925,15 +925,15 @@ nav{top:10px;left:10px;right:10px;border-radius:999px;background:rgba(9,12,24,.5
 .nav-book{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup)) !important;color:#140d00 !important;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 8px 24px rgba(245,166,35,.35)}
 /* ---------- hero over the stage: copy left, the emblem lives on the right ---------- */
 .hero{min-height:100svh;padding:120px 16px 120px;overflow:visible;align-items:flex-start;text-align:left}
-.hero-core{align-items:flex-start;max-width:min(760px,62vw);margin-left:max(18px,calc((100vw - 1100px)/2))}
+.hero-core{align-items:flex-start;max-width:min(700px,60vw);margin-left:max(18px,calc((100vw - 1100px)/2))}
 .hero .stats,.hero .cta-row,.hero .scroll-hint{align-self:flex-start;margin-left:max(18px,calc((100vw - 1100px)/2))}
-.hero .stats{justify-content:flex-start}
+.hero .stats{justify-content:flex-start;max-width:min(700px,60vw)}
 .hero .stats::before{display:none}
 @media(max-width:820px){.hero{align-items:center;text-align:center;justify-content:flex-end;padding-top:150px;padding-bottom:96px}.hero-core{align-items:center;max-width:100%;margin-left:0}.hero .stats,.hero .cta-row,.hero .scroll-hint{align-self:center;margin-left:0}.hero .scroll-hint{display:none}}
 .hero-bg,.driz-bottles,.hero-driz,.drip-edge,.hero::before,.hero::after,canvas.hero-portrait{display:none !important}
 .hero-core{gap:8px}
 .hero .eyebrow{margin-bottom:22px}
-.hero h1{font-size:clamp(2.9rem,11.5vw,8.4rem);line-height:.9;letter-spacing:.01em;margin:0;color:transparent !important;background:linear-gradient(180deg,#ffffff 0%,#dfe6ff 42%,#8d9ad0 50%,#f2f5ff 58%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;text-shadow:none !important;-webkit-text-stroke:0 !important;filter:drop-shadow(0 12px 40px rgba(0,0,0,.6))}
+.hero h1{font-size:clamp(2.6rem,8.6vw,6.9rem);line-height:.9;letter-spacing:.01em;margin:0;color:transparent !important;background:linear-gradient(180deg,#ffffff 0%,#dfe6ff 42%,#8d9ad0 50%,#f2f5ff 58%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;text-shadow:none !important;-webkit-text-stroke:0 !important;filter:drop-shadow(0 12px 40px rgba(0,0,0,.6))}
 .hero h1 .l2{display:block;color:transparent !important;background:linear-gradient(180deg,#fff0c4 0%,#f5a623 44%,#8a5307 50%,#ffe29a 58%,#f5a623 100%);-webkit-background-clip:text;background-clip:text;text-shadow:none !important;-webkit-text-stroke:0 !important;paint-order:normal !important}
 .tagline{font-family:'JetBrains Mono',monospace;font-size:clamp(.9rem,2.4vw,1.15rem);letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-top:18px;text-shadow:none}
 .tagline i{color:var(--syrup);font-style:normal}.tagline b{color:var(--cyan)}
@@ -973,9 +973,41 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 .f-reveal{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
 .f-reveal.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.f-reveal{opacity:1;transform:none;transition:none}.scroll-hint::after{animation:none}}
+@media(max-width:820px){.hero h1{font-size:clamp(2rem,9.6vw,3.3rem);line-height:.92}.hero .eyebrow{margin-bottom:10px}.tagline{margin-top:10px}.stats{margin-top:16px}.cta-row{margin-top:14px}.hero{padding-bottom:88px}}
 @media(max-width:640px){nav{top:8px;left:8px;right:8px}.logo{font-size:.74rem;white-space:nowrap;letter-spacing:.1em}.logo span{display:none}.nav-book{padding:8px 13px;font-size:.84rem;white-space:nowrap}.hero{padding-top:104px}.hero h1{font-size:clamp(2.6rem,13.5vw,4.6rem)}}
 /* sticky action bar: glass */
 .sticky-bar{background:rgba(9,12,24,.62) !important;border-top:1px solid var(--line);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+/* ---------- CLAMP REEL: the hero photo, as a live deck of clamps and drizzles ---------- */
+.hero-reel{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.reel-bg{position:absolute;inset:-10%;background-size:cover;background-position:center 28%;filter:blur(42px) saturate(1.35) brightness(.42);opacity:0;transition:opacity 1.3s ease;transform:scale(1.08)}
+.reel-bg.on{opacity:1}
+.reel-scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,6,11,.94) 0%,rgba(5,6,11,.72) 38%,rgba(5,6,11,.18) 66%,rgba(5,6,11,.5) 100%),linear-gradient(180deg,rgba(5,6,11,.55) 0%,rgba(5,6,11,0) 28%,rgba(5,6,11,0) 66%,rgba(5,6,11,.95) 100%)}
+.reel-grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");mix-blend-mode:overlay}
+.reel-col{position:absolute;right:max(28px,calc((100vw - 1100px)/2));top:0;height:100svh;width:min(30vw,380px,52svh);display:flex;flex-direction:column;justify-content:center;gap:16px;padding-top:54px;box-sizing:border-box}
+.reel-stage{position:relative;width:100%;aspect-ratio:3/4;perspective:1500px;pointer-events:auto;touch-action:pan-y}
+.reel-card{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#000;transform-style:preserve-3d;box-shadow:0 44px 100px rgba(0,0,0,.62),0 0 0 1px rgba(245,166,35,.42),0 0 60px rgba(245,166,35,.12);will-change:transform,opacity;transition:transform 1s cubic-bezier(.22,.8,.2,1),opacity .9s ease,filter .9s ease}
+.reel-card img{width:100%;height:100%;object-fit:cover;object-position:center 22%;display:block}
+.reel-card .foil{position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 32%,rgba(255,236,180,.32) 46%,rgba(255,255,255,0) 58%);mix-blend-mode:screen;transform:translateX(var(--fx,0%));pointer-events:none}
+.reel-card .frame{position:absolute;inset:11px;border:1px solid rgba(255,209,102,.55);border-radius:13px;pointer-events:none}
+.reel-card .frame::before,.reel-card .frame::after{content:'';position:absolute;width:14px;height:14px;border:1px solid #ffd166}
+.reel-card .frame::before{left:-1px;top:-1px;border-right:0;border-bottom:0}.reel-card .frame::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+.reel-card .tag{position:absolute;left:18px;bottom:16px;font:500 .6rem 'JetBrains Mono',monospace;letter-spacing:.26em;text-transform:uppercase;color:#ffd166;background:rgba(5,6,11,.5);padding:6px 10px;border-radius:999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.reel-card[data-pos="0"]{transform:rotateY(var(--ry,0deg)) rotateX(var(--rx,0deg));z-index:5;opacity:1}
+.reel-card[data-pos="1"]{transform:translate3d(8%,4%,-120px) rotateY(-9deg);opacity:.78;z-index:4;filter:brightness(.62) saturate(.9)}
+.reel-card[data-pos="2"]{transform:translate3d(16%,8%,-240px) rotateY(-13deg);opacity:.5;z-index:3;filter:brightness(.42)}
+.reel-card[data-pos="3"]{transform:translate3d(24%,12%,-360px) rotateY(-16deg);opacity:0;z-index:2;filter:brightness(.3)}
+.reel-card[data-pos="out"]{transform:translate3d(-46%,-18%,300px) rotateY(30deg) rotateZ(-9deg);opacity:0;z-index:6;pointer-events:none;filter:blur(6px);transition:transform .62s cubic-bezier(.5,0,.9,.5),opacity .38s ease-in,filter .5s ease}
+.reel-hud{position:relative;width:100%;pointer-events:auto;font-family:'JetBrains Mono',monospace;color:var(--mut)}
+.reel-read{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase}
+.reel-read b{color:#ffd166;font-weight:500;white-space:nowrap}.reel-read span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reel-bar{height:1px;background:rgba(255,255,255,.14);margin:10px 0 12px;position:relative;overflow:hidden}
+.reel-bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#ffd166,#5ee7ff)}
+.reel-strip{display:flex;gap:6px}
+.reel-strip button{flex:1;aspect-ratio:3/4;border:1px solid rgba(255,255,255,.12);background:#000 center 20%/cover no-repeat;border-radius:6px;padding:0;cursor:pointer;opacity:.45;transition:opacity .3s,transform .3s,border-color .3s;filter:saturate(.8)}
+.reel-strip button.on{opacity:1;border-color:#ffd166;transform:translateY(-3px);box-shadow:0 0 18px rgba(255,209,102,.35)}
+.reel-strip button:hover{opacity:.9}
+@media(max-width:820px){.reel-col{right:50%;transform:translateX(50%);top:64px;height:auto;width:min(40vw,190px);padding:0}.reel-hud{display:none}.reel-scrim{background:linear-gradient(180deg,rgba(5,6,11,.55) 0%,rgba(5,6,11,.15) 30%,rgba(5,6,11,.75) 58%,rgba(5,6,11,.98) 100%)}}
+@media(prefers-reduced-motion:reduce){.reel-card{transition:none}.reel-bg{transition:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <link rel="stylesheet" href="cine/cine.css">
@@ -991,6 +1023,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 <!-- HERO -->
 <header class="hero" id="top">
   <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-reel" id="heroReel" aria-hidden="true"></div>
   <canvas class="hero-driz" id="heroDriz"></canvas>
 <div class="driz-bottles" aria-hidden="true">
   <div class="dzb" style="left:10%;animation-delay:0.00s">
@@ -7226,6 +7259,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   });
 })();
 </script>
+<script>window.REEL=[{"src":"assets/media/5e362e890cf9.jpg","n":"Hollywood Walk of Fame","fx":"clamp","c":"hollywood"},{"src":"assets/media/a485e7aa0b0b.jpg","n":"Drizzle. Bite. Repeat.","fx":"both","c":"signature"},{"src":"assets/media/1969a40602cf.jpg","n":"Storm Burger","fx":"clamp","c":""},{"src":"assets/media/287237d7289d.jpg","n":"Wax Smashburgers","fx":"clamp","c":""},{"src":"assets/media/6187c8dacf07.jpg","n":"Gritz N Wafflez Pt. II","fx":"both","c":""},{"src":"assets/media/b5cef02986bf.jpg","n":"The Lagoon","fx":"both","c":""},{"src":"assets/media/f90ec9b32dde.jpg","n":"Marathon Burger","fx":"both","c":""},{"src":"assets/media/8484b4996421.jpg","n":"Bread & Breakfast","fx":"clamp","c":""},{"src":"assets/media/eb9b644612b4.jpg","n":"Kute N the Kitchen","fx":"both","c":""},{"src":"assets/media/eb882f3c76ef.jpg","n":"Lola's Kitchen","fx":"both","c":""},{"src":"assets/media/c4afc7e5b352.jpg","n":"Mister Dimples","fx":"both","c":""},{"src":"assets/media/4e24663c5047.jpg","n":"Storm Burger Pt. 2","fx":"clamp","c":""},{"src":"assets/media/5a720ca7e08f.jpg","n":"Taco Mell","fx":"driz","c":""},{"src":"assets/media/68cd294e05de.jpg","n":"The Griddle Cafe","fx":"driz","c":""},{"src":"assets/media/d4968fced2d0.jpg","n":"Hibiki BBQ","fx":"clamp","c":""},{"src":"assets/media/b1ed43917784.jpg","n":"Chop Cheese Bodega","fx":"clamp","c":""},{"src":"assets/media/d81f4ccee53d.jpg","n":"Maison Kayser","fx":"clamp","c":""},{"src":"assets/media/031feee70233.jpg","n":"Maple","fx":"clamp","c":""},{"src":"assets/media/3b3f3e7e66a3.jpg","n":"Kava Hana","fx":"clamp","c":""},{"src":"assets/media/4b8263830903.jpg","n":"Nalu Vida (Venice)","fx":"clamp","c":""},{"src":"assets/media/cb6c9bc1b1e2.jpg","n":"Frosty King","fx":"both","c":""},{"src":"assets/media/2a05eb9cf19f.jpg","n":"Boo's Philly Cheesesteaks","fx":"both","c":""},{"src":"assets/media/0d9105fd1ad2.jpg","n":"Eat'N Park","fx":"driz","c":""},{"src":"assets/media/13cb89663936.jpg","n":"Gritz N Wafflez","fx":"both","c":""},{"src":"assets/media/d78a3122a39e.jpg","n":"The Serving Spoon","fx":"driz","c":""},{"src":"assets/media/f36dde7c0b36.jpg","n":"Bree Westbrook's Spice House","fx":"clamp","c":""},{"src":"assets/media/014b53fa10a1.jpg","n":"Melba's Soul Food","fx":"clamp","c":""},{"src":"assets/media/0d8eb2af90a2.jpg","n":"Ziggle Korean BBQ","fx":"clamp","c":""},{"src":"assets/media/09e672551471.jpg","n":"Arayaki Japanese Grill","fx":"clamp","c":""},{"src":"assets/media/d0a048fd86e1.jpg","n":"Lucky Dragon Hibachi","fx":"clamp","c":""},{"src":"assets/media/9eb0b8fa24cd.jpg","n":"Fuego Hibachi","fx":"clamp","c":""},{"src":"assets/media/396ef7ff05b6.jpg","n":"Birrieria Garcia","fx":"both","c":""},{"src":"assets/media/215f65f3036e.jpg","n":"Taqueria 3 Amigos","fx":"both","c":""},{"src":"assets/media/953e7d544d93.jpg","n":"Fuego Cravings Pt. 2","fx":"both","c":""},{"src":"assets/media/18f0640c7527.jpg","n":"Fuego Cravings","fx":"both","c":""},{"src":"assets/media/e61df3e4784c.jpg","n":"Churrito Loco","fx":"clamp","c":""},{"src":"assets/media/d81a312b8b8d.jpg","n":"Churrito Loco Pt. 2","fx":"both","c":""},{"src":"assets/media/7616dcb0342d.jpg","n":"Churrito Loco Pt. 3","fx":"both","c":""},{"src":"assets/media/e03033f549dd.jpg","n":"Churrito Loco Pt. 3.5","fx":"both","c":""},{"src":"assets/media/82df0952dbf8.jpg","n":"Churrito Loco Pt. 4","fx":"both","c":""},{"src":"assets/media/7688b836fad4.jpg","n":"All N Di Sauce","fx":"both","c":""},{"src":"assets/media/bc880df189af.jpg","n":"Bubba's Crabhouse","fx":"clamp","c":""},{"src":"assets/media/4915d7f55d5a.jpg","n":"Crab Grabber","fx":"clamp","c":""},{"src":"assets/media/0cb14c6d7a84.jpg","n":"Mariscos Choix","fx":"clamp","c":""},{"src":"assets/media/ffd15b166c7e.jpg","n":"My Fish Spot","fx":"clamp","c":""},{"src":"assets/media/2a7c5cbd0a31.jpg","n":"MeSoFishLA","fx":"clamp","c":""},{"src":"assets/media/996250b0f32e.jpg","n":"Z's Foodboil \u00b7 ft. C-Nova","fx":"clamp","c":""},{"src":"assets/media/5ed9f612eb77.jpg","n":"My NY Pizza","fx":"clamp","c":""},{"src":"assets/media/1e26f6304828.jpg","n":"My NY Pizza 2 \u00b7 ft. Mike Zombie","fx":"clamp","c":""},{"src":"assets/media/ebb8539117ef.jpg","n":"Flamin' Pasta","fx":"driz","c":""},{"src":"assets/media/42d41b79e3b1.jpg","n":"Habibi Time","fx":"both","c":""},{"src":"assets/media/90d9203b82b3.jpg","n":"Cosmodrome LA","fx":"clamp","c":""},{"src":"assets/media/07cc89fbde0c.jpg","n":"New York Chicken & Gyro","fx":"both","c":""},{"src":"assets/media/9a148888efa0.jpg","n":"Nice Guy Burgers \u00b7 ft. C-Nova","fx":"both","c":""},{"src":"assets/media/2e3bcfbaa64f.jpg","n":"Cham Gastropub","fx":"clamp","c":""},{"src":"assets/media/3751f1cf7883.jpg","n":"Melody Bar & Grill","fx":"driz","c":""},{"src":"assets/media/f778e2519ec1.jpg","n":"LUV DDUK","fx":"clamp","c":""},{"src":"assets/media/9b59c3f59225.jpg","n":"DGM Soju Bar","fx":"clamp","c":""},{"src":"assets/media/65804f4d3549.jpg","n":"Jawny's \u00b7 ft. Problem Da Goon","fx":"both","c":""},{"src":"assets/media/c7ee961f4064.jpg","n":"Cali Chilli","fx":"clamp","c":""},{"src":"assets/media/82f275ea44d7.jpg","n":"Mean Cow","fx":"both","c":""},{"src":"assets/media/ed753e11bced.jpg","n":"Papillon Bakery","fx":"both","c":""},{"src":"assets/media/c64d3d15d914.jpg","n":"Mai Phat Noodle House","fx":"clamp","c":""},{"src":"assets/media/ed729617e0d7.jpg","n":"Mai Phat Noodle House 2","fx":"clamp","c":""},{"src":"assets/media/be3c63b3ac72.jpg","n":"Wangs N Thangs","fx":"both","c":""},{"src":"assets/media/c34580bb8548.jpg","n":"Mean Chix","fx":"both","c":""}];</script>
 <script type="module">
 /* ================= FUTURE STAGE — a live 3D emblem that turns with the scroll and leans with the pointer ================= */
 import * as THREE from 'three';
@@ -7286,8 +7320,9 @@ function frame(){
   /* hero: centred and big; past the hero it slides to the side, shrinks and keeps turning through every section */
   const k=Math.min(1,sp);
   /* desktop: beside the title on the right, then it stays on the right rail and shrinks; phone: above the title, then off to the top-right corner */
-  if(!mobile){rig.position.x=2.55+0.6*k;rig.position.y=-0.15+0.45*k-Math.sin(sp*1.7)*0.3;rig.scale.setScalar(0.92*(1-0.38*k));}
-  else{rig.position.x=1.15*k;rig.position.y=2.3-0.35*k-Math.sin(sp*1.7)*0.2;rig.scale.setScalar(0.42*(1-0.25*k));}
+  const ef=Math.min(1,Math.max(0,(k-0.3)/0.6));rig.visible=ef>0.01;   /* the hero belongs to the clamp reel: the emblem arrives as you scroll into the story */
+  if(!mobile){rig.position.x=2.55+0.6*k;rig.position.y=-0.15+0.45*k-Math.sin(sp*1.7)*0.3;rig.scale.setScalar(0.92*(1-0.38*k)*ef);}
+  else{rig.position.x=1.15*k;rig.position.y=2.3-0.35*k-Math.sin(sp*1.7)*0.2;rig.scale.setScalar(0.42*(1-0.25*k)*ef);}
   rig.rotation.y=t*0.35+sp*1.6+px*0.45;rig.rotation.x=Math.sin(t*0.5)*0.12+py*0.3-0.1*k;
   aMesh.rotation.z=Math.sin(t*0.7)*0.05;
   drop.position.y=-1.28-((t*0.6)%1)*0.5;drop.scale.y=1.35+((t*0.6)%1)*0.5;drop.material.opacity=1;
@@ -7306,6 +7341,42 @@ if(!reduce&&'IntersectionObserver' in window){
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:0.08});
   targets.forEach((el,i)=>{el.classList.add('f-reveal');el.style.transitionDelay=((i%5)*60)+'ms';io.observe(el);});
 }
+/* ================= CLAMP REEL — the hero photo as a live deck: every clamp and drizzle, snapping through ================= */
+(function(){
+  const host=document.getElementById('heroReel'),list=Array.isArray(window.REEL)?window.REEL:[];
+  if(!host||list.length<2)return;
+  host.innerHTML='<div class="reel-bg"></div><div class="reel-bg"></div><div class="reel-scrim"></div><div class="reel-grain"></div><div class="reel-col"><div class="reel-stage" id="reelStage"></div><div class="reel-hud"><div class="reel-read"><b id="reelNum"></b><span id="reelName"></span><b id="reelFx"></b></div><div class="reel-bar"><i id="reelBar"></i></div><div class="reel-strip" id="reelStrip"></div></div></div>';
+  const bgs=host.querySelectorAll('.reel-bg'),stage=host.querySelector('#reelStage'),strip=host.querySelector('#reelStrip'),num=host.querySelector('#reelNum'),name=host.querySelector('#reelName'),fxEl=host.querySelector('#reelFx'),bar=host.querySelector('#reelBar');
+  const HOLD=3600,DEPTH=4;let cur=0,bgi=0,timer=0,hold=false,lastSwap=performance.now();
+  const cards=[];
+  const mk=(i)=>{const it=list[i];const c=document.createElement('div');c.className='reel-card';c.innerHTML='<img alt="" decoding="async" loading="eager"><div class="foil"></div><div class="frame"></div><span class="tag"></span>';c.querySelector('img').src=it.src;c.querySelector('.tag').textContent=(it.fx==='both'?'clamp · drizzle':it.fx==='driz'?'drizzle':'clamp')+' — '+it.n;c.dataset.i=i;return c;};
+  const setBg=(src)=>{bgi=1-bgi;bgs[bgi].style.backgroundImage='url("'+src+'")';bgs[bgi].classList.add('on');bgs[1-bgi].classList.remove('on');};
+  const layout=()=>{const seen=new Set();for(let k=0;k<DEPTH;k++){const i=(cur+k)%list.length;seen.add(i);let c=cards.find(x=>+x.dataset.i===i&&x.dataset.pos!=='out');if(!c){c=mk(i);stage.appendChild(c);cards.push(c);}c.dataset.pos=String(k);}
+    for(const c of cards.slice()){if(!seen.has(+c.dataset.i)&&c.dataset.pos!=='out'){c.dataset.pos='out';setTimeout(()=>{c.remove();const j=cards.indexOf(c);if(j>=0)cards.splice(j,1);},900);}}
+    const it=list[cur];setBg(it.src);num.textContent=String(cur+1).padStart(2,'0')+' / '+list.length;name.textContent=it.n;fxEl.textContent=it.fx==='both'?'CLAMP + DRIZZLE':it.fx==='driz'?'DRIZZLE':'THE CLAMP';
+    strip.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===cur));
+    const nxt=list[(cur+DEPTH)%list.length];if(nxt){const im=new Image();im.src=nxt.src;}   /* keep one ahead warm */
+    lastSwap=performance.now();};
+  const go=(i)=>{cur=(i+list.length)%list.length;layout();};
+  /* thumbnail strip: the next seven, always centred on the current one */
+  const buildStrip=()=>{strip.innerHTML='';const n=Math.min(7,list.length);for(let k=-3;k<=3;k++){const i=(cur+k+list.length)%list.length;const b=document.createElement('button');b.type='button';b.dataset.i=i;b.style.backgroundImage='url("'+list[i].src+'")';b.setAttribute('aria-label',list[i].n);b.addEventListener('click',()=>{go(i);buildStrip();});strip.appendChild(b);}};
+  buildStrip();layout();
+  /* pointer: the front card tilts toward you and its foil catches the light */
+  let tx=0,ty=0,rx=0,ry=0;
+  addEventListener('pointermove',e=>{const r=stage.getBoundingClientRect();tx=((e.clientX-(r.left+r.width/2))/r.width);ty=((e.clientY-(r.top+r.height/2))/r.height);},{passive:true});
+  stage.addEventListener('pointerenter',()=>{hold=true;});stage.addEventListener('pointerleave',()=>{hold=false;});
+  let sx=null;stage.addEventListener('pointerdown',e=>{sx=e.clientX;},{passive:true});
+  addEventListener('pointerup',e=>{if(sx==null)return;const dx=e.clientX-sx;sx=null;if(Math.abs(dx)>28){go(cur+(dx<0?1:-1));buildStrip();}else if(e.target.closest&&e.target.closest('#reelStage')){go(cur+1);buildStrip();}},{passive:true});
+  addEventListener('keydown',e=>{if(e.code==='ArrowRight'){go(cur+1);buildStrip();}if(e.code==='ArrowLeft'){go(cur-1);buildStrip();}});
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function tick(){const now=performance.now();rx+=(clampN(-ty,-1,1)*9-rx)*0.08;ry+=(clampN(tx,-1,1)*12-ry)*0.08;
+    const front=cards.find(c=>c.dataset.pos==='0');if(front){front.style.setProperty('--rx',rx.toFixed(2)+'deg');front.style.setProperty('--ry',ry.toFixed(2)+'deg');front.style.setProperty('--fx',(ry*6).toFixed(1)+'%');}
+    const el=now-lastSwap;bar.style.width=(hold?bar.style.width:Math.min(100,el/HOLD*100)+'%');
+    if(!reduce&&!hold&&!document.hidden&&scrollY<innerHeight*1.2&&el>HOLD){go(cur+1);buildStrip();}
+    requestAnimationFrame(tick);}
+  const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
+  tick();
+})();
 </script>
 <script src="cine/cine.js"></script>
 <script>
