@@ -99,9 +99,9 @@ const CHEESE_FS=`#version 300 es
 precision highp float;
 out vec4 O;
 uniform vec2 R;uniform float T,SHIFT,BASEF,BASEB,GLOW;uniform int N;
-uniform vec4 A[32];   /* cx, y0, L, w0            (px) */
-uniform vec4 B[32];   /* rb, wn, sway, dropY(-1)  (px) */
-uniform vec4 C[32];   /* back(0/1), dropR, pinch, det */
+uniform vec4 A[48];   /* cx, y0, L, w0            (px) */
+uniform vec4 B[48];   /* rb, wn, sway, dropY(-1)  (px) */
+uniform vec4 C[48];   /* back(0/1), dropR, pinch, det */
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*f*(f*(f*6.0-15.0)+10.0);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
 float smin(float a,float b,float k){float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0);return mix(b,a,h)-k*h*(1.0-h);}
@@ -110,9 +110,9 @@ float field(vec2 p,float back,float base,out float rr){
   float x=p.x,y=p.y;
   /* the sheet edge sags and dips toward every drip */
   float e=base+sin(x*0.011+T*0.35)*R.y*0.007+sin(x*0.029+1.7)*R.y*0.004+(noise(vec2(x*0.02,T*0.2))-0.5)*R.y*0.012;
-  for(int i=0;i<32;i++){if(i>=N)break;if(C[i].x!=back)continue;float u=(x-A[i].x)/(A[i].w*1.7);e+=exp(-u*u)*A[i].w*0.5;}
-  float d=y-e;rr=R.y*0.045;
-  for(int i=0;i<32;i++){if(i>=N)break;if(C[i].x!=back)continue;
+  for(int i=0;i<48;i++){if(i>=N)break;if(C[i].x!=back)continue;float u=(x-A[i].x)/(A[i].w*1.7);e+=exp(-u*u)*A[i].w*0.5;}
+  float d=y-e;rr=R.y*0.03;
+  for(int i=0;i<48;i++){if(i>=N)break;if(C[i].x!=back)continue;
     float cx=A[i].x,y0=A[i].y-A[i].w*0.4,L=A[i].z,w0=A[i].w*0.5,rb=B[i].x,wn=B[i].y*0.5,sw=B[i].z,pinch=C[i].z;
     float by=y0+L;                                     /* bulb centre */
     float s=clamp((y-y0)/max(L,1.0),0.0,1.0);
@@ -167,22 +167,22 @@ void main(){
   O=vec4(col,a);
 }`;
 R['cheese-drip']={gl:true,
-  init(s){const rnd=()=>Math.random();const port=s.W<s.H,ws=port?2.1:1;  /* portrait screens: fewer, fatter tongues so they stay thick */
-    const mk=(n,back)=>{const arr=[];let x=0.02+rnd()*0.03;while(x<0.98&&arr.length<n){const w=((back?0.075:0.055)+rnd()*0.06)*ws;
-      arr.push({x:x+w/2,w0:w*(back?0.78:0.72),len:0.18+Math.pow(rnd(),0.7)*0.8,ph:rnd()*6.3,det:0.32+rnd()*0.4,drop:rnd()<0.6,wob:0.6+rnd()*0.8,back:back?1:0});x+=w*(0.9+rnd()*0.6);}return arr;};
-    s.drips=mk(port?9:18,false).concat(mk(port?5:9,true));
+  init(s){const rnd=()=>Math.random();const port=s.W<s.H,ws=port?1.9:1;  /* sauce: thin strands, more of them, longer; portrait screens keep them a touch wider */
+    const mk=(n,back)=>{const arr=[];let x=0.01+rnd()*0.02;while(x<0.99&&arr.length<n){const w=((back?0.034:0.024)+rnd()*0.03)*ws;
+      arr.push({x:x+w/2,w0:w*(back?0.62:0.55),len:0.22+Math.pow(rnd(),0.6)*0.85,ph:rnd()*6.3,det:0.28+rnd()*0.45,drop:rnd()<0.7,wob:0.7+rnd()*0.9,back:back?1:0});x+=w*(1.0+rnd()*1.1);}return arr;};
+    s.drips=mk(port?14:30,false).concat(mk(port?7:16,true));
     const gl=s.gl;const P=gl.createProgram();const mkS=(t,src)=>{const sh=gl.createShader(t);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));gl.attachShader(P,sh);};
     mkS(gl.VERTEX_SHADER,CHEESE_VS);mkS(gl.FRAGMENT_SHADER,CHEESE_FS);gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
     gl.useProgram(P);const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(P,'a');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
     s.P=P;s.U={};['R','T','SHIFT','BASEF','BASEB','GLOW','N','A','B','C'].forEach(k=>s.U[k]=gl.getUniformLocation(P,k));
-    s.FA=new Float32Array(32*4);s.FB=new Float32Array(32*4);s.FC=new Float32Array(32*4);
+    s.FA=new Float32Array(48*4);s.FB=new Float32Array(48*4);s.FC=new Float32Array(48*4);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);},
   draw(s,p,t){const {gl,W,H,dpr,ctx}=s;
     const pour=Math.pow(sm(p,0,0.62),1.15),run=Math.pow(sm(p,0.66,1),1.8);const shift=run*H*2.6;
-    const baseF=H*0.085*(0.35+0.65*pour)+H*0.03,baseB=H*0.13*(0.35+0.65*pour)+H*0.03;
+    const baseF=H*0.06*(0.35+0.65*pour)+H*0.025,baseB=H*0.095*(0.35+0.65*pour)+H*0.025;
     const {FA,FB,FC}=s;let n=0;
     for(const d of s.drips){const cx=d.x*W,w0=d.w0*W;const grow=Math.pow(clamp(pour*1.15-(1-d.len)*0.12,0,1),1.7);const L=H*d.len*grow+w0*0.6;
-      const rb=w0*(0.44+0.14*grow),wn=w0*(0.92-0.3*grow),sway=Math.sin(t*d.wob+d.ph)*w0*0.35*grow;
+      const rb=w0*(0.5+0.22*grow),wn=w0*(0.9-0.42*grow),sway=Math.sin(t*d.wob+d.ph)*w0*0.5*grow;
       const y0=(d.back?baseB:baseF);
       let dropY=-1,dropR=0,pinch=0;
       if(d.drop){const q=seg(pour,d.det,d.det+0.34);pinch=sm(q,0,0.35);if(q>0.3){const q2=(q-0.3)/0.7;dropR=rb*0.55*(0.7+0.3*q2);dropY=y0+L+rb*0.4+q2*q2*H*1.0;}}
