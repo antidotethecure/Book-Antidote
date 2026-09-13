@@ -1008,6 +1008,61 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 .reel-strip button:hover{opacity:.9}
 @media(max-width:820px){.reel-col{right:50%;transform:translateX(50%);top:64px;height:auto;width:min(40vw,190px);padding:0}.reel-hud{display:none}.reel-scrim{background:linear-gradient(180deg,rgba(5,6,11,.55) 0%,rgba(5,6,11,.15) 30%,rgba(5,6,11,.75) 58%,rgba(5,6,11,.98) 100%)}}
 @media(prefers-reduced-motion:reduce){.reel-card{transition:none}.reel-bg{transition:none}}
+
+/* ---------- THE DRIZZLE LIST: live membership card + form ---------- */
+#join .wrap{max-width:1100px}
+.jn-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;margin-top:18px}
+.jn-lead{max-width:52ch;color:var(--mut);font-size:1.02rem;line-height:1.55;margin:0 0 20px}
+.jn-form{display:grid;gap:12px}
+.jn-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.jn-field{display:grid;gap:6px;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan)}
+.jn-field em{color:var(--mut);font-style:normal;letter-spacing:.1em}
+.jn-field input{font:500 1rem 'Space Grotesk',sans-serif;letter-spacing:0;text-transform:none;padding:13px 14px;border-radius:12px;background:rgba(255,255,255,.05) !important;border:1px solid var(--line) !important;color:var(--cream) !important;transition:border-color .25s,box-shadow .25s,background .25s}
+.jn-field input::placeholder{color:rgba(152,162,195,.55)}
+.jn-field input:focus{outline:none;border-color:rgba(255,209,102,.7) !important;box-shadow:0 0 0 3px rgba(255,209,102,.14),0 0 24px rgba(255,209,102,.12)}
+.jn-field input:invalid:not(:placeholder-shown){border-color:rgba(255,90,90,.6) !important}
+.jn-wants{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.jn-wants button{font:600 .8rem 'Space Grotesk',sans-serif;padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--glass);color:var(--mut);cursor:pointer;transition:all .25s}
+.jn-wants button.on{color:#140d00;background:linear-gradient(180deg,var(--syrup-hi),var(--syrup));border-color:transparent;box-shadow:0 8px 24px rgba(245,166,35,.25)}
+.jn-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.jn-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
+.jn-note{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.jn-note.err{color:#ff7b7b}.jn-note.ok{color:var(--cyan)}
+#jnSubmit[disabled]{opacity:.6;cursor:progress}
+/* the card */
+.jn-stage{perspective:1400px;display:grid;justify-items:center;gap:16px}
+.jn-card{width:min(100%,440px);aspect-ratio:1.586;position:relative;transform-style:preserve-3d;transform:rotateY(var(--ry,-8deg)) rotateX(var(--rx,4deg));transition:transform .18s ease-out}
+.jn-face{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#15161c 0%,#0a0b10 55%,#16151a 100%);border:1px solid rgba(255,209,102,.5);box-shadow:0 40px 90px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04) inset,0 0 70px rgba(245,166,35,.12);padding:22px 24px;box-sizing:border-box;font-family:'JetBrains Mono',monospace;color:#f3f5ff}
+.jn-face::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 22% 18%,rgba(255,255,255,.10),transparent 42%),repeating-linear-gradient(115deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px);pointer-events:none}
+.jn-foil{position:absolute;inset:0;background:linear-gradient(112deg,rgba(255,255,255,0) 34%,rgba(255,236,180,.22) 46%,rgba(94,231,255,.16) 52%,rgba(255,255,255,0) 62%);mix-blend-mode:screen;transform:translateX(var(--fx,0%));pointer-events:none}
+.jn-top{display:flex;justify-content:space-between;align-items:baseline;position:relative}
+.jn-brand{font-family:'Orbitron',sans-serif;font-weight:800;letter-spacing:.2em;font-size:.95rem;background:linear-gradient(92deg,#ffe8a8,#f5a623 45%,#fff3cc 55%,#e39a1a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jn-tier{font-size:.6rem;letter-spacing:.3em;color:var(--cyan)}
+.jn-chip{width:46px;height:34px;border-radius:7px;margin:22px 0 0;background:linear-gradient(135deg,#f6d77a,#c9952c 55%,#f2c65a);position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;padding:5px;box-sizing:border-box;box-shadow:0 2px 6px rgba(0,0,0,.5) inset}
+.jn-chip i{border:1px solid rgba(90,60,10,.55);border-radius:2px}
+.jn-name{margin-top:18px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(1rem,2.6vw,1.35rem);letter-spacing:.14em;text-transform:uppercase;color:#f3f5ff;text-shadow:0 1px 0 rgba(255,255,255,.18),0 -1px 0 rgba(0,0,0,.8);min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.jn-name.empty{color:rgba(243,245,255,.28)}
+.jn-meta{display:flex;justify-content:space-between;margin-top:10px;font-size:.62rem;letter-spacing:.22em;color:var(--mut);position:relative}
+.jn-meta b{color:#ffd166;font-weight:500}
+.jn-sig{display:flex;gap:8px;margin-top:14px;position:relative}
+.jn-sig span{font-size:.56rem;letter-spacing:.24em;padding:4px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:rgba(152,162,195,.6);transition:all .3s}
+.jn-sig span.on{color:#5ee7ff;border-color:rgba(94,231,255,.6);box-shadow:0 0 12px rgba(94,231,255,.25)}
+.jn-drip{position:absolute;right:38%;top:-8px;width:16px;height:52px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#ffd166,#f5a623 70%,#c47a0a);box-shadow:0 0 14px rgba(245,166,35,.45);animation:jndrip 5s ease-in-out infinite}
+.jn-drip::after{content:'';position:absolute;left:3px;bottom:-9px;width:10px;height:10px;border-radius:50%;background:#f5a623;box-shadow:0 0 10px rgba(245,166,35,.6)}
+@keyframes jndrip{0%,100%{height:44px}50%{height:60px}}
+.jn-stamp{position:absolute;right:20px;bottom:18px;width:118px;height:118px;border-radius:50%;border:3px solid #ffd166;display:grid;place-content:center;text-align:center;color:#ffd166;transform:rotate(-14deg) scale(3);opacity:0;pointer-events:none;box-shadow:0 0 0 3px rgba(255,209,102,.25) inset;background:radial-gradient(circle,rgba(255,209,102,.12),rgba(255,209,102,0) 70%)}
+.jn-stamp span{font-family:'Orbitron',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.14em}
+.jn-stamp small{display:block;font-size:.42rem;letter-spacing:.22em;margin-top:4px}
+.jn-card.stamped .jn-stamp{animation:jnstamp .55s cubic-bezier(.2,1.4,.3,1) forwards}
+@keyframes jnstamp{0%{transform:rotate(-14deg) scale(3);opacity:0}60%{transform:rotate(-14deg) scale(.92);opacity:1}100%{transform:rotate(-14deg) scale(1);opacity:1}}
+.jn-card.stamped .jn-face{border-color:#ffd166;box-shadow:0 40px 90px rgba(0,0,0,.65),0 0 0 1px rgba(255,209,102,.2) inset,0 0 90px rgba(245,166,35,.35)}
+.jn-done[hidden]{display:none}
+.jn-done{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);text-align:center;display:grid;gap:4px}
+.jn-done b{color:#ffd166;font-weight:500;font-size:.8rem}
+.jn-confetti{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.jn-confetti i{position:absolute;left:50%;top:40%;width:6px;height:14px;border-radius:3px;background:var(--syrup);animation:jnfly 1.4s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes jnfly{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+@media(max-width:820px){.jn-grid{grid-template-columns:1fr;gap:26px}.jn-stage{order:-1}.jn-row{grid-template-columns:1fr}.jn-card{width:min(100%,380px)}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <link rel="stylesheet" href="cine/cine.css">
@@ -1252,6 +1307,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
     <a class="stat" href="#ebook"><b>Wealth</b> Blueprint</a>
     <a class="stat" href="#crypto"><b>All In</b> On Crypto</a>
     <a class="stat" href="/drizzle-bowl/"><b>🎳 Drizzle</b> Bowl — Play</a>
+      <a class="stat" href="#join"><b>✦ Join</b> the Drizzle List</a>
   </div>
   <div class="cta-row">
     <a class="btn btn-gold" href="tel:+14243094068">📞 Book Your Review</a>
@@ -1770,6 +1826,56 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
   </div>
 </section>
 <!-- BOOK -->
+<!-- THE DRIZZLE LIST — members-only alerts. Your details get engraved onto a live card as you type; submitting stamps it. -->
+<section id="join">
+  <div class="wrap">
+    <div class="eyebrow">Members only</div>
+    <h2>Get the drop <span class="neon">before it drops.</span></h2>
+    <div class="jn-grid">
+      <div class="jn-copy">
+        <p class="jn-lead">New reviews the second they land. Merch drops. Drizzle Bowl leaderboard resets. Tour dates and pop-ups. One list, no spam, unsubscribe any time.</p>
+        <form class="jn-form" id="jnForm" novalidate>
+          <label class="jn-field"><span>Name</span><input type="text" name="name" id="jnName" maxlength="40" autocomplete="name" placeholder="What do we call you"></label>
+          <label class="jn-field"><span>Email *</span><input type="email" name="email" id="jnEmail" maxlength="120" autocomplete="email" inputmode="email" placeholder="you@email.com" required></label>
+          <div class="jn-row">
+            <label class="jn-field"><span>Phone <em>for texts</em></span><input type="tel" name="phone" id="jnPhone" maxlength="24" autocomplete="tel" inputmode="tel" placeholder="(optional)"></label>
+            <label class="jn-field"><span>Instagram</span><input type="text" name="ig" id="jnIg" maxlength="40" autocomplete="off" placeholder="@handle"></label>
+          </div>
+          <div class="jn-wants" id="jnWants" role="group" aria-label="What do you want alerts for">
+            <button type="button" class="on" data-w="reviews">🍔 New reviews</button>
+            <button type="button" class="on" data-w="drops">🧢 Drops &amp; merch</button>
+            <button type="button" data-w="bowl">🎳 Drizzle Bowl</button>
+            <button type="button" data-w="events">📍 Tour &amp; events</button>
+          </div>
+          <input type="text" name="website" class="jn-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="jn-actions">
+            <button type="submit" class="btn btn-gold" id="jnSubmit">✦ Stamp my card</button>
+            <span class="jn-note" id="jnNote">Your card updates as you type.</span>
+          </div>
+        </form>
+      </div>
+      <div class="jn-stage">
+        <div class="jn-card" id="jnCard">
+          <div class="jn-face jn-front">
+            <div class="jn-foil"></div>
+            <div class="jn-top"><span class="jn-brand">ANTIDOTE</span><span class="jn-tier">DRIZZLE LIST</span></div>
+            <div class="jn-chip"><i></i><i></i><i></i><i></i></div>
+            <div class="jn-name" id="jnCardName">YOUR NAME</div>
+            <div class="jn-meta"><span>MEMBER <b id="jnCardNo">№ ------</b></span><span id="jnCardSince">SINCE ----</span></div>
+            <div class="jn-sig" id="jnCardSig"><span class="on">EMAIL</span><span>SMS</span><span>IG</span></div>
+            <div class="jn-stamp" id="jnStamp"><span>STAMPED</span><small>DRIZZLE · BITE · REPEAT</small></div>
+            <div class="jn-drip" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="jn-done" id="jnDone" hidden>
+          <b>You're on the list.</b>
+          <span id="jnDoneTxt">First drop hits your inbox soon.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="book">
   <div class="wrap">
     <div class="book-card reveal">
@@ -4198,6 +4304,7 @@ function agencySubmit(e){
     <a href="https://yelp.to/STF9gIDe4C" target="_blank" rel="noopener">Yelp</a>
     <a id="shopLink2" href="https://wokedote-clothing.myshopify.com" target="_blank" rel="noopener">🛒 Woke Dote</a>
     <a href="https://therealantidote.gumroad.com/l/vkffrk?utm_id=97760_v0_s00_e0_tv3" target="_blank" rel="noopener">📘 Wealth Blueprint</a>
+    <a href="#join">✦ Join the list</a>
   </div>
   <div class="maker reveal">
     <div class="seal" tabindex="0" aria-label="Handcrafted by Antidote The Foodie">
@@ -7260,6 +7367,44 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 })();
 </script>
 <script>window.REEL=[{"src":"assets/media/5e362e890cf9.jpg","n":"Hollywood Walk of Fame","fx":"clamp","c":"hollywood"},{"src":"assets/media/a485e7aa0b0b.jpg","n":"Drizzle. Bite. Repeat.","fx":"both","c":"signature"},{"src":"assets/media/1969a40602cf.jpg","n":"Storm Burger","fx":"clamp","c":""},{"src":"assets/media/287237d7289d.jpg","n":"Wax Smashburgers","fx":"clamp","c":""},{"src":"assets/media/6187c8dacf07.jpg","n":"Gritz N Wafflez Pt. II","fx":"both","c":""},{"src":"assets/media/b5cef02986bf.jpg","n":"The Lagoon","fx":"both","c":""},{"src":"assets/media/f90ec9b32dde.jpg","n":"Marathon Burger","fx":"both","c":""},{"src":"assets/media/8484b4996421.jpg","n":"Bread & Breakfast","fx":"clamp","c":""},{"src":"assets/media/eb9b644612b4.jpg","n":"Kute N the Kitchen","fx":"both","c":""},{"src":"assets/media/eb882f3c76ef.jpg","n":"Lola's Kitchen","fx":"both","c":""},{"src":"assets/media/c4afc7e5b352.jpg","n":"Mister Dimples","fx":"both","c":""},{"src":"assets/media/4e24663c5047.jpg","n":"Storm Burger Pt. 2","fx":"clamp","c":""},{"src":"assets/media/5a720ca7e08f.jpg","n":"Taco Mell","fx":"driz","c":""},{"src":"assets/media/68cd294e05de.jpg","n":"The Griddle Cafe","fx":"driz","c":""},{"src":"assets/media/d4968fced2d0.jpg","n":"Hibiki BBQ","fx":"clamp","c":""},{"src":"assets/media/b1ed43917784.jpg","n":"Chop Cheese Bodega","fx":"clamp","c":""},{"src":"assets/media/d81f4ccee53d.jpg","n":"Maison Kayser","fx":"clamp","c":""},{"src":"assets/media/031feee70233.jpg","n":"Maple","fx":"clamp","c":""},{"src":"assets/media/3b3f3e7e66a3.jpg","n":"Kava Hana","fx":"clamp","c":""},{"src":"assets/media/4b8263830903.jpg","n":"Nalu Vida (Venice)","fx":"clamp","c":""},{"src":"assets/media/cb6c9bc1b1e2.jpg","n":"Frosty King","fx":"both","c":""},{"src":"assets/media/2a05eb9cf19f.jpg","n":"Boo's Philly Cheesesteaks","fx":"both","c":""},{"src":"assets/media/0d9105fd1ad2.jpg","n":"Eat'N Park","fx":"driz","c":""},{"src":"assets/media/13cb89663936.jpg","n":"Gritz N Wafflez","fx":"both","c":""},{"src":"assets/media/d78a3122a39e.jpg","n":"The Serving Spoon","fx":"driz","c":""},{"src":"assets/media/f36dde7c0b36.jpg","n":"Bree Westbrook's Spice House","fx":"clamp","c":""},{"src":"assets/media/014b53fa10a1.jpg","n":"Melba's Soul Food","fx":"clamp","c":""},{"src":"assets/media/0d8eb2af90a2.jpg","n":"Ziggle Korean BBQ","fx":"clamp","c":""},{"src":"assets/media/09e672551471.jpg","n":"Arayaki Japanese Grill","fx":"clamp","c":""},{"src":"assets/media/d0a048fd86e1.jpg","n":"Lucky Dragon Hibachi","fx":"clamp","c":""},{"src":"assets/media/9eb0b8fa24cd.jpg","n":"Fuego Hibachi","fx":"clamp","c":""},{"src":"assets/media/396ef7ff05b6.jpg","n":"Birrieria Garcia","fx":"both","c":""},{"src":"assets/media/215f65f3036e.jpg","n":"Taqueria 3 Amigos","fx":"both","c":""},{"src":"assets/media/953e7d544d93.jpg","n":"Fuego Cravings Pt. 2","fx":"both","c":""},{"src":"assets/media/18f0640c7527.jpg","n":"Fuego Cravings","fx":"both","c":""},{"src":"assets/media/e61df3e4784c.jpg","n":"Churrito Loco","fx":"clamp","c":""},{"src":"assets/media/d81a312b8b8d.jpg","n":"Churrito Loco Pt. 2","fx":"both","c":""},{"src":"assets/media/7616dcb0342d.jpg","n":"Churrito Loco Pt. 3","fx":"both","c":""},{"src":"assets/media/e03033f549dd.jpg","n":"Churrito Loco Pt. 3.5","fx":"both","c":""},{"src":"assets/media/82df0952dbf8.jpg","n":"Churrito Loco Pt. 4","fx":"both","c":""},{"src":"assets/media/7688b836fad4.jpg","n":"All N Di Sauce","fx":"both","c":""},{"src":"assets/media/bc880df189af.jpg","n":"Bubba's Crabhouse","fx":"clamp","c":""},{"src":"assets/media/4915d7f55d5a.jpg","n":"Crab Grabber","fx":"clamp","c":""},{"src":"assets/media/0cb14c6d7a84.jpg","n":"Mariscos Choix","fx":"clamp","c":""},{"src":"assets/media/ffd15b166c7e.jpg","n":"My Fish Spot","fx":"clamp","c":""},{"src":"assets/media/2a7c5cbd0a31.jpg","n":"MeSoFishLA","fx":"clamp","c":""},{"src":"assets/media/996250b0f32e.jpg","n":"Z's Foodboil \u00b7 ft. C-Nova","fx":"clamp","c":""},{"src":"assets/media/5ed9f612eb77.jpg","n":"My NY Pizza","fx":"clamp","c":""},{"src":"assets/media/1e26f6304828.jpg","n":"My NY Pizza 2 \u00b7 ft. Mike Zombie","fx":"clamp","c":""},{"src":"assets/media/ebb8539117ef.jpg","n":"Flamin' Pasta","fx":"driz","c":""},{"src":"assets/media/42d41b79e3b1.jpg","n":"Habibi Time","fx":"both","c":""},{"src":"assets/media/90d9203b82b3.jpg","n":"Cosmodrome LA","fx":"clamp","c":""},{"src":"assets/media/07cc89fbde0c.jpg","n":"New York Chicken & Gyro","fx":"both","c":""},{"src":"assets/media/9a148888efa0.jpg","n":"Nice Guy Burgers \u00b7 ft. C-Nova","fx":"both","c":""},{"src":"assets/media/2e3bcfbaa64f.jpg","n":"Cham Gastropub","fx":"clamp","c":""},{"src":"assets/media/3751f1cf7883.jpg","n":"Melody Bar & Grill","fx":"driz","c":""},{"src":"assets/media/f778e2519ec1.jpg","n":"LUV DDUK","fx":"clamp","c":""},{"src":"assets/media/9b59c3f59225.jpg","n":"DGM Soju Bar","fx":"clamp","c":""},{"src":"assets/media/65804f4d3549.jpg","n":"Jawny's \u00b7 ft. Problem Da Goon","fx":"both","c":""},{"src":"assets/media/c7ee961f4064.jpg","n":"Cali Chilli","fx":"clamp","c":""},{"src":"assets/media/82f275ea44d7.jpg","n":"Mean Cow","fx":"both","c":""},{"src":"assets/media/ed753e11bced.jpg","n":"Papillon Bakery","fx":"both","c":""},{"src":"assets/media/c64d3d15d914.jpg","n":"Mai Phat Noodle House","fx":"clamp","c":""},{"src":"assets/media/ed729617e0d7.jpg","n":"Mai Phat Noodle House 2","fx":"clamp","c":""},{"src":"assets/media/be3c63b3ac72.jpg","n":"Wangs N Thangs","fx":"both","c":""},{"src":"assets/media/c34580bb8548.jpg","n":"Mean Chix","fx":"both","c":""}];</script>
+<script>
+/* THE DRIZZLE LIST — the card engraves as you type; submitting stamps it and files the member with the API */
+(function(){
+  const API='https://drizzle-bowl-scores.higgsfield.app/api/subscribe';
+  const form=document.getElementById('jnForm');if(!form)return;
+  const $=id=>document.getElementById(id);
+  const name=$('jnName'),email=$('jnEmail'),phone=$('jnPhone'),ig=$('jnIg'),wants=$('jnWants'),note=$('jnNote'),submit=$('jnSubmit');
+  const card=$('jnCard'),cName=$('jnCardName'),cNo=$('jnCardNo'),cSince=$('jnCardSince'),sig=$('jnCardSig').children,done=$('jnDone'),doneTxt=$('jnDoneTxt');
+  const mono=new Date();cSince.textContent='SINCE '+mono.getFullYear();
+  /* live engraving */
+  const engrave=()=>{const v=name.value.trim();cName.textContent=v?v.toUpperCase():'YOUR NAME';cName.classList.toggle('empty',!v);
+    sig[0].classList.toggle('on',true);sig[1].classList.toggle('on',phone.value.trim().length>6);sig[2].classList.toggle('on',ig.value.trim().length>1);};
+  [name,phone,ig].forEach(el=>el.addEventListener('input',engrave));engrave();
+  ig.addEventListener('blur',()=>{const v=ig.value.trim();if(v&&v[0]!=='@')ig.value='@'+v;engrave();});
+  wants.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;b.classList.toggle('on');});
+  /* the card follows the pointer */
+  let tx=0,ty=0;const stage=card.parentElement;
+  stage.addEventListener('pointermove',e=>{const r=card.getBoundingClientRect();tx=(e.clientX-(r.left+r.width/2))/r.width;ty=(e.clientY-(r.top+r.height/2))/r.height;
+    card.style.setProperty('--ry',(tx*16-8).toFixed(1)+'deg');card.style.setProperty('--rx',(4-ty*14).toFixed(1)+'deg');card.style.setProperty('--fx',(tx*40).toFixed(1)+'%');},{passive:true});
+  stage.addEventListener('pointerleave',()=>{card.style.setProperty('--ry','-8deg');card.style.setProperty('--rx','4deg');card.style.setProperty('--fx','0%');});
+  /* returning members see their stamped card */
+  try{const m=JSON.parse(localStorage.getItem('adb_member')||'null');if(m&&m.email){name.value=m.name||'';email.value=m.email;engrave();stamp(m.n,true);}}catch(e){}
+  function stamp(n,quiet){cNo.textContent='№ '+String(n||0).padStart(6,'0');card.classList.add('stamped');done.hidden=false;
+    submit.textContent='✓ On the list';submit.disabled=true;note.textContent=quiet?'Welcome back.':'Stamped.';note.className='jn-note ok';
+    if(!quiet){const c=document.createElement('div');c.className='jn-confetti';for(let i=0;i<26;i++){const p=document.createElement('i');const a=Math.random()*Math.PI*2,d=90+Math.random()*180;p.style.setProperty('--dx',(Math.cos(a)*d).toFixed(0)+'px');p.style.setProperty('--dy',(Math.sin(a)*d-60).toFixed(0)+'px');p.style.setProperty('--rot',(Math.random()*720-360).toFixed(0)+'deg');p.style.animationDelay=(Math.random()*0.15)+'s';p.style.background=Math.random()<0.3?'#5ee7ff':'#f5a623';c.appendChild(p);}card.appendChild(c);setTimeout(()=>c.remove(),1800);}}
+  form.addEventListener('submit',async e=>{e.preventDefault();
+    const em=email.value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){note.textContent='That email does not look right.';note.className='jn-note err';email.focus();return;}
+    if(form.website&&form.website.value){return;}   /* honeypot */
+    const body={name:name.value.trim().slice(0,40),email:em.toLowerCase(),phone:phone.value.trim().slice(0,24),ig:ig.value.trim().slice(0,40),wants:[...wants.querySelectorAll('button.on')].map(b=>b.dataset.w),source:location.hostname};
+    submit.disabled=true;note.textContent='Stamping…';note.className='jn-note';
+    try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));
+      if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));
+      try{localStorage.setItem('adb_member',JSON.stringify({email:em,name:body.name,n:j.n}));}catch(x){}
+      doneTxt.textContent=(body.phone?'Texts and email':'Email')+' locked in. First drop hits soon.';stamp(j.n,false);
+    }catch(err){submit.disabled=false;note.textContent='Could not reach the list. Try again in a moment.';note.className='jn-note err';console.warn('[join]',err);}
+  });
+})();
+</script>
 <script type="module">
 /* ================= FUTURE STAGE — a live 3D emblem that turns with the scroll and leans with the pointer ================= */
 import * as THREE from 'three';
