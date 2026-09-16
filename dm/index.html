@@ -166,12 +166,12 @@ select{
     </div>
   </div>
 
-  <p class="note warn"><b>"Open app" jumps straight into the Instagram app — nothing else.</b>
-    If tapping it does nothing at all, you're either viewing this page inside another app's
-    built-in browser (Instagram DMs, Messages link previews, Claude, Gmail and similar all
-    block app handoff on purpose — open this page in Safari or Chrome instead), or Instagram
-    isn't installed on this device — use the restaurant name or handle above to open their
-    profile on the Instagram website instead.</p>
+  <p class="note warn"><b>Every Instagram link on this page — the name, the handle, and the
+    "Open app" button — jumps straight into the app now, not the website.</b> If tapping any
+    of them lands you on instagram.com in a browser instead, you're either viewing this page
+    inside another app's built-in browser (Instagram DMs, Messages link previews, Claude,
+    Gmail, or a third-party browser app all handle this differently — open this page in
+    Safari or Chrome and try again), or Instagram isn't installed on this device.</p>
 
   <div class="bar">
     <input class="search" id="q" type="search" placeholder="Search name, area, dish or handle…" aria-label="Search leads">
@@ -302,14 +302,13 @@ function render(){
 
   list.innerHTML=rows.map(l=>{
     const uname=l.ig.slice(1);
-    const igUrl="https://instagram.com/"+uname;
     const appUrl="instagram://user?username="+uname;
     return `<div class="row${done[l.id]?" is-done":""}" data-id="${l.id}">
       <input class="chk" type="checkbox" ${done[l.id]?"checked":""} aria-label="Mark ${esc(l.name)} contacted">
       <div class="meta">
-        <a class="name" href="${igUrl}" target="_blank" rel="noopener">${esc(l.name)}</a>
+        <a class="name" href="${appUrl}">${esc(l.name)}</a>
         <div class="line2">
-          <a class="handle" href="${igUrl}" target="_blank" rel="noopener">${esc(l.ig)}</a>
+          <a class="handle" href="${appUrl}">${esc(l.ig)}</a>
           <span class="dot">·</span><span class="hood">${esc(l.hood)}</span>
           <span class="cat">${esc(l.cat)}</span>
           ${l.light?'<span class="cat cat-light">Light bites</span>':""}
