@@ -3,209 +3,357 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>DM List</title>
+<title>Restaurant DM Queue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-:root{--bg:#f4f4f2;--card:#fff;--ink:#15151a;--mut:#6a6a76;--line:#e3e3df;--acc:#1F4FD8;--ok:#0F6B5C}
-@media(prefers-color-scheme:dark){:root{--bg:#0e0e12;--card:#17171d;--ink:#ededf2;--mut:#93939f;--line:#26262e;--acc:#7fa0ff;--ok:#4FCBAF}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-.w{max-width:640px;margin:0 auto;padding:18px 14px 60px}
-h1{font-size:1.35rem;margin:6px 0 2px;letter-spacing:-.02em}
-.sub{color:var(--mut);font-size:.85rem;margin-bottom:14px}
-h2{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);
-margin:26px 0 8px;font-weight:700;display:flex;align-items:center;gap:8px}
-h2 .ct{background:var(--line);color:var(--mut);border-radius:999px;padding:1px 7px;
-font-size:.68rem;letter-spacing:.04em}
-.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);
-border-radius:0 9px 9px 0;padding:10px 12px;font-size:.8rem;color:var(--mut);margin-bottom:14px}
-.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;
-border-bottom:1px solid var(--line);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:7px}
-.bar input[type=search]{flex:1 1 150px;min-width:0;padding:9px 11px;border-radius:9px;
-border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:15px}
-.tg{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:9px;
-border:1px solid var(--line);background:var(--card);color:var(--mut);font-size:.8rem;
-cursor:pointer;user-select:none;white-space:nowrap}
-.tg input{accent-color:var(--acc);margin:0}
-.list{display:flex;flex-direction:column;gap:7px}
-.row{background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden}
-.row.off{display:none}
-.row.done{opacity:.45}
-.row.done .n{text-decoration:line-through}
-a.r{display:flex;align-items:center;justify-content:space-between;gap:10px;
-padding:14px 15px;min-height:56px;text-decoration:none;color:var(--ink);
--webkit-tap-highlight-color:rgba(31,79,216,.15)}
-a.r:active{background:var(--acc)}
-a.r:active .n,a.r:active .h,a.r:active .k,a.r:active .go{color:#fff}
-.tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-.n{font-weight:650;letter-spacing:-.01em}
-.h{font-size:.78rem;color:var(--mut)}
-.k{font-size:.78rem;color:var(--mut);font-style:italic}
-.go{flex:none;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--acc);
-border:1px solid var(--acc);border-radius:7px;padding:5px 10px}
-.acts{display:flex;flex-wrap:wrap;gap:6px;padding:0 15px 12px}
-.mini{font-size:.75rem;padding:6px 10px;border-radius:7px;border:1px solid var(--line);
-background:transparent;color:var(--mut);text-decoration:none;cursor:pointer}
-.mini:active,.mini:hover{border-color:var(--acc);color:var(--acc)}
-.mini.ok{border-color:var(--ok);color:var(--ok)}
-.tick{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:var(--mut);
-padding:6px 10px;border:1px solid var(--line);border-radius:7px;cursor:pointer}
-.tick input{accent-color:var(--ok);margin:0}
-.none{padding:30px 0;text-align:center;color:var(--mut);font-size:.85rem}
-</style></head><body><div class="w">
-<h1>DM List</h1>
-<p class="sub">Tap a line &mdash; it opens the Instagram app on that profile, then hit Message.
-Batches of 14 &amp; 15 Sep.</p>
-<div class="note">If a tap does nothing, you opened this inside another app's browser.
-Open it in Safari and it works. <b>Web</b> is the browser fallback.</div>
-
-<div class="bar">
-  <input type="search" id="q" placeholder="Search name, area, dish&hellip;" aria-label="Search">
-  <label class="tg"><input type="checkbox" id="meals" checked> Full meals only</label>
-  <label class="tg"><input type="checkbox" id="hide"> Hide done</label>
-</div>
-<h2 data-region>Central LA <span class="ct">12</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="chimmelier koreatown korean fried chicken chimmelier the korean fried chicken"><a class="r" href="instagram://user?username=chimmelier"><span class="tx"><span class="n">Chimmelier</span><span class="h">@chimmelier &middot; Koreatown</span><span class="k">the Korean fried chicken</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The Korean fried chicken on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/chimmelier/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://chimmelier.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="chimmelier"> done</label></div></div>
-<div class="row" data-l="0" data-s="town hof &amp; thanks chicken koreatown korean fried chicken thankschicken_townhof the habanero-garlic fried chicken"><a class="r" href="instagram://user?username=thankschicken_townhof"><span class="tx"><span class="n">Town Hof &amp; Thanks Chicken</span><span class="h">@thankschicken_townhof &middot; Koreatown</span><span class="k">the habanero-garlic fried chicken</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The habanero-garlic fried chicken on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/thankschicken_townhof/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3239980818">Call</a><label class="tick"><input type="checkbox" data-k="thankschicken_townhof"> done</label></div></div>
-<div class="row" data-l="0" data-s="emc seafood &amp; raw bar koreatown seafood emcseafood the hokkaido scallop carpaccio"><a class="r" href="instagram://user?username=emcseafood"><span class="tx"><span class="n">EMC Seafood &amp; Raw Bar</span><span class="h">@emcseafood &middot; Koreatown</span><span class="k">the Hokkaido scallop carpaccio</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The Hokkaido scallop carpaccio on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/emcseafood/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://emcseafoodgroup.com/koreatown-menu/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:2133519988">Call</a><label class="tick"><input type="checkbox" data-k="emcseafood"> done</label></div></div>
-<div class="row" data-l="0" data-s="mdk noodles koreatown korean mdknoodles the kalguksu noodle soup"><a class="r" href="instagram://user?username=mdknoodles"><span class="tx"><span class="n">MDK Noodles</span><span class="h">@mdknoodles &middot; Koreatown</span><span class="k">the kalguksu noodle soup</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The kalguksu noodle soup on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/mdknoodles/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="mdknoodles"> done</label></div></div>
-<div class="row" data-l="0" data-s="seong buk dong koreatown korean seong_buk_dong the braised short rib stew"><a class="r" href="instagram://user?username=seong_buk_dong"><span class="tx"><span class="n">Seong Buk Dong</span><span class="h">@seong_buk_dong &middot; Koreatown</span><span class="k">the braised short rib stew</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The braised short rib stew on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/seong_buk_dong/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:2137388977">Call</a><label class="tick"><input type="checkbox" data-k="seong_buk_dong"> done</label></div></div>
-<div class="row" data-l="0" data-s="joopocha gastropub koreatown korean joopocha the galbi spread"><a class="r" href="instagram://user?username=joopocha"><span class="tx"><span class="n">Joopocha Gastropub</span><span class="h">@joopocha &middot; Koreatown</span><span class="k">the galbi spread</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The galbi spread on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/joopocha/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="joopocha"> done</label></div></div>
-<div class="row" data-l="0" data-s="pho legend koreatown koreatown vietnamese pholegend.ktown the pho noodle soup"><a class="r" href="instagram://user?username=pholegend.ktown"><span class="tx"><span class="n">Pho Legend Koreatown</span><span class="h">@pholegend.ktown &middot; Koreatown</span><span class="k">the pho noodle soup</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The pho noodle soup on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/pholegend.ktown/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="pholegend.ktown"> done</label></div></div>
-<div class="row" data-l="0" data-s="jae bu do koreatown korean bbq jaebudoseafood the live seafood bbq combo"><a class="r" href="instagram://user?username=jaebudoseafood"><span class="tx"><span class="n">Jae Bu Do</span><span class="h">@jaebudoseafood &middot; Koreatown</span><span class="k">the live seafood BBQ combo</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The live seafood BBQ combo on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/jaebudoseafood/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3234672900">Call</a><label class="tick"><input type="checkbox" data-k="jaebudoseafood"> done</label></div></div>
-<div class="row" data-l="0" data-s="genwa korean bbq mid-wilshire korean bbq genwabbq the prime galbi short rib spread"><a class="r" href="instagram://user?username=genwabbq"><span class="tx"><span class="n">Genwa Korean BBQ</span><span class="h">@genwabbq &middot; Mid-Wilshire</span><span class="k">the prime galbi short rib spread</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The prime galbi short rib spread on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/genwabbq/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="genwabbq"> done</label></div></div>
-<div class="row" data-l="0" data-s="el chato taco truck mid-city mexican elchatotacotruck the trompo-cut al pastor tacos"><a class="r" href="instagram://user?username=elchatotacotruck"><span class="tx"><span class="n">El Chato Taco Truck</span><span class="h">@elchatotacotruck &middot; Mid-City</span><span class="k">the trompo-cut al pastor tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The trompo-cut al pastor tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/elchatotacotruck/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://elchatola.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="elchatotacotruck"> done</label></div></div>
-<div class="row lite" data-l="1" data-s="pitchoun! bakery &amp; cafe downtown la breakfast/brunch pitchounbakery the croissants and quiche"><a class="r" href="instagram://user?username=pitchounbakery"><span class="tx"><span class="n">Pitchoun! Bakery &amp; Cafe</span><span class="h">@pitchounbakery &middot; Downtown LA</span><span class="k">the croissants and quiche</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The croissants and quiche on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/pitchounbakery/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://pitchounbakery.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="pitchounbakery"> done</label></div></div>
-<div class="row" data-l="0" data-s="damian arts district mexican damiandtla the heirloom corn masa tetelas"><a class="r" href="instagram://user?username=damiandtla"><span class="tx"><span class="n">Damian</span><span class="h">@damiandtla &middot; Arts District</span><span class="k">the heirloom corn masa tetelas</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The heirloom corn masa tetelas on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/damiandtla/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="damiandtla"> done</label></div></div>
-<div class="row" data-l="0" data-s="casa fina restaurant boyle heights mexican casafinafiesta the street tacos"><a class="r" href="instagram://user?username=casafinafiesta"><span class="tx"><span class="n">Casa Fina Restaurant</span><span class="h">@casafinafiesta &middot; Boyle Heights</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/casafinafiesta/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="casafinafiesta"> done</label></div></div>
-</div>
-<h2 data-region>South Bay <span class="ct">8</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="soul&#x27;d out kitchen inglewood soul food sould_outfood them slow-braised oxtails"><a class="r" href="instagram://user?username=sould_outfood"><span class="tx"><span class="n">Soul&#x27;d Out Kitchen</span><span class="h">@sould_outfood &middot; Inglewood</span><span class="k">them slow-braised oxtails</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them slow-braised oxtails on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/sould_outfood/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3239753308">Call</a><label class="tick"><input type="checkbox" data-k="sould_outfood"> done</label></div></div>
-<div class="row" data-l="0" data-s="ricky&#x27;s birria de res inglewood mexican - birria rickys_birria_de__res them birria de res tacos"><a class="r" href="instagram://user?username=rickys_birria_de__res"><span class="tx"><span class="n">Ricky&#x27;s Birria de Res</span><span class="h">@rickys_birria_de__res &middot; Inglewood</span><span class="k">them birria de res tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them birria de res tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/rickys_birria_de__res/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://rickysbirriaderesca.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="rickys_birria_de__res"> done</label></div></div>
-<div class="row" data-l="0" data-s="la fonda of inglewood inglewood mexican lafondaofinglewoodrestaurant the wet shrimp burrito"><a class="r" href="instagram://user?username=lafondaofinglewoodrestaurant"><span class="tx"><span class="n">La Fonda of Inglewood</span><span class="h">@lafondaofinglewoodrestaurant &middot; Inglewood</span><span class="k">the wet shrimp burrito</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The wet shrimp burrito on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/lafondaofinglewoodrestaurant/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://lafondamexicanfood.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:3104197596">Call</a><label class="tick"><input type="checkbox" data-k="lafondaofinglewoodrestaurant"> done</label></div></div>
-<div class="row" data-l="0" data-s="asadero chikali inglewood mexican asaderochikali the handmade flour tortilla tacos"><a class="r" href="instagram://user?username=asaderochikali"><span class="tx"><span class="n">Asadero Chikali</span><span class="h">@asaderochikali &middot; Inglewood</span><span class="k">the handmade flour tortilla tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The handmade flour tortilla tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/asaderochikali/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://asaderochikalica.com/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:3237761742">Call</a><label class="tick"><input type="checkbox" data-k="asaderochikali"> done</label></div></div>
-<div class="row" data-l="0" data-s="darrow&#x27;s new orleans grill carson soul food uncldarrows that gumbo"><a class="r" href="instagram://user?username=uncldarrows"><span class="tx"><span class="n">Darrow&#x27;s New Orleans Grill</span><span class="h">@uncldarrows &middot; Carson</span><span class="k">that gumbo</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That gumbo on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/uncldarrows/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="uncldarrows"> done</label></div></div>
-<div class="row" data-l="0" data-s="tacos mancillas el segundo mexican tacosmancillas the fish tacos"><a class="r" href="instagram://user?username=tacosmancillas"><span class="tx"><span class="n">Tacos Mancillas</span><span class="h">@tacosmancillas &middot; El Segundo</span><span class="k">the fish tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The fish tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tacosmancillas/" target="_blank" rel="noopener">Web</a><a class="mini" href="http://ordertacosmancillas.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="tacosmancillas"> done</label></div></div>
-<div class="row" data-l="0" data-s="casa playa redondo beach mexican casaplaya_redondobeach the crispy chicken tacos"><a class="r" href="instagram://user?username=casaplaya_redondobeach"><span class="tx"><span class="n">Casa Playa</span><span class="h">@casaplaya_redondobeach &middot; Redondo Beach</span><span class="k">the crispy chicken tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The crispy chicken tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/casaplaya_redondobeach/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://casaplayarestaurant.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="casaplaya_redondobeach"> done</label></div></div>
-<div class="row" data-l="0" data-s="ryla restaurant &amp; bar hermosa beach breakfast/brunch eat_ryla the japanese pancake"><a class="r" href="instagram://user?username=eat_ryla"><span class="tx"><span class="n">RYLA Restaurant &amp; Bar</span><span class="h">@eat_ryla &middot; Hermosa Beach</span><span class="k">the Japanese pancake</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The Japanese pancake on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/eat_ryla/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://eatryla.com/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:4242479881">Call</a><label class="tick"><input type="checkbox" data-k="eat_ryla"> done</label></div></div>
-<div class="row lite" data-l="1" data-s="java man coffee house hermosa beach breakfast/brunch javamancoffeehouse that breakfast burrito"><a class="r" href="instagram://user?username=javamancoffeehouse"><span class="tx"><span class="n">Java Man Coffee House</span><span class="h">@javamancoffeehouse &middot; Hermosa Beach</span><span class="k">that breakfast burrito</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That breakfast burrito on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/javamancoffeehouse/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://javamancoffeehouse.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="javamancoffeehouse"> done</label></div></div>
-</div>
-<h2 data-region>Long Beach <span class="ct">5</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="midnight oil lbc long beach chinese mnolbc the har gow"><a class="r" href="instagram://user?username=mnolbc"><span class="tx"><span class="n">Midnight Oil LBC</span><span class="h">@mnolbc &middot; Long Beach</span><span class="k">the har gow</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The har gow on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/mnolbc/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://www.mnolbc.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="mnolbc"> done</label></div></div>
-<div class="row" data-l="0" data-s="tacos uziel long beach mexican tacos_uziel01 the street tacos"><a class="r" href="instagram://user?username=tacos_uziel01"><span class="tx"><span class="n">Tacos Uziel</span><span class="h">@tacos_uziel01 &middot; Long Beach</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tacos_uziel01/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3233173151">Call</a><label class="tick"><input type="checkbox" data-k="tacos_uziel01"> done</label></div></div>
-<div class="row" data-l="0" data-s="tacomasa long beach mexican tacomasataqueria them tijuana-style street tacos"><a class="r" href="instagram://user?username=tacomasataqueria"><span class="tx"><span class="n">Tacomasa</span><span class="h">@tacomasataqueria &middot; Long Beach</span><span class="k">them Tijuana-style street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them Tijuana-style street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tacomasataqueria/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://tacomasa.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="tacomasataqueria"> done</label></div></div>
-<div class="row" data-l="0" data-s="los trompos taqueria long beach mexican lostrompostaqueria them trompo al pastor tacos"><a class="r" href="instagram://user?username=lostrompostaqueria"><span class="tx"><span class="n">Los Trompos Taqueria</span><span class="h">@lostrompostaqueria &middot; Long Beach</span><span class="k">them trompo al pastor tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them trompo al pastor tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/lostrompostaqueria/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="lostrompostaqueria"> done</label></div></div>
-<div class="row" data-l="0" data-s="meema&#x27;s long beach breakfast/brunch meemas_4276 them steak chilaquiles"><a class="r" href="instagram://user?username=meemas_4276"><span class="tx"><span class="n">MeeMa&#x27;s</span><span class="h">@meemas_4276 &middot; Long Beach</span><span class="k">them steak chilaquiles</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them steak chilaquiles on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/meemas_4276/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://meemas.net" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:5624262626">Call</a><label class="tick"><input type="checkbox" data-k="meemas_4276"> done</label></div></div>
-</div>
-<h2 data-region>Westside <span class="ct">6</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="sol mexican cocina playa vista mexican solcocina the street tacos"><a class="r" href="instagram://user?username=solcocina"><span class="tx"><span class="n">SOL Mexican Cocina</span><span class="h">@solcocina &middot; Playa Vista</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/solcocina/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://solcocina.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:4242890066">Call</a><label class="tick"><input type="checkbox" data-k="solcocina"> done</label></div></div>
-<div class="row" data-l="0" data-s="monte alban restaurant west la mexican montealbanrestaurant the street tacos"><a class="r" href="instagram://user?username=montealbanrestaurant"><span class="tx"><span class="n">Monte Alban Restaurant</span><span class="h">@montealbanrestaurant &middot; West LA</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/montealbanrestaurant/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://montealbanrestaurant.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:3104447736">Call</a><label class="tick"><input type="checkbox" data-k="montealbanrestaurant"> done</label></div></div>
-<div class="row" data-l="0" data-s="broken spanish comedor culver city mexican brokenspanishcomedor the street tacos"><a class="r" href="instagram://user?username=brokenspanishcomedor"><span class="tx"><span class="n">Broken Spanish Comedor</span><span class="h">@brokenspanishcomedor &middot; Culver City</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/brokenspanishcomedor/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://brokenspanishcomedor.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="brokenspanishcomedor"> done</label></div></div>
-<div class="row" data-l="0" data-s="hacienda del rey westchester mexican hacienda_insta the street tacos"><a class="r" href="instagram://user?username=hacienda_insta"><span class="tx"><span class="n">Hacienda Del Rey</span><span class="h">@hacienda_insta &middot; Westchester</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/hacienda_insta/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://haciendafamily.com/hacienda-del-rey" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="hacienda_insta"> done</label></div></div>
-<div class="row" data-l="0" data-s="brizo bar &amp; restaurant marina del rey breakfast/brunch brizo_marinadelrey the loaded pancakes"><a class="r" href="instagram://user?username=brizo_marinadelrey"><span class="tx"><span class="n">Brizo Bar &amp; Restaurant</span><span class="h">@brizo_marinadelrey &middot; Marina del Rey</span><span class="k">the loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/brizo_marinadelrey/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://brizomdr.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:4244435807">Call</a><label class="tick"><input type="checkbox" data-k="brizo_marinadelrey"> done</label></div></div>
-<div class="row" data-l="0" data-s="cafe belen santa monica breakfast/brunch cafebelensantamonica them loaded pancakes"><a class="r" href="instagram://user?username=cafebelensantamonica"><span class="tx"><span class="n">Cafe Belen</span><span class="h">@cafebelensantamonica &middot; Santa Monica</span><span class="k">them loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/cafebelensantamonica/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://cafe-belen.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="cafebelensantamonica"> done</label></div></div>
-</div>
-<h2 data-region>San Gabriel Valley <span class="ct">11</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="happy together el monte chinese happytogetherbbq the char siu puffs"><a class="r" href="instagram://user?username=happytogetherbbq"><span class="tx"><span class="n">Happy Together</span><span class="h">@happytogetherbbq &middot; El Monte</span><span class="k">the char siu puffs</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The char siu puffs on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/happytogetherbbq/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://www.happytogetherca.com/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:6264341788">Call</a><label class="tick"><input type="checkbox" data-k="happytogetherbbq"> done</label></div></div>
-<div class="row" data-l="0" data-s="don gerardo&#x27;s restaurant el monte mexican - birria don_gerardos_restaurant626 the quesabirria tacos"><a class="r" href="instagram://user?username=don_gerardos_restaurant626"><span class="tx"><span class="n">Don Gerardo&#x27;s Restaurant</span><span class="h">@don_gerardos_restaurant626 &middot; El Monte</span><span class="k">the quesabirria tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The quesabirria tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/don_gerardos_restaurant626/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="don_gerardos_restaurant626"> done</label></div></div>
-<div class="row" data-l="0" data-s="dan dan noodle alhambra chinese dandannoodleca the dan dan noodles"><a class="r" href="instagram://user?username=dandannoodleca"><span class="tx"><span class="n">Dan Dan Noodle</span><span class="h">@dandannoodleca &middot; Alhambra</span><span class="k">the dan dan noodles</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The dan dan noodles on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/dandannoodleca/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="dandannoodleca"> done</label></div></div>
-<div class="row" data-l="0" data-s="pepe&#x27;s finest mexican food alhambra mexican pepesfinest the street tacos"><a class="r" href="instagram://user?username=pepesfinest"><span class="tx"><span class="n">Pepe&#x27;s Finest Mexican Food</span><span class="h">@pepesfinest &middot; Alhambra</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/pepesfinest/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://ogpepes.com/locations/alhambra/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="pepesfinest"> done</label></div></div>
-<div class="row" data-l="0" data-s="iwagyu bbq monterey park japanese bbq iwagyula the wagyu platter"><a class="r" href="instagram://user?username=iwagyula"><span class="tx"><span class="n">iWagyu BBQ</span><span class="h">@iwagyula &middot; Monterey Park</span><span class="k">the wagyu platter</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The wagyu platter on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/iwagyula/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://iwagyu.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="iwagyula"> done</label></div></div>
-<div class="row" data-l="0" data-s="luminarias restaurant monterey park mexican luminariaseats them caramelized mezcal baby back ribs"><a class="r" href="instagram://user?username=luminariaseats"><span class="tx"><span class="n">Luminarias Restaurant</span><span class="h">@luminariaseats &middot; Monterey Park</span><span class="k">them caramelized mezcal baby back ribs</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them caramelized mezcal baby back ribs on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/luminariaseats/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://luminariasrestaurant.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="luminariaseats"> done</label></div></div>
-<div class="row" data-l="0" data-s="luna&#x27;s bar and grill san gabriel mexican - birria lunasbarandgrill the quesabirria tacos"><a class="r" href="instagram://user?username=lunasbarandgrill"><span class="tx"><span class="n">Luna&#x27;s Bar and Grill</span><span class="h">@lunasbarandgrill &middot; San Gabriel</span><span class="k">the quesabirria tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The quesabirria tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/lunasbarandgrill/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://lunasbarandgrillsg.com/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:6265767653">Call</a><label class="tick"><input type="checkbox" data-k="lunasbarandgrill"> done</label></div></div>
-<div class="row" data-l="0" data-s="the taco cartel rosemead mexican thetacocartella the street tacos"><a class="r" href="instagram://user?username=thetacocartella"><span class="tx"><span class="n">The Taco Cartel</span><span class="h">@thetacocartella &middot; Rosemead</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/thetacocartella/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="thetacocartella"> done</label></div></div>
-<div class="row" data-l="0" data-s="casa alvarez rowland heights mexican casa_alvarezrh them shrimp enchiladas"><a class="r" href="instagram://user?username=casa_alvarezrh"><span class="tx"><span class="n">Casa Alvarez</span><span class="h">@casa_alvarezrh &middot; Rowland Heights</span><span class="k">them shrimp enchiladas</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them shrimp enchiladas on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/casa_alvarezrh/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://casaalvarezrh.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:9095946463">Call</a><label class="tick"><input type="checkbox" data-k="casa_alvarezrh"> done</label></div></div>
-<div class="row" data-l="0" data-s="birrieria jalisco pico rivera mexican - birria birrieriajalisco that goat birria"><a class="r" href="instagram://user?username=birrieriajalisco"><span class="tx"><span class="n">Birrieria Jalisco</span><span class="h">@birrieriajalisco &middot; Pico Rivera</span><span class="k">that goat birria</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That goat birria on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/birrieriajalisco/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://mybirrieriajalisco.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="birrieriajalisco"> done</label></div></div>
-<div class="row" data-l="0" data-s="mariscos el zurdo montebello mexican - mariscos mariscos.el.zurdo the seafood tostada"><a class="r" href="instagram://user?username=mariscos.el.zurdo"><span class="tx"><span class="n">Mariscos El Zurdo</span><span class="h">@mariscos.el.zurdo &middot; Montebello</span><span class="k">the seafood tostada</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The seafood tostada on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/mariscos.el.zurdo/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3235300064">Call</a><label class="tick"><input type="checkbox" data-k="mariscos.el.zurdo"> done</label></div></div>
-</div>
-<h2 data-region>Pasadena <span class="ct">3</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="ghetto kitchen altadena soul food therealghettokitchen the fried chicken plate"><a class="r" href="instagram://user?username=therealghettokitchen"><span class="tx"><span class="n">Ghetto Kitchen</span><span class="h">@therealghettokitchen &middot; Altadena</span><span class="k">the fried chicken plate</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The fried chicken plate on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/therealghettokitchen/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://ghettokitchensoulfood.com/" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="therealghettokitchen"> done</label></div></div>
-<div class="row" data-l="0" data-s="la cajun seafood boil altadena seafood boil hotshrimpmami the crab boil bag"><a class="r" href="instagram://user?username=hotshrimpmami"><span class="tx"><span class="n">LA Cajun Seafood Boil</span><span class="h">@hotshrimpmami &middot; Altadena</span><span class="k">the crab boil bag</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The crab boil bag on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/hotshrimpmami/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="hotshrimpmami"> done</label></div></div>
-<div class="row" data-l="0" data-s="edwin mills by equator pasadena breakfast/brunch edwinmillsbyequator the bananas foster pancake"><a class="r" href="instagram://user?username=edwinmillsbyequator"><span class="tx"><span class="n">Edwin Mills by Equator</span><span class="h">@edwinmillsbyequator &middot; Pasadena</span><span class="k">the bananas foster pancake</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The bananas foster pancake on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/edwinmillsbyequator/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://edwinmills.com/" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:6265648656">Call</a><label class="tick"><input type="checkbox" data-k="edwinmillsbyequator"> done</label></div></div>
-</div>
-<h2 data-region>The Valley <span class="ct">8</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="good neighbor restaurant studio city breakfast/brunch goodneighborrestaurant the loaded pancakes"><a class="r" href="instagram://user?username=goodneighborrestaurant"><span class="tx"><span class="n">Good Neighbor Restaurant</span><span class="h">@goodneighborrestaurant &middot; Studio City</span><span class="k">the loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/goodneighborrestaurant/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://goodneighborrestaurant.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="goodneighborrestaurant"> done</label></div></div>
-<div class="row" data-l="0" data-s="tacos el tigre north hollywood mexican tacoseltigre1 the street tacos"><a class="r" href="instagram://user?username=tacoseltigre1"><span class="tx"><span class="n">Tacos El Tigre</span><span class="h">@tacoseltigre1 &middot; North Hollywood</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tacoseltigre1/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3235342319">Call</a><label class="tick"><input type="checkbox" data-k="tacoseltigre1"> done</label></div></div>
-<div class="row" data-l="0" data-s="black rabbit cafe valley village breakfast/brunch blackrabbitcafe them loaded pancakes"><a class="r" href="instagram://user?username=blackrabbitcafe"><span class="tx"><span class="n">Black Rabbit Cafe</span><span class="h">@blackrabbitcafe &middot; Valley Village</span><span class="k">them loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/blackrabbitcafe/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://theblackrabbitcafe.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="blackrabbitcafe"> done</label></div></div>
-<div class="row lite" data-l="1" data-s="n cafe by nova glendale breakfast/brunch ncafebynova the nutella &amp; banana toast"><a class="r" href="instagram://user?username=ncafebynova"><span class="tx"><span class="n">N Cafe by Nova</span><span class="h">@ncafebynova &middot; Glendale</span><span class="k">the Nutella &amp; banana toast</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The Nutella &amp; banana toast on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/ncafebynova/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://ncafebynova.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="ncafebynova"> done</label></div></div>
-<div class="row" data-l="0" data-s="hills korean bbq north hills korean bbq hillskbbq the galbi spread"><a class="r" href="instagram://user?username=hillskbbq"><span class="tx"><span class="n">Hills Korean BBQ</span><span class="h">@hillskbbq &middot; North Hills</span><span class="k">the galbi spread</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The galbi spread on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/hillskbbq/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="hillskbbq"> done</label></div></div>
-<div class="row" data-l="0" data-s="all in wok panorama city chinese all_inwok the dan dan noodles"><a class="r" href="instagram://user?username=all_inwok"><span class="tx"><span class="n">All In Wok</span><span class="h">@all_inwok &middot; Panorama City</span><span class="k">the dan dan noodles</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The dan dan noodles on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/all_inwok/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:8183262732">Call</a><label class="tick"><input type="checkbox" data-k="all_inwok"> done</label></div></div>
-<div class="row" data-l="0" data-s="tasty pot northridge northridge chinese - hot pot tastypot.northridge that individual mini hot pot"><a class="r" href="instagram://user?username=tastypot.northridge"><span class="tx"><span class="n">Tasty Pot Northridge</span><span class="h">@tastypot.northridge &middot; Northridge</span><span class="k">that individual mini hot pot</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That individual mini hot pot on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tastypot.northridge/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:8188129346">Call</a><label class="tick"><input type="checkbox" data-k="tastypot.northridge"> done</label></div></div>
-<div class="row lite" data-l="1" data-s="north ridge cafe &amp; coffee northridge breakfast/brunch northridgecafe them loaded pancakes"><a class="r" href="instagram://user?username=northridgecafe"><span class="tx"><span class="n">North Ridge Cafe &amp; Coffee</span><span class="h">@northridgecafe &middot; Northridge</span><span class="k">them loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/northridgecafe/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="northridgecafe"> done</label></div></div>
-<div class="row" data-l="0" data-s="wangdoyaji reseda korean bbq wangdoyaji the galbi spread"><a class="r" href="instagram://user?username=wangdoyaji"><span class="tx"><span class="n">Wangdoyaji</span><span class="h">@wangdoyaji &middot; Reseda</span><span class="k">the galbi spread</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The galbi spread on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/wangdoyaji/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="wangdoyaji"> done</label></div></div>
-<div class="row" data-l="0" data-s="daniel&#x27;s tacos sun valley mexican danielstacosinc that mulita"><a class="r" href="instagram://user?username=danielstacosinc"><span class="tx"><span class="n">Daniel&#x27;s Tacos</span><span class="h">@danielstacosinc &middot; Sun Valley</span><span class="k">that mulita</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That mulita on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/danielstacosinc/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://danielstacos.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="danielstacosinc"> done</label></div></div>
-</div>
-<h2 data-region>Inland Empire <span class="ct">9</span></h2>
-<div class="list">
-<div class="row" data-l="0" data-s="gina&#x27;s kitchen + catering rancho cucamonga breakfast/brunch ginas_kitchen.catering the loaded pancakes"><a class="r" href="instagram://user?username=ginas_kitchen.catering"><span class="tx"><span class="n">Gina&#x27;s Kitchen + Catering</span><span class="h">@ginas_kitchen.catering &middot; Rancho Cucamonga</span><span class="k">the loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/ginas_kitchen.catering/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://ginaskitchenandcatering.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="ginas_kitchen.catering"> done</label></div></div>
-<div class="row" data-l="0" data-s="sunny&#x27;s cafe rancho cucamonga breakfast/brunch sunnyscaferancho that sunny&#x27;s sandwich"><a class="r" href="instagram://user?username=sunnyscaferancho"><span class="tx"><span class="n">Sunny&#x27;s Cafe</span><span class="h">@sunnyscaferancho &middot; Rancho Cucamonga</span><span class="k">that Sunny&#x27;s Sandwich</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That Sunny&#x27;s Sandwich on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/sunnyscaferancho/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://sunnys.cafe" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="sunnyscaferancho"> done</label></div></div>
-<div class="row" data-l="0" data-s="corky&#x27;s kitchen &amp; bakery highland breakfast/brunch corkyskitchenandbakery the loaded pancakes"><a class="r" href="instagram://user?username=corkyskitchenandbakery"><span class="tx"><span class="n">Corky&#x27;s Kitchen &amp; Bakery</span><span class="h">@corkyskitchenandbakery &middot; Highland</span><span class="k">the loaded pancakes</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The loaded pancakes on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/corkyskitchenandbakery/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://corkyskitchenandbakery.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="corkyskitchenandbakery"> done</label></div></div>
-<div class="row" data-l="0" data-s="mitla cafe san bernardino mexican mitla_cafe the street tacos"><a class="r" href="instagram://user?username=mitla_cafe"><span class="tx"><span class="n">Mitla Cafe</span><span class="h">@mitla_cafe &middot; San Bernardino</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/mitla_cafe/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://mitlacafesb.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:9098880460">Call</a><label class="tick"><input type="checkbox" data-k="mitla_cafe"> done</label></div></div>
-<div class="row" data-l="0" data-s="tacos de birria los koras san bernardino mexican - birria tacos_los_koras the quesabirria tacos"><a class="r" href="instagram://user?username=tacos_los_koras"><span class="tx"><span class="n">Tacos De Birria Los Koras</span><span class="h">@tacos_los_koras &middot; San Bernardino</span><span class="k">the quesabirria tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The quesabirria tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/tacos_los_koras/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:3106671765">Call</a><label class="tick"><input type="checkbox" data-k="tacos_los_koras"> done</label></div></div>
-<div class="row" data-l="0" data-s="birrieria xolos ontario mexican - birria birrieriaxolosontario them quesabirria tacos"><a class="r" href="instagram://user?username=birrieriaxolosontario"><span class="tx"><span class="n">Birrieria Xolos</span><span class="h">@birrieriaxolosontario &middot; Ontario</span><span class="k">them quesabirria tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. Them quesabirria tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/birrieriaxolosontario/" target="_blank" rel="noopener">Web</a><a class="mini" href="tel:9094900074">Call</a><label class="tick"><input type="checkbox" data-k="birrieriaxolosontario"> done</label></div></div>
-<div class="row" data-l="0" data-s="shabu wara chino chinese - hot pot shabuwara.official that premium wagyu shabu-shabu"><a class="r" href="instagram://user?username=shabuwara.official"><span class="tx"><span class="n">Shabu Wara</span><span class="h">@shabuwara.official &middot; Chino</span><span class="k">that premium wagyu shabu-shabu</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That premium wagyu shabu-shabu on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/shabuwara.official/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://shabuwara.com" target="_blank" rel="noopener">Site</a><label class="tick"><input type="checkbox" data-k="shabuwara.official"> done</label></div></div>
-<div class="row" data-l="0" data-s="pier 88 boiling seafood eastvale seafood boil pier_88_seafood that cajun seafood boil combo"><a class="r" href="instagram://user?username=pier_88_seafood"><span class="tx"><span class="n">Pier 88 Boiling Seafood</span><span class="h">@pier_88_seafood &middot; Eastvale</span><span class="k">that Cajun seafood boil combo</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. That Cajun seafood boil combo on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/pier_88_seafood/" target="_blank" rel="noopener">Web</a><a class="mini" href="https://pier88seafood.com" target="_blank" rel="noopener">Site</a><a class="mini" href="tel:9513322600">Call</a><label class="tick"><input type="checkbox" data-k="pier_88_seafood"> done</label></div></div>
-<div class="row" data-l="0" data-s="chronic tacos bar &amp; grill corona mexican chronictacos_corona the street tacos"><a class="r" href="instagram://user?username=chronictacos_corona"><span class="tx"><span class="n">Chronic Tacos Bar &amp; Grill</span><span class="h">@chronictacos_corona &middot; Corona</span><span class="k">the street tacos</span></span><span class="go">DM</span></a><div class="acts"><button class="mini cp" type="button" data-p="yo, antidote here. food reviewer, featured in LA Times Food, 120+ LA spots so far. The street tacos on your page got me in your inbox. 🔥 quick context so i&#39;m not wasting your time: these are paid production shoots, not me tasting food on camera. i&#39;m acting in it, directing it, the whole thing. i&#39;ve got a couple slots left this week. want to see one first?">Copy pitch</button><a class="mini" href="https://www.instagram.com/chronictacos_corona/" target="_blank" rel="noopener">Web</a><label class="tick"><input type="checkbox" data-k="chronictacos_corona"> done</label></div></div>
-</div>
-<div class="none" id="none" hidden>Nothing matches.</div>
-</div>
-<script>
-var K="antidote.dm.v2",done={};
-try{done=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
-function save(){try{localStorage.setItem(K,JSON.stringify(done))}catch(e){}}
-
-document.querySelectorAll('.tick input').forEach(function(cb){
-  if(done[cb.dataset.k]){cb.checked=true;cb.closest('.row').classList.add('done');}
-  cb.addEventListener('change',function(){
-    if(cb.checked){done[cb.dataset.k]=1}else{delete done[cb.dataset.k]}
-    cb.closest('.row').classList.toggle('done',cb.checked);save();apply();
-  });
-});
-
-document.querySelectorAll('.cp').forEach(function(b){
-  b.addEventListener('click',function(){
-    var t=b.dataset.p;
-    function flash(){b.textContent="Copied";b.classList.add('ok');
-      setTimeout(function(){b.textContent="Copy pitch";b.classList.remove('ok')},1400);}
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(t).then(flash,fallback);
-    }else{fallback();}
-    function fallback(){
-      var a=document.createElement('textarea');a.value=t;a.style.position='fixed';
-      a.style.opacity='0';document.body.appendChild(a);a.select();
-      try{document.execCommand('copy');flash();}catch(e){b.textContent="Copy failed";}
-      document.body.removeChild(a);
-    }
-  });
-});
-
-var q=document.getElementById('q'),meals=document.getElementById('meals'),
-    hide=document.getElementById('hide');
-function apply(){
-  var t=q.value.trim().toLowerCase(),mo=meals.checked,hd=hide.checked,shown=0;
-  document.querySelectorAll('.row').forEach(function(r){
-    var off=false;
-    if(mo&&r.dataset.l==="1")off=true;
-    if(hd&&r.classList.contains('done'))off=true;
-    if(t&&r.dataset.s.indexOf(t)===-1)off=true;
-    r.classList.toggle('off',off); if(!off)shown++;
-  });
-  document.querySelectorAll('h2[data-region]').forEach(function(h){
-    var n=0,el=h.nextElementSibling;
-    if(el)el.querySelectorAll('.row').forEach(function(r){if(!r.classList.contains('off'))n++});
-    h.style.display=n?'':'none'; if(el)el.style.display=n?'':'none';
-  });
-  document.getElementById('none').hidden=shown>0;
+:root{
+  --bg:#F3F1ED; --surface:#FFFFFF; --surface-2:#EDEAE4;
+  --ink:#191512; --ink-2:#4A423B; --muted:#7C7169;
+  --line:#DCD6CD; --line-strong:#C6BEB2;
+  --accent:#D9410F; --accent-ink:#FFFFFF; --accent-soft:#FBE7DF;
+  --done:#0F6B5C; --done-soft:#DCEFEA;
+  --shadow:0 1px 2px rgba(25,21,18,.06),0 4px 14px rgba(25,21,18,.05);
+  --r:10px;
 }
-[q,meals,hide].forEach(function(el){el.addEventListener('input',apply)});
-apply();
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#15120F; --surface:#1E1A16; --surface-2:#262117;
+    --ink:#F3EEE7; --ink-2:#CFC5BA; --muted:#968A7E;
+    --line:#332C25; --line-strong:#463D33;
+    --accent:#FF6A38; --accent-ink:#1A1411; --accent-soft:#3A2015;
+    --done:#4FCBAF; --done-soft:#12312B;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15120F; --surface:#1E1A16; --surface-2:#262117;
+  --ink:#F3EEE7; --ink-2:#CFC5BA; --muted:#968A7E;
+  --line:#332C25; --line-strong:#463D33;
+  --accent:#FF6A38; --accent-ink:#1A1411; --accent-soft:#3A2015;
+  --done:#4FCBAF; --done-soft:#12312B;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font:400 15px/1.5 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+/* ---- masthead ---- */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 24px;margin-bottom:22px}
+h1{
+  font:800 clamp(28px,4.6vw,44px)/0.98 Archivo,system-ui,sans-serif;
+  letter-spacing:-.025em;margin:0;text-wrap:balance;
+}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{color:var(--muted);font-size:13.5px;max-width:58ch;margin:7px 0 0}
+.tally{display:flex;gap:22px;margin-left:auto;font-variant-numeric:tabular-nums}
+.tally div{text-align:right}
+.tally b{display:block;font:700 26px/1 Archivo,sans-serif;letter-spacing:-.02em}
+.tally span{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.tally .t-done b{color:var(--done)}
+
+/* ---- toolbar ---- */
+.bar{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);
+  padding:12px 0 11px;border-bottom:1px solid var(--line);margin-bottom:4px;
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+}
+.search{
+  flex:1 1 230px;min-width:0;padding:9px 12px;border-radius:8px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);
+  font:400 14px "IBM Plex Sans",sans-serif;
+}
+.search::placeholder{color:var(--muted)}
+.search:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px
+}
+select{
+  padding:9px 10px;border-radius:8px;border:1px solid var(--line-strong);
+  background:var(--surface);color:var(--ink);font:400 13.5px "IBM Plex Sans",sans-serif;
+}
+.tgl{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:8px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);
+  font-size:13.5px;cursor:pointer;user-select:none;
+}
+.tgl input{accent-color:var(--accent);margin:0}
+.tgl:hover{border-color:var(--accent)}
+
+/* ---- list ---- */
+.list{display:flex;flex-direction:column;gap:0}
+.row{
+  display:grid;
+  grid-template-columns:22px minmax(0,1fr) auto;
+  gap:0 14px;align-items:center;
+  padding:13px 4px 13px 0;border-bottom:1px solid var(--line);
+}
+.row.is-done{opacity:.46}
+.row.is-done .name{text-decoration:line-through;text-decoration-color:var(--muted)}
+.chk{appearance:none;width:17px;height:17px;border:1.5px solid var(--line-strong);
+  border-radius:5px;background:var(--surface);cursor:pointer;display:grid;place-content:center}
+.chk:checked{background:var(--done);border-color:var(--done)}
+.chk:checked::after{content:"";width:9px;height:5px;border:2px solid var(--bg);
+  border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.meta{min-width:0}
+.name{
+  font:700 16.5px/1.25 Archivo,system-ui,sans-serif;letter-spacing:-.012em;
+  color:var(--ink);text-decoration:none;display:inline-block;
+}
+.name:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.line2{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;margin-top:4px}
+.handle{
+  font:500 12.5px "IBM Plex Mono",ui-monospace,monospace;color:var(--accent);
+  text-decoration:none;
+}
+.handle:hover{text-decoration:underline}
+.dot{color:var(--line-strong)}
+.hood{font-size:12.5px;color:var(--muted)}
+.cat{
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;
+  color:var(--ink-2);background:var(--surface-2);padding:2.5px 7px;border-radius:999px;
+  white-space:nowrap;
+}
+.cat-light{background:var(--accent-soft);color:var(--accent)}
+.hook{font-size:12.5px;color:var(--muted);font-style:italic;margin-top:3px}
+
+/* ---- actions ---- */
+.acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  height:33px;padding:0 12px;border-radius:8px;border:1px solid var(--line-strong);
+  background:var(--surface);color:var(--ink-2);text-decoration:none;cursor:pointer;
+  font:500 12.5px "IBM Plex Sans",sans-serif;white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-ig{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn-ig:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.copied{background:var(--done-soft);border-color:var(--done);color:var(--done)}
+
+.empty{padding:48px 8px;text-align:center;color:var(--muted)}
+.note{
+  margin-top:26px;padding:14px 16px;border-left:3px solid var(--accent);
+  background:var(--surface);border-radius:0 var(--r) var(--r) 0;box-shadow:var(--shadow);
+  font-size:13.5px;color:var(--ink-2);
+}
+.note b{color:var(--ink)}
+.note.warn{border-color:#B3241C}
+@media (max-width:720px){
+  .row{grid-template-columns:22px minmax(0,1fr);row-gap:10px}
+  .acts{grid-column:2}
+  .tally{margin-left:0;width:100%;justify-content:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="mast">
+    <div>
+      <h1>Restaurant <em>DM Queue</em></h1>
+      <p class="sub">Fresh Orange County batch — Little Saigon, North OC, Central OC and Coastal OC, sourced
+        16&nbsp;Sep. The prior LA/IE batches are all contacted and have been cleared off this list. Tap
+        <b>Open app</b> to jump straight into Instagram, copy the pitch, then check it off. Your ticks are
+        saved in this browser.</p>
+    </div>
+    <div class="tally">
+      <div><b id="tShown">0</b><span>Showing</span></div>
+      <div class="t-done"><b id="tDone">0</b><span>Contacted</span></div>
+      <div><b id="tLeft">0</b><span>To go</span></div>
+    </div>
+  </div>
+
+  <p class="note warn"><b>If "Open app" lands on the Instagram website instead of the app:</b>
+    you're viewing this page inside the Claude app's built-in browser, which isn't allowed to
+    hand off to other apps. Open this link in Safari or Chrome instead — tap the <b>⋯</b> or
+    share icon on this page and choose <b>Open in Browser</b> (or long-press the link that got
+    you here and choose <b>Open in Safari</b>) — then Open app will jump straight into Instagram.</p>
+
+  <div class="bar">
+    <input class="search" id="q" type="search" placeholder="Search name, area, dish or handle…" aria-label="Search leads">
+    <select id="fRegion" aria-label="Filter by region"><option value="">All regions</option></select>
+    <select id="fCat" aria-label="Filter by cuisine"><option value="">All cuisines</option></select>
+    <label class="tgl"><input type="checkbox" id="fMeal" checked> Full meals only</label>
+    <label class="tgl"><input type="checkbox" id="fHide"> Hide contacted</label>
+    <button class="btn" id="reset" type="button">Reset ticks</button>
+  </div>
+
+  <div class="list" id="list"></div>
+  <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+
+  <p class="note"><b>All Orange County, all verified.</b> Every business below was checked for a real,
+    currently-active Instagram handle before it went on this list — nothing guessed. A few real OC spots
+    turned up without a confirmable handle or already closed and were left off rather than included with
+    bad contact info.</p>
+</div>
+
+<script>
+const RAW = [
+["Taqueria El Gordito","Mexican / Taqueria","Santa Ana","@taqueriaelgordito","https://taqueriaelgordito.net","(714) 550-4686",""],
+["Copacabana Mariscos & Sushi","Mexican Seafood (Mariscos)","Santa Ana","@copacabanamariscos","","(657) 267-0033",""],
+["Pho Flavor","Vietnamese","Garden Grove","@phoflavor","https://phoflavor.com","(714) 591-5265",""],
+["Brodard Chateau","Vietnamese","Garden Grove","@brodard.chateau","https://brodard.net","(714) 899-8273",""],
+["Kyodong","Korean-Chinese","Garden Grove","@kyodong_garden_grove","","(714) 590-6140",""],
+["The Original Banh Mi Saigon","Vietnamese / Sandwiches","Garden Grove","@eatbanhmisaigon","","",""],
+["Com Tam Thuan Kieu","Vietnamese (Broken Rice)","Westminster","@comtamthuankieu","","(714) 897-4751",""],
+["Lily's Bakery & Cafe","Bakery/Cafe","Westminster","@lilysbakeryandcafe","https://lilybakery.net","(714) 839-1099",""],
+["Nok's Kitchen","Laotian/Thai","Westminster","@noks_kitchen","https://nokskitchen.com","(657) 227-3010",""],
+["Renato's","Italian/Pizza","Westminster","@renatos_restaurant","https://renatosrestaurant.com","(714) 839-5755",""],
+["Mori Izakaya","Japanese Izakaya","Anaheim","@mori.izakaya","https://moriizakaya.com","(714) 222-1325",""],
+["8th Haus Cafe","Breakfast/Brunch (Korean-fusion)","Anaheim","@8thhauscafe","","(714) 774-8013",""],
+["Wooden Pearl","Seafood/French","Anaheim","@woodenpearlanaheim","https://thewoodenpearl.com","(657) 201-3027","lobster in foie gras butter sauce"],
+["Afghan Shams Restaurant","Afghan","Anaheim","@afghanshams_restaurant","https://afghanshamsrestaurant.com","(714) 732-6639",""],
+["Georgia's Restaurant","Soul Food","Anaheim","@georgiassoul","https://georgias-restaurant.com","(714) 906-1900","Louisiana tilapia and shrimp over rice"],
+["The Filling Station Cafe","Breakfast/Brunch","Orange","@thefillingstationcafe","https://fillingstationcafe.com","(714) 289-9714",""],
+["Gabbi's Mexican Kitchen","Mexican","Orange","@gabbis_kitchen","https://gabbismexicankitchen.com","(714) 633-3038",""],
+["HamaHippo Korean Kitchen","Korean","Fullerton","@hamahippo_fullerton","https://hamahippokorean.com","(657) 500-8093",""],
+["WADAYA","Japanese Ramen/Mazemen","Fullerton","@wadaya_mazemen","","(714) 770-0065",""],
+["OMELI Kitchen","Vietnamese","Fullerton","@omeli.kitchen","https://omelikitchen.com","(714) 770-0970",""],
+["Il Dolce Pizzeria & Restaurant","Italian","Costa Mesa","@ildolceoc","https://ildolceoc.com","(949) 200-9107",""],
+["Pop Pie Co.","Bakery/Pot Pies","Costa Mesa","@eatpoppie17th","https://poppieco.com","(949) 791-8133",""],
+["Plums Cafe","Breakfast/Brunch","Costa Mesa","@plumscafe","https://plumscafe.com","(949) 722-7586",""],
+["Oak & Coal","Japanese Izakaya/Yakitori","Costa Mesa","@oakandcoal","https://oakandcoalcm.com","(949) 287-6150",""],
+["East Borough","Vietnamese","Costa Mesa","@eastborough","https://east-borough.com","(714) 641-5010",""],
+["Barolo Cafe","Italian","Tustin","@barolocafe","https://barolocafe.net","(714) 734-8882",""],
+["Utopia European Caffe","European/Turkish","Tustin","@utopiaeurocaffe","https://utopiacaffe.com","(714) 352-5789",""],
+["DaOM Korean Restaurant","Korean","Buena Park","@daom_koreanrestaurant","","(714) 739-0100",""],
+["Mindeulle","Korean","Buena Park","@mindeulle.buenapark","https://mdlkoreankitchen.com","(714) 522-2425",""],
+["Belinda's Authentic Mexican Food","Mexican","Buena Park","@belindasmexicanfood","","(714) 670-8014",""],
+["Jinsol Gukbap","Korean (Gukbap/Soup)","Buena Park","@jinsolgukbap.oc","https://jinsolbuenapark.com","(714) 266-0037",""],
+["NEP Cafe","Vietnamese/Breakfast","Fountain Valley","@nep.cafe","https://nepcafe.com","(714) 516-8121",""],
+["Bep Viet","Vietnamese","Fountain Valley","@bep_viet_restaurant","","(657) 329-1000",""],
+["Black Trumpet Bistro","Mediterranean/Tapas","Huntington Beach","@theblacktrumpet","https://theblacktrumpetbistro.com","(714) 842-1122",""],
+["Steadfast Cafe","Cafe/Breakfast","Huntington Beach","@steadfast.cafe","https://steadfastcafe.com","(657) 204-9333",""],
+["Rocoto Pesca Bar","Peruvian Seafood","Huntington Beach","@rocotopescabar","https://rocotopescabar.com","(714) 890-5249",""],
+["Izakaya Takasei","Japanese Izakaya/Yakitori","Huntington Beach","@izakayatakasei","https://izakayatakasei.com","(714) 577-0401",""],
+["Kokiyo","Japanese Ramen","Newport Beach","@kokiyo.newportbeach","https://kokiyonewportbeach.com","(949) 877-0400",""],
+["The Beachcomber Cafe","Seafood/American","Newport Beach (Crystal Cove)","@thebeachcombercafe","https://thebeachcombercafe.com","(949) 376-6900",""],
+["Rise Bagels","Bagels","Irvine","@risebagels","","(833) 821-4922",""],
+["Cheongdam Jokbal","Korean","Irvine","@cheongdamirvine","","(949) 839-7177",""],
+["Honey & Butter Macarons","Bakery/Macarons","Irvine","@honeyandbutter","https://honeynbutter.com","(949) 997-0500",""],
+["Izakaya Osen","Japanese","Irvine","@izakayaosenirvine","https://izakayaosen.com","(949) 308-4290",""]
+];
+
+const REGION = {
+  "Santa Ana":"Little Saigon","Garden Grove":"Little Saigon",
+  "Westminster":"Little Saigon","Fountain Valley":"Little Saigon",
+  "Anaheim":"North OC","Orange":"North OC","Fullerton":"North OC","Buena Park":"North OC",
+  "Tustin":"Central OC","Irvine":"Central OC",
+  "Costa Mesa":"Coastal OC","Huntington Beach":"Coastal OC",
+  "Newport Beach":"Coastal OC","Newport Beach (Crystal Cove)":"Coastal OC"
+};
+
+/* Places that lead with pastry, coffee or a light bite rather than a full plate.
+   Judged from the cuisine and the dish hook, so it is a flag, not a verdict.
+   Toggle the filter to see them. */
+const LIGHT = new Set([
+  "Lily's Bakery & Cafe",      // bakery/cafe
+  "Pop Pie Co.",               // bakery, pot pies
+  "Rise Bagels",                // bagels only
+  "Honey & Butter Macarons"    // macarons only
+]);
+
+const LEADS = RAW.map((r,i)=>({
+  id:"l"+i, name:r[0], cat:r[1], hood:r[2], ig:r[3], site:r[4], tel:r[5], hook:r[6],
+  region:REGION[r[2]]||"Other", light:LIGHT.has(r[0])
+}));
+
+const KEY="antidote.dmqueue.v2";
+let done={};
+try{ done=JSON.parse(localStorage.getItem(KEY)||"{}") }catch(e){ done={} }
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(done)) }catch(e){} };
+
+const pitch=l=>{
+  const open = l.hook
+    ? `${l.hook.charAt(0).toUpperCase()+l.hook.slice(1)} on your page has been living in my head 🔥`
+    : `Your page has been living in my head 🔥`;
+  return `Yo, Antidote here — I post LA food reviews. ${open} Would love to feature you, no cost to you, just an honest review for my followers. Down to connect? 👉 AntidoteTheFoodie.com`;
+};
+
+const $=s=>document.querySelector(s);
+const list=$("#list"), q=$("#q"), fRegion=$("#fRegion"), fCat=$("#fCat"),
+      fHide=$("#fHide"), fMeal=$("#fMeal");
+
+[...new Set(LEADS.map(l=>l.region))].sort().forEach(r=>
+  fRegion.insertAdjacentHTML("beforeend",`<option>${r}</option>`));
+[...new Set(LEADS.map(l=>l.cat))].sort().forEach(c=>
+  fCat.insertAdjacentHTML("beforeend",`<option>${c}</option>`));
+
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const term=q.value.trim().toLowerCase(), rg=fRegion.value, ct=fCat.value,
+        hide=fHide.checked, mealsOnly=fMeal.checked;
+  const rows=LEADS.filter(l=>{
+    if(rg&&l.region!==rg) return false;
+    if(ct&&l.cat!==ct) return false;
+    if(mealsOnly&&l.light) return false;
+    if(hide&&done[l.id]) return false;
+    if(term){
+      const hay=(l.name+" "+l.hood+" "+l.region+" "+l.cat+" "+l.ig+" "+l.hook).toLowerCase();
+      if(!hay.includes(term)) return false;
+    }
+    return true;
+  });
+
+  list.innerHTML=rows.map(l=>{
+    const uname=l.ig.slice(1);
+    const igUrl="https://instagram.com/"+uname;
+    const appUrl="https://ig.me/m/"+uname;
+    return `<div class="row${done[l.id]?" is-done":""}" data-id="${l.id}">
+      <input class="chk" type="checkbox" ${done[l.id]?"checked":""} aria-label="Mark ${esc(l.name)} contacted">
+      <div class="meta">
+        <a class="name" href="${igUrl}" target="_blank" rel="noopener">${esc(l.name)}</a>
+        <div class="line2">
+          <a class="handle" href="${igUrl}" target="_blank" rel="noopener">${esc(l.ig)}</a>
+          <span class="dot">·</span><span class="hood">${esc(l.hood)}</span>
+          <span class="cat">${esc(l.cat)}</span>
+          ${l.light?'<span class="cat cat-light">Light bites</span>':""}
+        </div>
+        <div class="hook">Hook: ${esc(l.hook)}</div>
+      </div>
+      <div class="acts">
+        <a class="btn btn-ig" href="${appUrl}" target="_blank" rel="noopener">Open app</a>
+        <button class="btn js-copy" type="button" data-id="${l.id}">Copy pitch</button>
+        ${l.site?`<a class="btn" href="${l.site}" target="_blank" rel="noopener">Site</a>`:""}
+        ${l.tel?`<a class="btn" href="tel:${l.tel.replace(/[^0-9+]/g,"")}">Call</a>`:""}
+      </div>
+    </div>`;
+  }).join("");
+
+  $("#empty").hidden = rows.length>0;
+  $("#tShown").textContent=rows.length;
+  const d=LEADS.filter(l=>done[l.id]).length;
+  $("#tDone").textContent=d;
+  $("#tLeft").textContent=LEADS.length-d;
+}
+
+list.addEventListener("change",e=>{
+  if(!e.target.classList.contains("chk")) return;
+  const id=e.target.closest(".row").dataset.id;
+  if(e.target.checked) done[id]=1; else delete done[id];
+  save(); render();
+});
+
+list.addEventListener("click",e=>{
+  const b=e.target.closest(".js-copy"); if(!b) return;
+  const l=LEADS.find(x=>x.id===b.dataset.id);
+  navigator.clipboard.writeText(pitch(l)).then(()=>{
+    b.textContent="Copied"; b.classList.add("copied");
+    setTimeout(()=>{b.textContent="Copy pitch";b.classList.remove("copied")},1400);
+  }).catch(()=>{ b.textContent="Copy failed"; setTimeout(()=>b.textContent="Copy pitch",1400) });
+});
+
+[q,fRegion,fCat,fHide,fMeal].forEach(el=>el.addEventListener("input",render));
+$("#reset").addEventListener("click",()=>{
+  if(!confirm("Clear every tick? The leads stay, only your progress resets.")) return;
+  done={}; save(); render();
+});
+
+render();
 </script>
+
 </body></html>
