@@ -167,9 +167,10 @@ select{
   </div>
 
   <p class="note warn"><b>If "Open app" lands on the Instagram website instead of the app:</b>
-    you're viewing this page inside the Claude app's built-in browser, which isn't allowed to
-    hand off to other apps. Open this link in Safari or Chrome instead — tap the <b>⋯</b> or
-    share icon on this page and choose <b>Open in Browser</b> (or long-press the link that got
+    you're viewing this page inside another app's built-in browser (Instagram DMs, Messages
+    link previews, Claude, Gmail and similar all do this), and those in-app browsers block
+    handing off to other apps on purpose. Open this page in Safari or Chrome instead — tap the
+    <b>⋯</b> or share icon and choose <b>Open in Browser</b> (or long-press the link that got
     you here and choose <b>Open in Safari</b>) — then Open app will jump straight into Instagram.</p>
 
   <div class="bar">
@@ -316,7 +317,7 @@ function render(){
         <div class="hook">Hook: ${esc(l.hook)}</div>
       </div>
       <div class="acts">
-        <a class="btn btn-ig" href="${appUrl}" target="_blank" rel="noopener">Open app</a>
+        <a class="btn btn-ig" href="${appUrl}">Open app</a>
         <button class="btn js-copy" type="button" data-id="${l.id}">Copy pitch</button>
         ${l.site?`<a class="btn" href="${l.site}" target="_blank" rel="noopener">Site</a>`:""}
         ${l.tel?`<a class="btn" href="tel:${l.tel.replace(/[^0-9+]/g,"")}">Call</a>`:""}
