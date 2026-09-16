@@ -166,12 +166,12 @@ select{
     </div>
   </div>
 
-  <p class="note warn"><b>If "Open app" lands on the Instagram website instead of the app:</b>
-    you're viewing this page inside another app's built-in browser (Instagram DMs, Messages
-    link previews, Claude, Gmail and similar all do this), and those in-app browsers block
-    handing off to other apps on purpose. Open this page in Safari or Chrome instead — tap the
-    <b>⋯</b> or share icon and choose <b>Open in Browser</b> (or long-press the link that got
-    you here and choose <b>Open in Safari</b>) — then Open app will jump straight into Instagram.</p>
+  <p class="note warn"><b>"Open app" jumps straight into the Instagram app — nothing else.</b>
+    If tapping it does nothing at all, you're either viewing this page inside another app's
+    built-in browser (Instagram DMs, Messages link previews, Claude, Gmail and similar all
+    block app handoff on purpose — open this page in Safari or Chrome instead), or Instagram
+    isn't installed on this device — use the restaurant name or handle above to open their
+    profile on the Instagram website instead.</p>
 
   <div class="bar">
     <input class="search" id="q" type="search" placeholder="Search name, area, dish or handle…" aria-label="Search leads">
@@ -303,7 +303,7 @@ function render(){
   list.innerHTML=rows.map(l=>{
     const uname=l.ig.slice(1);
     const igUrl="https://instagram.com/"+uname;
-    const appUrl="https://ig.me/m/"+uname;
+    const appUrl="instagram://user?username="+uname;
     return `<div class="row${done[l.id]?" is-done":""}" data-id="${l.id}">
       <input class="chk" type="checkbox" ${done[l.id]?"checked":""} aria-label="Mark ${esc(l.name)} contacted">
       <div class="meta">
@@ -317,7 +317,7 @@ function render(){
         <div class="hook">Hook: ${esc(l.hook)}</div>
       </div>
       <div class="acts">
-        <a class="btn btn-ig" href="${appUrl}" data-ig-user="${uname}">Open app</a>
+        <a class="btn btn-ig" href="${appUrl}">Open app</a>
         <button class="btn js-copy" type="button" data-id="${l.id}">Copy pitch</button>
         ${l.site?`<a class="btn" href="${l.site}" target="_blank" rel="noopener">Site</a>`:""}
         ${l.tel?`<a class="btn" href="tel:${l.tel.replace(/[^0-9+]/g,"")}">Call</a>`:""}
@@ -346,27 +346,6 @@ list.addEventListener("click",e=>{
     b.textContent="Copied"; b.classList.add("copied");
     setTimeout(()=>{b.textContent="Copy pitch";b.classList.remove("copied")},1400);
   }).catch(()=>{ b.textContent="Copy failed"; setTimeout(()=>b.textContent="Copy pitch",1400) });
-});
-
-// Try the native app first: a plain https link to ig.me only fires Instagram's
-// app if iOS/Android's universal-link association happens to cover that path,
-// which is out of our control and inconsistent in practice. The custom
-// instagram:// scheme always launches the app when it's installed, so we try
-// that first and only fall back to the web link if the app didn't take over.
-list.addEventListener("click",e=>{
-  const a=e.target.closest(".btn-ig"); if(!a) return;
-  const uname=a.dataset.igUser; if(!uname) return;
-  e.preventDefault();
-  const webFallback=a.href;
-  let left=false;
-  const markLeft=()=>{ left=true; };
-  document.addEventListener("visibilitychange",markLeft,{once:true});
-  window.addEventListener("pagehide",markLeft,{once:true});
-  window.location.href="instagram://user?username="+uname;
-  setTimeout(()=>{
-    document.removeEventListener("visibilitychange",markLeft);
-    if(!left) window.location.href=webFallback;
-  },1300);
 });
 
 [q,fRegion,fCat,fHide,fMeal].forEach(el=>el.addEventListener("input",render));
