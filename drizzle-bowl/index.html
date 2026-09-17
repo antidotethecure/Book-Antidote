@@ -585,7 +585,7 @@ function newGame(){sfx.fireStop();
   rack(false);
 }
 function rack(keepStanding){
-  var keep=keepStanding?g.pins.filter(function(p){return p.up;}).map(function(p){return p.id;}):null;
+  var keep=keepStanding?(g.keepIds||g.pins.filter(function(p){return p.up;}).map(function(p){return p.id;})):null;g.keepIds=null; /* the pins counted as standing when the roll was scored, not whatever wobbled since */
   g.pins=LAYOUT.map(function(l,i){return {id:i,x:l[0]*PDX+(Math.random()-0.5)*0.02,y:0.92+l[1]*PDY+(Math.random()-0.5)*0.008,vx:0,vy:0,up:true,rot:0,rv:0,z:0,vz:0,gone:false,counted:false,food:FOODS[(i+g.frame*3)%FOODS.length],bob:Math.random()*6.3,wave:Math.random()*6.3};});
   if(keep){g.pins.forEach(function(p){if(keep.indexOf(p.id)<0){p.up=false;p.gone=true;p.counted=true;}});}
   else g.splats=[];
@@ -1269,6 +1269,7 @@ function topple(p,sp){
 }
 function finishRoll(){
   var n=0;g.pins.forEach(function(p){if(!p.up&&!p.counted){n++;p.counted=true;}});
+  g.keepIds=g.pins.filter(function(p){return p.up;}).map(function(p){return p.id;}); /* frozen here: the deck is re-racked from this list, so the score and the pins on the deck always agree */
   g.rolls.push(n);g.fr.push(n);
   var tenth=g.frame===9,fr=g.fr,m='';
   sfx.fireStop();var wasFire=!!(g.ball&&g.ball.fire),dept=wasFire&&(g.ball.gutter||n===0); /* on fire and you missed: the fire department rolls in */
@@ -3085,7 +3086,7 @@ function mirror(){
     if(!pn||!pn.alive){out.pins.push({up:false,gone:true,ox:0,oy:0.92,rot:0,loft:0});continue;}
     const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());
     const dsp=Math.hypot(b.position.x-(b.__spot?b.__spot.x:0),b.position.z-(b.__spot?b.__spot.z:0));
-    const up=b.position.y>-0.05&&Math.abs(b.position.x)<0.70&&b.position.z>-17.55&&a.y>0.94;
+    const up=b.position.y>-0.05&&Math.abs(b.position.x)<0.70&&b.position.z>-17.55&&a.y>0.90;
     if(pn.wasUp&&!up){pn.wasUp=false;spawnPuddle(b.position.x,b.position.z,pn.fi,false);}
     out.pins.push({up,gone:b.position.y<-0.32||b.position.z<-18.0,ox:Math.max(-1.3,Math.min(1.3,b.position.x*OLDX)),oy:Math.min(1.22,zToOld(b.position.z)),
       rot:Math.atan2(a.x,Math.max(-0.4,a.y)),loft:Math.max(0,b.position.y-PHYS.pinCY)/0.35});
@@ -3095,7 +3096,7 @@ function mirror(){
 function settled(){
   if(ballBody&&!S.rest)return false;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
-    if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.15||b.angularVelocity.length()>0.7))return false;}
+    if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.08||b.angularVelocity.length()>0.3))return false;}
   return true;
 }
 /* ---- aiming preview (dashed 3D line) ---- */
@@ -3451,7 +3452,7 @@ const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BS
 /* ---------- THE REAL ANTIDOTE: a rigged, textured 3D scan of him built from his photos (front and back). It loads in the
    background; the procedural bowler stands in until it arrives and then becomes the hidden control rig: every pose,
    walk cycle and swing still runs on the old joints, and each frame the scan's skeleton is aimed to match them. ---------- */
-const BOWLER_GLBS=['assets/antidote.glb','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/557e63ff-735d-4642-9f98-2e4e4b63ae9e.glb'];
+const BOWLER_GLBS=['assets/antidote.glb','assets/antidote.wasm','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/557e63ff-735d-4642-9f98-2e4e4b63ae9e.glb'];
 let real=null;
 const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),DOWN=new THREE.Vector3(0,-1,0),
       _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3();
@@ -3655,7 +3656,7 @@ window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fi
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
   v.set(HALF*0.93,0.02,bz).project(cam);
-  return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
+  return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__pins:function(){return pins.map(function(pn){return pn&&pn.alive?[+pn.body.position.x.toFixed(3),+pn.body.position.y.toFixed(3),+pn.body.position.z.toFixed(3),pn.wasUp]:null;});},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
   resize:function(){renderer.setSize(LW,LH,false);},setRatio:function(r){if(Math.abs(renderer.getPixelRatio()-r)<0.01)return;renderer.setPixelRatio(r);renderer.setSize(LW,LH,false);}};
 }catch(err){window.__b3dFail=true;console.warn('3D lane unavailable, staying 2D:',err);}
 </script>
