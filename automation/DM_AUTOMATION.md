@@ -30,6 +30,13 @@ than include it with fabricated or guessed contact info.
   batches (so you know which one is oldest when trimming).
 - **This file**: `automation/DM_AUTOMATION.md`.
 
+## Keep the DM tick sync (added 2026-09-17)
+
+`dm/index.html` has a `syncTick(id, isDone)` function called from the checkbox `change`
+handler. It posts each "done" tick to `https://drizzle-bowl-scores.higgsfield.app/api/dm-ticks`
+so Antidote's assistant can count the DMs he sent today. When you rebuild or merge the page,
+keep that function and its call exactly as they are. Never remove them.
+
 ## Step by step
 
 1. **Clone/pull the repo fresh.** Use `add_repo` with `access: "push"` for

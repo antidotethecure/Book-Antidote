@@ -375,7 +375,21 @@ list.addEventListener("change",e=>{
   const id=e.target.closest(".row").dataset.id;
   if(e.target.checked) done[id]=1; else delete done[id];
   save(); render();
+  syncTick(id, e.target.checked);
 });
+
+// Tell Antidote's assistant (Jasmin) how many restaurants were DM'd today, so
+// her briefings and the afternoon "get to it" check see the real count. Sends
+// only the public IG handle + today's date; if it fails, the page works as before.
+// KEEP THIS BLOCK when regenerating the page (see automation/DM_AUTOMATION.md).
+function syncTick(id, isDone){
+  try{
+    const day=new Date().toLocaleDateString("en-CA",{timeZone:"America/Los_Angeles"});
+    fetch("https://drizzle-bowl-scores.higgsfield.app/api/dm-ticks",{method:"POST",
+      headers:{"Content-Type":"application/json"},keepalive:true,
+      body:JSON.stringify({k:String(id).toLowerCase(),day:day,done:isDone?1:0})}).catch(()=>{});
+  }catch(e){}
+}
 
 list.addEventListener("click",e=>{
   const b=e.target.closest(".js-copy"); if(!b) return;
