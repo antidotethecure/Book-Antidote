@@ -3452,7 +3452,7 @@ const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BS
 /* ---------- THE REAL ANTIDOTE: a rigged, textured 3D scan of him built from his photos (front and back). It loads in the
    background; the procedural bowler stands in until it arrives and then becomes the hidden control rig: every pose,
    walk cycle and swing still runs on the old joints, and each frame the scan's skeleton is aimed to match them. ---------- */
-const BOWLER_GLBS=['assets/antidote.glb','assets/antidote.wasm','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/557e63ff-735d-4642-9f98-2e4e4b63ae9e.glb'];
+const BOWLER_GLBS=['assets/antidote.glb','assets/antidote.json','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/557e63ff-735d-4642-9f98-2e4e4b63ae9e.glb'];
 let real=null;
 const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),DOWN=new THREE.Vector3(0,-1,0),
       _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3();
@@ -3484,7 +3484,8 @@ function installReal(root,keepProc){
     const c=b.children.find(x=>x.isBone),d=new THREE.Vector3();
     if(c)d.copy(wp(c)).sub(wp(b));else d.copy(wp(b)).sub(wp(b.parent));
     if(d.lengthSq()<1e-10)d.set(0,1,0);restD[k]=d.normalize();}
-  const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){if(m.roughness!=null)m.roughness=Math.max(m.roughness,0.78);if(m.metalness!=null)m.metalness=0;m.flatShading=false;if(m.emissiveIntensity!=null)m.emissiveIntensity=0.3;if(m.specularIntensity!=null)m.specularIntensity=0.3;if(m.specularColor)m.specularColor.setScalar(1);if(m.map){m.map.anisotropy=8;m.map.needsUpdate=true;}m.needsUpdate=true;m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.78;mats.push(m);}});}});
+  const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){if(!m.map){if(m.emissive)m.emissive.set(0x000000);m.emissiveMap=null;m.color.set(0x5a3b2c);} /* no skin texture came through: a plain dark tone, never a white glow */
+    if(m.roughness!=null)m.roughness=Math.max(m.roughness,0.78);if(m.metalness!=null)m.metalness=0;m.flatShading=false;if(m.emissiveIntensity!=null)m.emissiveIntensity=0.3;if(m.specularIntensity!=null)m.specularIntensity=0.3;if(m.specularColor)m.specularColor.setScalar(1);if(m.map){m.map.anisotropy=8;m.map.needsUpdate=true;}m.needsUpdate=true;m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.78;mats.push(m);}});}});
   const ws=bones.wrR.getWorldScale(new THREE.Vector3()).x||1;
   const hb=new THREE.Mesh(ballGeo,ballMat);bones.wrR.add(hb);hb.scale.setScalar(1/ws);
   hb.position.copy(bones.wrR.worldToLocal(wp(bones.wrR).add(restD.wrR.clone().multiplyScalar(0.16))));   /* the ball hangs a hand's length past the wrist */
