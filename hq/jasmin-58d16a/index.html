@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jasmin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E0D0C">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Jasmin</title>
+<style>
+:root{--bg:#0E0D0C;--ink:#F4EFE6;--muted:#A69E92;--gold:#E0B25C}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+main{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:max(24px,env(safe-area-inset-top)) 16px max(32px,env(safe-area-inset-bottom));text-align:center}
+img{width:84px;height:84px;border-radius:22px}
+h1{margin:4px 0 0;font-size:34px;letter-spacing:-.02em}
+p{margin:0;color:var(--muted);font-size:15px;line-height:1.45;max-width:30ch}
+b{color:var(--gold);font-weight:600}
+</style>
+</head><body>
+<main>
+  <img src="icon.png" alt="">
+  <h1>Jasmin</h1>
+  <p>Tap the button at the bottom to <b>talk</b>, or tap the keyboard in the chat to <b>type</b> to her.</p>
+</main>
+<elevenlabs-convai agent-id="agent_5101m2q0r4cqf9yra7j3cpk56ftx"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+</body></html>
