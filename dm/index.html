@@ -162,10 +162,10 @@ select{
   <div class="mast">
     <div>
       <h1>Restaurant <em>DM Queue</em></h1>
-      <p class="sub">Fresh Orange County batch — Little Saigon, North OC, Central OC and Coastal OC, sourced
-        16&nbsp;Sep. The prior LA/IE batches are all contacted and have been cleared off this list. Tap
-        <b>Open app</b> to jump straight into Instagram, copy the pitch, then check it off. Your ticks are
-        saved in this browser.</p>
+      <p class="sub">Fresh Inland Empire batch — Riverside, Corona, West Covina, and the surrounding
+        IE cities, sourced 17&nbsp;Sep. The prior Orange County batch is done and has been cleared off
+        this list. Tap <b>Open app</b> to jump straight into Instagram, copy the pitch, then check it
+        off. Your ticks are saved in this browser.</p>
     </div>
     <div class="tally">
       <div><b id="tShown">0</b><span>Showing</span></div>
@@ -195,10 +195,10 @@ select{
   <div class="list" id="list"></div>
   <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
 
-  <p class="note"><b>All Orange County, all verified.</b> Every business below was checked for a real,
-    currently-active Instagram handle before it went on this list — nothing guessed. A few real OC spots
-    turned up without a confirmable handle or already closed and were left off rather than included with
-    bad contact info.</p>
+  <p class="note"><b>Riverside, Corona, West Covina and the Inland Empire — all verified.</b> Every
+    business below was checked for a real, currently-active Instagram handle before it went on this
+    list — nothing guessed. A few real IE spots turned up without a confirmable handle or already
+    closed and were left off rather than included with bad contact info.</p>
 
   <p class="note"><b>Stale-feed check is manual, not automatic.</b> This page has no way to reach
     Instagram's servers itself to check post dates. When you open a profile, glance at the feed —
@@ -208,68 +208,71 @@ select{
 
 <script>
 const RAW = [
-["Taqueria El Gordito","Mexican / Taqueria","Santa Ana","@taqueriaelgordito","https://taqueriaelgordito.net","(714) 550-4686",""],
-["Copacabana Mariscos & Sushi","Mexican Seafood (Mariscos)","Santa Ana","@copacabanamariscos","","(657) 267-0033",""],
-["Pho Flavor","Vietnamese","Garden Grove","@phoflavor","https://phoflavor.com","(714) 591-5265",""],
-["Brodard Chateau","Vietnamese","Garden Grove","@brodard.chateau","https://brodard.net","(714) 899-8273",""],
-["Kyodong","Korean-Chinese","Garden Grove","@kyodong_garden_grove","","(714) 590-6140",""],
-["The Original Banh Mi Saigon","Vietnamese / Sandwiches","Garden Grove","@eatbanhmisaigon","","",""],
-["Com Tam Thuan Kieu","Vietnamese (Broken Rice)","Westminster","@comtamthuankieu","","(714) 897-4751",""],
-["Lily's Bakery & Cafe","Bakery/Cafe","Westminster","@lilysbakeryandcafe","https://lilybakery.net","(714) 839-1099",""],
-["Nok's Kitchen","Laotian/Thai","Westminster","@noks_kitchen","https://nokskitchen.com","(657) 227-3010",""],
-["Renato's","Italian/Pizza","Westminster","@renatos_restaurant","https://renatosrestaurant.com","(714) 839-5755",""],
-["Mori Izakaya","Japanese Izakaya","Anaheim","@mori.izakaya","https://moriizakaya.com","(714) 222-1325",""],
-["8th Haus Cafe","Breakfast/Brunch (Korean-fusion)","Anaheim","@8thhauscafe","","(714) 774-8013",""],
-["Wooden Pearl","Seafood/French","Anaheim","@woodenpearlanaheim","https://thewoodenpearl.com","(657) 201-3027","lobster in foie gras butter sauce"],
-["Afghan Shams Restaurant","Afghan","Anaheim","@afghanshams_restaurant","https://afghanshamsrestaurant.com","(714) 732-6639",""],
-["Georgia's Restaurant","Soul Food","Anaheim","@georgiassoul","https://georgias-restaurant.com","(714) 906-1900","Louisiana tilapia and shrimp over rice"],
-["The Filling Station Cafe","Breakfast/Brunch","Orange","@thefillingstationcafe","https://fillingstationcafe.com","(714) 289-9714",""],
-["Gabbi's Mexican Kitchen","Mexican","Orange","@gabbis_kitchen","https://gabbismexicankitchen.com","(714) 633-3038",""],
-["HamaHippo Korean Kitchen","Korean","Fullerton","@hamahippo_fullerton","https://hamahippokorean.com","(657) 500-8093",""],
-["WADAYA","Japanese Ramen/Mazemen","Fullerton","@wadaya_mazemen","","(714) 770-0065",""],
-["OMELI Kitchen","Vietnamese","Fullerton","@omeli.kitchen","https://omelikitchen.com","(714) 770-0970",""],
-["Il Dolce Pizzeria & Restaurant","Italian","Costa Mesa","@ildolceoc","https://ildolceoc.com","(949) 200-9107",""],
-["Pop Pie Co.","Bakery/Pot Pies","Costa Mesa","@eatpoppie17th","https://poppieco.com","(949) 791-8133",""],
-["Plums Cafe","Breakfast/Brunch","Costa Mesa","@plumscafe","https://plumscafe.com","(949) 722-7586",""],
-["Oak & Coal","Japanese Izakaya/Yakitori","Costa Mesa","@oakandcoal","https://oakandcoalcm.com","(949) 287-6150",""],
-["East Borough","Vietnamese","Costa Mesa","@eastborough","https://east-borough.com","(714) 641-5010",""],
-["Barolo Cafe","Italian","Tustin","@barolocafe","https://barolocafe.net","(714) 734-8882",""],
-["Utopia European Caffe","European/Turkish","Tustin","@utopiaeurocaffe","https://utopiacaffe.com","(714) 352-5789",""],
-["DaOM Korean Restaurant","Korean","Buena Park","@daom_koreanrestaurant","","(714) 739-0100",""],
-["Mindeulle","Korean","Buena Park","@mindeulle.buenapark","https://mdlkoreankitchen.com","(714) 522-2425",""],
-["Belinda's Authentic Mexican Food","Mexican","Buena Park","@belindasmexicanfood","","(714) 670-8014",""],
-["Jinsol Gukbap","Korean (Gukbap/Soup)","Buena Park","@jinsolgukbap.oc","https://jinsolbuenapark.com","(714) 266-0037",""],
-["NEP Cafe","Vietnamese/Breakfast","Fountain Valley","@nep.cafe","https://nepcafe.com","(714) 516-8121",""],
-["Bep Viet","Vietnamese","Fountain Valley","@bep_viet_restaurant","","(657) 329-1000",""],
-["Black Trumpet Bistro","Mediterranean/Tapas","Huntington Beach","@theblacktrumpet","https://theblacktrumpetbistro.com","(714) 842-1122",""],
-["Steadfast Cafe","Cafe/Breakfast","Huntington Beach","@steadfast.cafe","https://steadfastcafe.com","(657) 204-9333",""],
-["Rocoto Pesca Bar","Peruvian Seafood","Huntington Beach","@rocotopescabar","https://rocotopescabar.com","(714) 890-5249",""],
-["Izakaya Takasei","Japanese Izakaya/Yakitori","Huntington Beach","@izakayatakasei","https://izakayatakasei.com","(714) 577-0401",""],
-["Kokiyo","Japanese Ramen","Newport Beach","@kokiyo.newportbeach","https://kokiyonewportbeach.com","(949) 877-0400",""],
-["The Beachcomber Cafe","Seafood/American","Newport Beach (Crystal Cove)","@thebeachcombercafe","https://thebeachcombercafe.com","(949) 376-6900",""],
-["Rise Bagels","Bagels","Irvine","@risebagels","","(833) 821-4922",""],
-["Cheongdam Jokbal","Korean","Irvine","@cheongdamirvine","","(949) 839-7177",""],
-["Honey & Butter Macarons","Bakery/Macarons","Irvine","@honeyandbutter","https://honeynbutter.com","(949) 997-0500",""],
-["Izakaya Osen","Japanese","Irvine","@izakayaosenirvine","https://izakayaosen.com","(949) 308-4290",""]
+["Tio's Tacos","Mexican","Riverside","@tiostacos","","",""],
+["Zacatecas Cafe","Mexican","Riverside","@zacatecascafe","https://zacatecascafe.com","(951) 683-3939","chile relleno"],
+["Pho 99 Vietnamese Restaurant","Vietnamese","Riverside","@pho99_riversideca","https://pho99vietnameserestaurant.com","(951) 688-2671",""],
+["Pho Ha #7","Vietnamese","Riverside","@phoha7.riverside","","",""],
+["Hotlanta Wings & Things","Soul Food / Wings","Riverside","@hotlantawingz","https://hotlantawingswest.com","",""],
+["Chimak House","Korean Fried Chicken","Riverside","@chimakhouse_riverside","https://chimakhouseriverside.com","",""],
+["Tomo 7 Sushi","Japanese","Riverside","@tomo7.sushi","https://tomo7sushi.net","(951) 343-5991",""],
+["Monark Asian Bistro","Chinese","Riverside","@monarkasianbistro","https://monarkasianbistro.com","(951) 683-1073",""],
+["Cravin' Crab Haus","Seafood Boil","Riverside","@cravin_crab_haus","https://cravincrabhaus.com","",""],
+["Toasted Inc (Coffee & Toast Bar)","Breakfast/Brunch (Coffee)","Riverside","@lets_gettoasted","","",""],
+["Sarap Social","Filipino","Riverside","@sarap.social","","",""],
+["Eduardo's Mexican Restaurant","Mexican","Corona","@eduardosmex","https://eduardosmex.com","(951) 340-3722",""],
+["Pho Koi Vietnamese Cuisine","Vietnamese","Corona","@pho_koi_corona","","(951) 475-7265",""],
+["Hi BBQ Chicken","Korean Fried Chicken","Corona","@hibbqchicken_corona","","(951) 531-8800",""],
+["Tokai Sushi","Japanese","Corona","@tokai_sushi_corona","","(951) 340-0443",""],
+["China Fusion","Chinese","Corona","@chinesefusionofficial","https://chinafusionfoothill.com","",""],
+["Boil Daddy - Corona","Cajun Seafood Boil","Corona","@theboildaddy.corona","https://boildaddycorona.com","(951) 547-4438",""],
+["Palapas Brunch & Lounge","Breakfast/Brunch (Mexican)","Corona","@palapas_brunchstop","","(951) 268-6950",""],
+["Misky Misky Cocina Peruana","Peruvian","West Covina","@miskymisky626","https://miskymisky.com","(626) 966-0600","lomo saltado"],
+["Salo Salo Kitchen","Filipino","West Covina","@salosalokitchen","https://salosalo.com","(626) 964-4095","crispy pata"],
+["Pang Inasal","Filipino BBQ / Breakfast","West Covina","@pangsinasal","https://panginasal.com","(626) 430-6694",""],
+["El Bukanas Taqueria","Mexican","West Covina","@elbukanas_taqueria","https://elbukanas.com","",""],
+["Banig Restaurant","Filipino","Moreno Valley","@banigrestaurant","","(951) 653-5268",""],
+["WTFalafel","Lebanese/Mediterranean","Moreno Valley","@wtfalafell","https://wtfalafel.net","(951) 221-1580",""],
+["R & R Breakfast Spot","Breakfast / Soul Food","Moreno Valley","@randrbreakfastspot","https://randrbreakfastspot.com","",""],
+["Mi Alegria Mexican Restaurant","Mexican / Mariscos","Jurupa Valley","@mialegriarestaurant","https://mialegriarestaurant.com","",""],
+["Flabob Airport Cafe","American Comfort Food","Jurupa Valley","@theflabobairportcafe","https://flabobairport.org/flabob-cafe","(951) 224-9167",""],
+["Dubu Tofu House","Korean","Eastvale","@dubu.tofuhouse","https://dubutofuhouse.com","(951) 934-3171",""],
+["Rude Jerk Kitchen","Jamaican","Perris","@rude_jerk_kitchen_","https://rudejerkkitchen.com","","jerk chicken"],
+["Pupuseria El Encanto","Salvadoran","Perris","@pupuseriaelencanto","https://pupuseriaelencantoca.com","(951) 722-4075",""],
+["Sabor Yucateco","Mexican (Yucatecan) / Seafood","Rialto","@saboryucateco2025","https://saboryucatecoca.com","(909) 421-0963",""],
+["Vazquez Bakery","Mexican Bakery","Rialto","@vazquezbakery","","(909) 875-3578",""],
+["Fontana Pho","Vietnamese","Fontana","@fontana_pho","","(909) 829-1571",""],
+["Corky's Kitchen & Bakery","Breakfast / American","Fontana","@corkyskitchenandbakery","https://corkyskitchenandbakery.com","",""],
+["Woody's Roadhouse","Breakfast / American","Colton","@woodys_roadhouse","","",""],
+["Thai House Restaurant & Martini Bar","Thai","Redlands","@thaihouseredlands","https://thaihouseredlands.com","",""],
+["Las Chicas Fresas","Mexican","Pomona","@laschicasfresas_pomona","https://laschicasfresaspomona.com","(909) 461-3240",""],
+["Borreguitas","Mexican (Vegan)","Pomona","@borreguitas_be","https://borreguitas.com","(626) 391-0700",""],
+["El Mejor Menudo","Mexican","La Puente","@elmejormenudo","","",""],
+["Caramelo Cafe","Breakfast/Brunch / Crepes","La Puente","@caramelo_cafe_","https://caramelo.cafe","",""],
+["Kyala Sushi by Morisen","Japanese","Diamond Bar","@kyala_sushi_by_morisen","","(909) 860-9162",""],
+["Basil & Co","Thai","Diamond Bar","@thebasilandcompany","https://basilandco.net","(909) 551-0202",""],
+["Pho Ha Plus","Vietnamese","Diamond Bar","@phoha_plus","https://phohaplusdiamondbar.com","",""],
+["Pradera Brunch","Breakfast/Brunch (Mexican)","Baldwin Park","@praderabrunch","","",""],
+["Mr. Pho California Kitchen","Vietnamese","Walnut","@mrphocaliforniakitchen","","(909) 468-5866",""]
 ];
 
 const REGION = {
-  "Santa Ana":"Little Saigon","Garden Grove":"Little Saigon",
-  "Westminster":"Little Saigon","Fountain Valley":"Little Saigon",
-  "Anaheim":"North OC","Orange":"North OC","Fullerton":"North OC","Buena Park":"North OC",
-  "Tustin":"Central OC","Irvine":"Central OC",
-  "Costa Mesa":"Coastal OC","Huntington Beach":"Coastal OC",
-  "Newport Beach":"Coastal OC","Newport Beach (Crystal Cove)":"Coastal OC"
+  "Riverside":"Riverside",
+  "Moreno Valley":"Riverside County","Jurupa Valley":"Riverside County",
+  "Eastvale":"Riverside County","Perris":"Riverside County",
+  "Corona":"Corona",
+  "West Covina":"San Gabriel Valley","Baldwin Park":"San Gabriel Valley",
+  "La Puente":"San Gabriel Valley","Walnut":"San Gabriel Valley",
+  "Diamond Bar":"San Gabriel Valley","Pomona":"San Gabriel Valley",
+  "Rialto":"Inland Empire","Fontana":"Inland Empire",
+  "Colton":"Inland Empire","Redlands":"Inland Empire"
 };
 
 /* Places that lead with pastry, coffee or a light bite rather than a full plate.
    Judged from the cuisine and the dish hook, so it is a flag, not a verdict.
    Toggle the filter to see them. */
 const LIGHT = new Set([
-  "Lily's Bakery & Cafe",      // bakery/cafe
-  "Pop Pie Co.",               // bakery, pot pies
-  "Rise Bagels",                // bagels only
-  "Honey & Butter Macarons"    // macarons only
+  "Toasted Inc (Coffee & Toast Bar)",  // coffee/toast only
+  "Vazquez Bakery"                      // bakery
 ]);
 
 const LEADS = RAW.map((r,i)=>({
@@ -277,7 +280,7 @@ const LEADS = RAW.map((r,i)=>({
   region:REGION[r[2]]||"Other", light:LIGHT.has(r[0])
 }));
 
-const KEY="antidote.dmqueue.v2";
+const KEY="antidote.dmqueue.v3";
 let done={};
 try{ done=JSON.parse(localStorage.getItem(KEY)||"{}") }catch(e){ done={} }
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(done)) }catch(e){} };
@@ -287,7 +290,7 @@ const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(done)) }catch(e){}
 // has to be a manual call: glance at the feed when you open the profile,
 // tap Mark stale if it's gone quiet. Stored separately from "contacted"
 // since a lead can be both, either, or neither.
-const STALE_KEY="antidote.dmqueue.stale.v1";
+const STALE_KEY="antidote.dmqueue.stale.v2";
 let stale={};
 try{ stale=JSON.parse(localStorage.getItem(STALE_KEY)||"{}") }catch(e){ stale={} }
 const saveStale=()=>{ try{ localStorage.setItem(STALE_KEY,JSON.stringify(stale)) }catch(e){} };
