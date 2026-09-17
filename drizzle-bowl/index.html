@@ -353,6 +353,15 @@ var SITE_URL="https://antidotethefoodie.com";
 (function(){
 var W=480,H=800,cv=document.getElementById('c'),ctx=cv.getContext('2d');
 var USE3D=false; /* flips true once the three.js+cannon module is live */
+var BOOT_T0=performance.now();
+function booting(){return !USE3D&&!window.__b3dFail&&(performance.now()-BOOT_T0<15000);} /* until the 3D lane is up, show a loading card instead of the old 2D lane */
+function drawBoot(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#1a1214';ctx.fillRect(0,0,W,H);var t=performance.now()/1000,cy=H*0.40;
+  if(LANE_LOGO.complete&&LANE_LOGO.naturalWidth){var lw=210,lh=lw*0.52;ctx.globalAlpha=0.92;ctx.drawImage(LANE_LOGO,W/2-lw/2,cy-lh/2-30,lw,lh);ctx.globalAlpha=1;}
+  txt('SETTING UP THE LANE',W/2,cy+58,'bold 16px Impact,"Arial Black",sans-serif','#f2a81d');
+  var bw=220,bx=W/2-bw/2,by=cy+82;ctx.fillStyle='rgba(255,255,255,.08)';rr(bx,by,bw,6,3);ctx.fill();
+  var p=(t*0.6)%1,gr=ctx.createLinearGradient(bx+p*bw-70,0,bx+p*bw+70,0);gr.addColorStop(0,'rgba(242,168,29,0)');gr.addColorStop(0.5,'rgba(242,168,29,.95)');gr.addColorStop(1,'rgba(242,168,29,0)');
+  ctx.save();rr(bx,by,bw,6,3);ctx.clip();ctx.fillStyle=gr;ctx.fillRect(bx,by,bw,6);ctx.restore();
+  txt('ANTIDOTE DRIZZLE BOWL',W/2,cy+112,'bold 9px Impact,"Arial Black",sans-serif','rgba(242,168,29,.55)');}
 var dpr=1; /* effective backing ratio = on-screen scale x devicePixelRatio, so nothing is upscaled (capped for phones) */
 function calcDpr(s){var raw=window.devicePixelRatio||1,coarse=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);return Math.max(1,Math.min(coarse?2.2:3,s*raw));}
 function fit(){
@@ -1014,7 +1023,7 @@ function update(dt){
   if(g.phase==='aim'&&g.xT!=null)g.x+=(g.xT-g.x)*Math.min(1,dt*14);
   if(g.phase==='spin'){g.spin+=g.spinDir*dt*1.9*meterMul();if(g.spin>1){g.spin=1;g.spinDir=-1;}if(g.spin<-1){g.spin=-1;g.spinDir=1;}}
   if(g.phase==='power'){g.power+=g.powerDir*dt*2.2*meterMul();if(g.power>1){g.power=1;g.powerDir=-1;}if(g.power<0.05){g.power=0.05;g.powerDir=1;}}
-  if(g.phase==='throw'){g.throwT+=dt;if(g.throwT>0.55){g.phase='roll';
+  if(g.phase==='throw'){g.throwT+=dt;if(g.throwT>1.0){g.phase='roll'; /* the ball leaves his hand at the bottom of the swing, 1.0 s into the approach */
     var chg=Math.abs((g.power||0.5)-0.775)<0.016;
     if(chg){g.msg='CHARGED UP!';g.msgT=1.4;g.flash=Math.max(g.flash,0.3);sfx.tick();setTimeout(sfx.tick,90);setTimeout(sfx.tick,180);}
     if(USE3D){g.ball={x:g.x,x0:g.x,spin:g.spin,y:0,vx:0,vy:throwSpeed(),rot:0,gutter:false,free:true,hit:false,done:false,rest:false,pit:0,charged:chg};g.ball.fire=g.streak>=3;g.ball.ult=g.streak>=6;if(B3D.setFire)B3D.setFire(g.streak>=6?2:(g.streak>=3?1:0));B3D.throwBall(g.x,g.spin,g.power,chg);}
@@ -1808,7 +1817,7 @@ function drawBowler(){
   if(USE3D&&window.B3D&&B3D.ok&&B3D.bowlerPx){try{bx=B3D.bowlerPx(g.bowlerX);}catch(e){}}
   g.bowlerPx=bx;
   if(USE3D&&window.B3D&&B3D.ok)return; /* the lofted 3D bowler stands in for him */
-  var back=g.phase==='throw'||g.phase==='roll'||g.phase==='settle',cheer=g.cheer>0,throwP=g.phase==='throw'?Math.min(1,g.throwT/0.55):0;
+  var back=g.phase==='throw'||g.phase==='roll'||g.phase==='settle',cheer=g.cheer>0,throwP=g.phase==='throw'?Math.min(1,g.throwT/1.0):0;
   ctx.save();ctx.translate(bx,by);
   ctx.fillStyle='rgba(0,0,0,.45)';ctx.beginPath();ctx.ellipse(0,0,30,8,0,0,7);ctx.fill();
   var hop=cheer?Math.abs(Math.sin(g.t*16))*10:0;ctx.translate(0,-hop);
@@ -1858,6 +1867,7 @@ function drawBowler(){
 
 /* ---------- frame ---------- */
 function draw(){
+  if(booting()){drawBoot();return;}
   ctx.save();if(g.shake>0)ctx.translate((Math.random()-0.5)*8,(Math.random()-0.5)*8);
   ctx.fillStyle='#1a1214';if(USE3D){ctx.fillRect(-10,-10,W+20,BOT.y+10);ctx.clearRect(0,BOT.y,W,H-BOT.y);}else ctx.fillRect(-10,-10,W+20,H+20);
   drawTop();
@@ -1913,7 +1923,7 @@ function b3dFrame(){
 newGame();requestAnimationFrame(loop);
 window.__showHalf=showHalftime;
 window.ADB={get g(){return g;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
-  throw3d:function(x,spin,power){g.x=x;g.spin=spin;g.power=power;g.phase='throw';g.throwT=0.56;}};
+  throw3d:function(x,spin,power){g.x=x;g.spin=spin;g.power=power;g.phase='throw';g.throwT=1.01;}};
 window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,noise:noise,playCrash:playCrash,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE};
 })();
 </script>
@@ -3298,7 +3308,7 @@ function makeBowler(){
   return G;
 }
 const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
-let bVis=false,bRollT=0,bLastPhase='';
+let bVis=false,bRollT=0,bLastPhase='';const walk={amt:0,dir:1,phase:0};
 const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.PerspectiveCamera(47,LW/VH,0.05,140);
 function bowlerScreenX(x){homeCam.position.set((x||0)*0.25,1.32,3.5);homeCam.lookAt((x||0)*0.2,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*0.76,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
@@ -3306,34 +3316,51 @@ function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation
 function poseBowler(gs,dt,nw){
   const U=bowler.userData,B=U.B,A=U.arms,L=U.legs;
   const cheer=gs.cheer>0,ph=gs.phase;
-  const tp=ph==='throw'?Math.min(1,(gs.throwT||0)/0.55):(ph==='roll'?1:0);
+  const tp=ph==='throw'?Math.min(1,(gs.throwT||0)/1.15):(ph==='roll'?1:0); /* the approach is timed over 1.15 s; release at 0.87 of it (throwT 1.0) */
   const rl=ph==='roll'?bRollT:0;
   const br=Math.sin(nw*1.7)*0.5+0.5;
   /* target joint angles */
   let t={lean:-0.05,spine:-0.03,bob:0,hz:0,
     shL:[0.62,0,0.34],elL:1.55,shR:[0.55,0,0.28],elR:1.15,curl:0.75,
-    hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0};
-  if(soakT>0&&ph!=='throw'&&ph!=='roll'){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
+    hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0,wr:-0.3,yaw:0};
+  if(ph==='throw'||ph==='roll'){
+    /* THE APPROACH: three quick steps and a slide toward the line while the ball pushes away, swings back high,
+       comes through and leaves the hand at the bottom of the arc, then the arm follows through up and over */
+    const u=tp,fol=Math.min(1,rl/0.35),L2=THREE.MathUtils.lerp;
+    const P=Math.min(u,0.66)/0.66*3*Math.PI;
+    let hpR=Math.sin(P)*0.55,hpL=-Math.sin(P)*0.55,knR=-(0.15+0.6*Math.max(0,Math.sin(P-0.5))),knL=-(0.15+0.6*Math.max(0,Math.sin(P+Math.PI-0.5)));
+    const lg=sstep(0.66,0.86,u);hpL=L2(hpL,0.85,lg);knL=L2(knL,-1.15,lg);hpR=L2(hpR,-0.55,lg);knR=L2(knR,-0.25,lg);   /* the slide: left leg planted deep, right trailing */
+    let swR,elR;
+    if(u<0.2){const q=u/0.2;swR=L2(0.55,0.95,Math.sin(q*Math.PI/2));elR=L2(1.15,0.35,q);}                                /* push-away */
+    else if(u<0.62){const q=(u-0.2)/0.42;swR=L2(0.95,-1.75,0.5-0.5*Math.cos(q*Math.PI));elR=L2(0.35,0.08,q);}          /* backswing, arm straightening */
+    else if(u<0.88){const q=(u-0.62)/0.26;swR=L2(-1.75,0.45,0.5-0.5*Math.cos(q*Math.PI));elR=0.08+0.1*q;}              /* downswing to release */
+    else{const q=(u-0.88)/0.12;swR=L2(0.45,1.55,Math.sin(q*Math.PI/2));elR=0.2+0.3*q;}                                   /* follow-through */
+    swR+=0.6*sstep(0,1,fol);
+    const wr=u<0.62?-0.55:(u<0.88?L2(-0.55,0.35,(u-0.62)/0.26):0.35);                                                   /* wrist cupped in the backswing, flicks through at release */
+    t={lean:-0.10-0.30*u-0.05*fol,spine:-0.05-0.08*u,bob:-Math.abs(Math.sin(P))*0.025*(1-lg)-0.12*lg,hz:-0.72*u,
+       shL:[0.25+0.55*u,0,-(0.7+0.6*u)],elL:0.9-0.5*u,shR:[swR,0,0.16],elR:elR,curl:u<0.87?0.8:0.2,
+       hpL:hpL,knL:knL,hpR:hpR,knR:knR,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0};
+  }
+  else if(soakT>0){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
     const sv=Math.min(1,soakT/2);t={lean:0.02,spine:0.14*sv,bob:Math.sin(nw*27)*0.007*sv,hz:Math.sin(nw*31)*0.004*sv,shL:[1.05,0,0.55],elL:2.25,shR:[0.55,0,0.28],elR:1.15,curl:0.75,hpL:-0.14,knL:-0.26,hpR:-0.14,knR:-0.26,headX:0.32,headY:Math.sin(nw*23)*0.035*sv};}
   else if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,-0.35],elL:0.25,shR:[2.9,0,0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
-  else if(ph==='throw'||ph==='roll'){
-    const back=Math.min(1,tp/0.5),fwd=Math.max(0,(tp-0.5)/0.5),fol=Math.min(1,rl/0.35);
-    const swR=back<1?THREE.MathUtils.lerp(0.55,-1.45,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(-1.45,0.32,Math.sin(fwd*Math.PI/2))+1.35*sstep(0,1,fol); /* straight down the lane: rotation about x only, release near the bottom */
-    t={lean:-0.14-0.24*tp-0.05*fol,spine:-0.06-0.08*tp,bob:-0.06*tp-0.10*fwd,hz:-0.12*tp,
-       shL:[0.25+0.45*fwd,0,-(0.75+0.55*fwd)],elL:0.9-0.4*fwd,shR:[swR,0,0.16],elR:1.15-1.0*back+0.1*fwd,curl:tp<0.98?0.8:0.2,
-       hpL:0.6+0.4*fwd,knL:-0.6-0.55*fwd,hpR:-0.25-0.4*tp,knR:-0.12,headX:0.26+0.1*tp,headY:0};
+  if((ph==='aim'||ph==='spin'||ph==='power')&&walk.amt>0.02&&!cheer){ /* sidestepping to his mark: legs stepping, a little bob, turned slightly the way he is going */
+    const a=walk.amt,P=walk.phase,L2=THREE.MathUtils.lerp;
+    t.hpL=L2(t.hpL,Math.sin(P)*0.5,a);t.hpR=L2(t.hpR,-Math.sin(P)*0.5,a);
+    t.knL=L2(t.knL,-(0.16+0.7*Math.max(0,Math.sin(P-0.6))),a);t.knR=L2(t.knR,-(0.16+0.7*Math.max(0,-Math.sin(P+0.6))),a);
+    t.bob=-Math.abs(Math.sin(P))*0.03*a;t.yaw=-walk.dir*0.32*a;t.shL=[t.shL[0]+Math.sin(P+Math.PI)*0.3*a,0,t.shL[2]];t.lean-=0.05*a;
   }
-  const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?16:7));
+  const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?24:(walk.amt>0.02?14:7)));
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
-  lp(bowler.rotation,'x',t.lean);lp(B.spine.rotation,'x',t.spine);
+  lp(bowler.rotation,'x',t.lean);lp(bowler.rotation,'y',t.yaw||0);lp(B.spine.rotation,'x',t.spine);
   bowler.position.y+=(t.bob-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
   ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);
     lp(L[s].hp.rotation,'x',t['hp'+s]);lp(L[s].kn.rotation,'x',t['kn'+s]);L[s].an.rotation.x=-L[s].hp.rotation.x-L[s].kn.rotation.x-bowler.rotation.x;});
-  A.R.wr.rotation.x=-0.3;A.L.wr.rotation.x=-0.2;
+  lp(A.R.wr.rotation,'x',t.wr!=null?t.wr:-0.3);A.L.wr.rotation.x=-0.2;
   curlHand(A.R.hand,t.curl);curlHand(A.L.hand,0.35);
   lp(B.head.rotation,'x',t.headX);lp(B.head.rotation,'y',t.headY+Math.sin(nw*0.7)*0.04);
   B.chest.scale.y=1+0.008*br;B.chest.rotation.x=-0.01*br;
-  A.R.ball.visible=!(ph==='roll'||ph==='settle'||ph==='result')&&!(ph==='throw'&&tp>=0.98)&&!cheer;
+  A.R.ball.visible=!(ph==='roll'||ph==='settle'||ph==='result')&&!(ph==='throw'&&tp>=0.87)&&!cheer;
   U.shadow.scale.setScalar(1-0.35*Math.max(0,bowler.position.y));
 }
 function renderBowler(gs,dt,nw){
@@ -3346,7 +3373,8 @@ function renderBowler(gs,dt,nw){
   bRoot.position.y=0.20-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:home*2.6); /* drops out as the camera rolls past him, rises back in as it settles home */
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=px/(bPxPerM*BSCALE);
   if(!bVis){bowler.position.x=tx;if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
-  bowler.position.x+=(tx-bowler.position.x)*Math.min(1,dt*10);
+  const dxw=(tx-bowler.position.x)*Math.min(1,dt*10);bowler.position.x+=dxw;
+  const spd=dt>0?Math.abs(dxw)/dt:0;walk.amt+=(Math.min(1,spd/0.8)-walk.amt)*Math.min(1,dt*9);if(Math.abs(dxw)>1e-4)walk.dir=Math.sign(dxw);walk.phase+=Math.abs(dxw)*13*(0.4+0.6*walk.amt);
   poseBowler(gs,dt,nw);
   bRim.color.set(LEDCOLS[ledCol]);
   renderer.autoClear=false;renderer.clearDepth();renderer.render(bScene,bCam);renderer.autoClear=true;
@@ -3405,7 +3433,7 @@ window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fi
   v.set(HALF*0.93,0.02,bz).project(cam);
   return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
   resize:function(){renderer.setSize(LW,LH,false);},setRatio:function(r){if(Math.abs(renderer.getPixelRatio()-r)<0.01)return;renderer.setPixelRatio(r);renderer.setSize(LW,LH,false);}};
-}catch(err){console.warn('3D lane unavailable, staying 2D:',err);}
+}catch(err){window.__b3dFail=true;console.warn('3D lane unavailable, staying 2D:',err);}
 </script>
 
 
