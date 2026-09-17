@@ -1880,6 +1880,8 @@ const gutMat=new THREE.MeshStandardMaterial({color:0x17100e,roughness:0.6,metaln
   for(let pz3=1.3;pz3>-16.6;pz3-=2.1){const post=new M(new THREE.BoxGeometry(0.028,0.30,0.028),railMat);post.position.set(s2*0.95,0.06,pz3);scene.add(post);}
 });
 const backWall=add(new M(new THREE.PlaneGeometry(4,1.15),new THREE.MeshBasicMaterial({color:0x060404})));backWall.position.set(0,0.16,-18.35);
+/* kickback plates flanking the pin deck (match the physics boxes): dark steel with a worn top edge */
+[-1,1].forEach(sd=>{const kb=add(new M(new THREE.BoxGeometry(0.10,1.10,3.2),new THREE.MeshStandardMaterial({color:0x1b1416,roughness:0.55,metalness:0.35})));kb.position.set(sd*0.92,0.25,-16.7);const lip=add(new M(new THREE.BoxGeometry(0.11,0.02,3.2),new THREE.MeshStandardMaterial({color:0x5a4a48,roughness:0.4,metalness:0.6})));lip.position.set(sd*0.92,0.80,-16.7);});
 const bumper=add(new M(new THREE.BoxGeometry(1.9,0.12,0.08),new THREE.MeshStandardMaterial({color:0xb8322c,emissive:0x5a1712,roughness:0.4})));bumper.position.set(0,0.62,-17.0);
 const maskT=add(new M(new THREE.BoxGeometry(6,0.42,0.1),new THREE.MeshBasicMaterial({color:0x0a0607})));maskT.position.set(0,1.44,-16.98);
 /* ---------- living backdrop: day cycle, real buildings, helicopter, cop car, stars ---------- */
@@ -2265,18 +2267,21 @@ function ambient(dt,gs){
    friction are computed by hand as proper mu*N Coulomb friction: the ball skids on the oil, then
    rolls and hooks on the dry back end, and pins slide across the deck instead of stopping dead.
    Nothing about the pins is scripted: no kicks, no random spin, no forced topples. */
-const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,deckMu:0.5,spinDrag:0.5,hookK:22,skid:0.45}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
+const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,deckMu:0.34,spinDrag:0.5,hookK:22,skid:0.45}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
 world.allowSleep=true;world.solver.iterations=20;
 world.defaultContactMaterial.contactEquationStiffness=1e8;world.defaultContactMaterial.contactEquationRelaxation=3;
 const mLane=new CANNON.Material('lane'),mBall=new CANNON.Material('ball'),mPin=new CANNON.Material('pin'),mKick=new CANNON.Material('kick'),mGutter=new CANNON.Material('gutter');
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:0,restitution:0.05}));            /* friction done by hand (oil / dry) */
 world.addContactMaterial(new CANNON.ContactMaterial(mBall,mGutter,{friction:0.25,restitution:0.1}));
-world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.02,restitution:0.64,contactEquationStiffness:1e8})); /* polished ball on coated pins: low friction, so revs do not scrub the carry */
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:0.03,restitution:0.68,contactEquationStiffness:1e8})); /* USBC pin spec: ball-on-pin COR 0.65-0.75 */ /* polished ball on coated pins: low friction, so revs do not scrub the carry */
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:0,restitution:0.02}));             /* deck friction done by hand; a pin landing on the boards does not bounce */
 world.addContactMaterial(new CANNON.ContactMaterial(mPin,mGutter,{friction:0.1,restitution:0.1}));
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.01,restitution:0.85,contactEquationStiffness:1e8})); /* plastic-coated maple: slick and lively */
-world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.15,restitution:0.2}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:0.04,restitution:0.66,contactEquationStiffness:1e8})); /* certified pins measure 0.61-0.74 */ /* plastic-coated maple: slick and lively */
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKick,{friction:0.55,restitution:0.08}));   /* pit curtain: a pin that flies off the deck hits cloth and drops */
+const mKB=new CANNON.Material('kickback');
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mKB,{friction:0.18,restitution:0.42}));   /* steel kickback plates beside the deck: pins ricochet back through the rack */
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mKB,{friction:0.1,restitution:0.3}));
 const G9=9.82;
 /* Coulomb friction at a rolling ball's contact patch: slip = v + w x r, impulse limited to mu*m*g*dt or to what stops the slip */
 function ballFriction(b,dt,mu){
@@ -2303,11 +2308,12 @@ function sbox(hx,hy,hz,x,y,z,mat){const b=new CANNON.Body({mass:0,material:mat||
 sbox(HALF,0.05,10.475,0,-0.05,-7.625);                  /* lane deck (front 2.85, back -18.10) */
 sbox(0.12,0.02,10.475,-0.80,-0.17,-7.625,mGutter);sbox(0.12,0.02,10.475,0.80,-0.17,-7.625,mGutter); /* gutter floors */
 sbox(0.03,0.12,10.475,-0.945,-0.06,-7.625,mGutter);sbox(0.03,0.12,10.475,0.945,-0.06,-7.625,mGutter);   /* gutter outer walls */
-sbox(1.3,1.1,0.05,0,0.5,-18.06,mKick); /* rear cushion: pins rebound onto the deck */                        /* pit back wall */
+sbox(1.3,1.1,0.05,0,0.5,-18.30,mKick);                 /* pit curtain, 20 cm behind the tail plank */
+sbox(0.05,0.55,1.6,-0.92,0.25,-16.7,mKB);sbox(0.05,0.55,1.6,0.92,0.25,-16.7,mKB);   /* kickback plates flanking the pin deck */
 sbox(1.4,0.05,1.0,0,-0.62,-18.5);                       /* pit floor */
 sbox(6,0.05,6,0,-0.85,-14.5);                           /* catch floor: nothing falls out of the world */
 /* ---- pins ---- */
-const pinProfile=[[0,0],[0.038,0],[0.052,0.02],[0.057,0.10],[0.049,0.17],[0.028,0.235],[0.021,0.25],[0.021,0.2545],[0.0168,0.2562],[0.0168,0.2598],[0.021,0.2615],[0.021,0.264],[0.030,0.29],[0.038,0.32],[0.038,0.345],[0.025,0.372],[0.001,0.381]].map(p=>new THREE.Vector2(p[0],p[1]));
+const pinProfile=[[0,0],[0.026,0],[0.044,0.018],[0.057,0.10],[0.049,0.17],[0.028,0.235],[0.021,0.25],[0.021,0.2545],[0.0168,0.2562],[0.0168,0.2598],[0.021,0.2615],[0.021,0.264],[0.030,0.29],[0.038,0.32],[0.038,0.345],[0.025,0.372],[0.001,0.381]].map(p=>new THREE.Vector2(p[0],p[1]));
 const pinGeo=new THREE.LatheGeometry(pinProfile,24);
 { /* map the texture by height so the LED channel lands exactly on its lit strip */
   const pa=pinGeo.attributes.position,ua=pinGeo.attributes.uv;for(let i=0;i<ua.count;i++)ua.setY(i,pa.getY(i)/0.381);ua.needsUpdate=true;}
@@ -2315,7 +2321,14 @@ pinGeo.rotateY(Math.PI/2);
 const LAYOUT=[[0,0],[-1,1],[1,1],[-2,2],[0,2],[2,2],[-3,3],[-1,3],[1,3],[3,3]];
 const pinMats={};function pinMat(fi){if(!pinMats[fi]){const f=(A3.foods||[])[fi];pinMats[fi]=new THREE.MeshStandardMaterial({map:pinTexture(f),roughness:0.22,metalness:0.05,emissiveMap:pinE,emissive:new THREE.Color(LEDCOLS[ledCol]),emissiveIntensity:2.2});}return pinMats[fi];}
 /* compound pin collider: wide base, belly, narrow neck, round head; offsets put the body origin at the real centre of mass */
-function pinShapes(){const CY=PHYS.pinCY;return [[new CANNON.Cylinder(0.052,0.052,0.17,10),0.095-CY],[new CANNON.Cylinder(0.038,0.052,0.07,10),0.215-CY],[new CANNON.Cylinder(0.022,0.030,0.07,10),0.28-CY],[new CANNON.Sphere(0.036),0.338-CY]];}
+/* real USBC pin proportions: the base that touches the deck is only 5.2 cm across (2.6 cm radius) under a 14.6 cm centre of mass,
+   so the pin tips over past ~10 degrees of lean; the belly is 11.4 cm at 10 cm up, the neck 4.6 cm, the head 7.4 cm */
+function pinShapes(){const CY=PHYS.pinCY,N=12;return [
+  [new CANNON.Cylinder(0.050,0.027,0.045,N),0.0225-CY],   /* base: 2.7 cm contact radius flaring to the belly */
+  [new CANNON.Cylinder(0.057,0.050,0.075,N),0.0825-CY],   /* lower belly 4.5-12 cm */
+  [new CANNON.Cylinder(0.040,0.057,0.10,N),0.17-CY],      /* upper belly tapering 12-22 cm */
+  [new CANNON.Cylinder(0.024,0.040,0.06,N),0.25-CY],      /* shoulder into the neck 22-28 cm */
+  [new CANNON.Sphere(0.037),0.335-CY]];}                    /* head, top at 37.2 cm */
 const shadowGeo=new THREE.CircleGeometry(0.16,20);shadowGeo.rotateX(-Math.PI/2);
 const shadowMat=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.34,depthWrite:false});
 let pins=[];/* {body,grp,mesh,shadow,alive} */
@@ -2571,7 +2584,7 @@ function pinStep(){
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
     if(b.sleepState===CANNON.Body.SLEEPING)continue;
     b.quaternion.vmult(UPV,upTmp);
-    b.allowSleep=upTmp.y>0.985||upTmp.y<0.35;   /* a pin mid-tip keeps simulating until gravity decides */
+    b.allowSleep=upTmp.y>0.996||upTmp.y<0.35;   /* a pin mid-tip keeps simulating until gravity decides */
     if(upTmp.y<0.35)pn.down=true;               /* it has been flat: from here the boards soak up its tumble */
     if(b.aabb.lowerBound.y>0.06)b.force.y-=b.mass*9.82*0.18;   /* a lofted pin comes down a touch quicker: snappier arcs */
     if(pn.down&&b.aabb.lowerBound.y<0.04){
