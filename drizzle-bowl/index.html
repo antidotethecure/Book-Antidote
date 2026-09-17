@@ -3139,6 +3139,39 @@ const denimFlat=new THREE.MeshStandardMaterial({color:0x2b3b54,roughness:0.9,met
 const goldMat=new THREE.MeshStandardMaterial({color:0xd9a428,roughness:0.32,metalness:0.7});
 const soleMat=new THREE.MeshStandardMaterial({color:0xefe6d4,roughness:0.55,metalness:0});
 const darkMat=new THREE.MeshStandardMaterial({color:0x1a1416,roughness:0.6,metalness:0.1});
+/* ---------- his fitted cap: six panels of black twill sampled straight off the skull surface (4% out for the fabric), a sweatband
+   rim, a flat brim that dips forward and curls up at the sides, a button on top, and the A on the front panel ---------- */
+const capT=bake(512,256,(g,w,h)=>{g.fillStyle='#16131a';g.fillRect(0,0,w,h);
+  for(let i=0;i<9000;i++){g.fillStyle='rgba(255,255,255,'+(Math.random()*0.05)+')';g.fillRect(Math.random()*w,Math.random()*h,1.5,1.5);}
+  for(let k=0;k<6;k++){const x=(k/6+1/12)*w;g.strokeStyle='rgba(0,0,0,.6)';g.lineWidth=3;g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=1;g.beginPath();g.moveTo(x+3,0);g.lineTo(x+3,h);g.stroke();}
+  g.font='bold 96px Impact,"Arial Black",sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineJoin='round';g.lineWidth=9;g.strokeStyle='#f2a81d';g.save();g.translate(w*0.75,h*0.58);g.scale(-1,1);g.strokeText('A',0,0);g.fillStyle='#ffffff';g.fillText('A',0,0);g.restore();}); /* drawn mirrored: the crown's u runs the other way when seen from the front */
+capT.wrapS=THREE.RepeatWrapping;capT.flipY=false; /* v=0 is the crown's top */
+const capMat=new THREE.MeshStandardMaterial({map:capT,roughness:0.88,metalness:0}),bandMat=new THREE.MeshStandardMaterial({color:0x0e0c10,roughness:0.7}),brimMat=new THREE.MeshStandardMaterial({color:0x141216,roughness:0.72,side:THREE.DoubleSide}),underMat=new THREE.MeshStandardMaterial({color:0x1f1d23,roughness:0.8,side:THREE.DoubleSide});
+function makeCap(headR){
+  const cap=new THREE.Group();
+  const edgeY=phi=>0.16-0.22*Math.sin(phi);                       /* where the rim sits on the unit sphere: high on the brow, low on the nape */
+  const dir=(phi,th)=>[Math.sin(th)*Math.cos(phi),Math.cos(th),Math.sin(th)*Math.sin(phi)];
+  const cols=64,rows=14,pos=[],uv=[],idx=[];
+  for(let j=0;j<=rows;j++){const v=j/rows;for(let i=0;i<=cols;i++){const phi=i/cols*Math.PI*2,thMax=Math.acos(edgeY(phi)),d=dir(phi,v*thMax),r=headR(d[0],d[1],d[2]),k=1.045-0.012*v;
+    pos.push(r[0]*k,r[1]*k,r[2]*k);uv.push(i/cols,v);}}
+  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const a=j*(cols+1)+i,b=a+cols+1;idx.push(a,a+1,b,a+1,b+1,b);}
+  const cg=new THREE.BufferGeometry();cg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));cg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));cg.setIndex(idx);cg.computeVertexNormals();
+  cap.add(new THREE.Mesh(cg,capMat));
+  const rimPts=[];for(let i=0;i<=cols;i++){const phi=i/cols*Math.PI*2,d=dir(phi,Math.acos(edgeY(phi))),r=headR(d[0],d[1],d[2]);rimPts.push(new THREE.Vector3(r[0]*1.034,r[1]*1.034,r[2]*1.034));}
+  cap.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimPts,true),96,0.0034,8,true),bandMat));
+  /* the brim */
+  const A=Math.PI*0.36,bw=24,bn=8;
+  const brimPt=(al,t,dy)=>{const phi=1.5*Math.PI+al,d=dir(phi,Math.acos(edgeY(phi))),r=headR(d[0],d[1],d[2]);
+    const len=0.074*Math.pow(Math.max(0.05,Math.cos(al)),0.55)*t,q=al/A;
+    return [r[0]*1.036+Math.cos(phi)*len,r[1]*1.036-0.003-0.022*t*t+0.014*t*q*q+dy,r[2]*1.036+Math.sin(phi)*len];};
+  const mkSheet=(dy,flip,mat)=>{const bp=[],bi=[];for(let j=0;j<=bn;j++)for(let i=0;i<=bw;i++){const p=brimPt(-A+2*A*i/bw,j/bn,dy);bp.push(p[0],p[1],p[2]);}
+    for(let j=0;j<bn;j++)for(let i=0;i<bw;i++){const a=j*(bw+1)+i,b=a+bw+1;if(flip)bi.push(a,b,a+1,a+1,b,b+1);else bi.push(a,a+1,b,a+1,b+1,b);}
+    const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));gg.setIndex(bi);gg.computeVertexNormals();return new THREE.Mesh(gg,mat);};
+  cap.add(mkSheet(0,false,brimMat));cap.add(mkSheet(-0.0036,true,underMat));
+  const edge=[];for(let i=0;i<=bw;i++){const p=brimPt(-A+2*A*i/bw,1,-0.0018);edge.push(new THREE.Vector3(p[0],p[1],p[2]));}
+  cap.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(edge,false),48,0.0019,6,false),brimMat));
+  const top=headR(0,1,0);const btn=new THREE.Mesh(new THREE.SphereGeometry(0.0055,10,8),bandMat);btn.position.set(0,top[1]*1.05,0);btn.scale.y=0.6;cap.add(btn);
+  return cap;}
 const gauss=(v,w)=>Math.exp(-(v*v)/(w*w));
 const sstep=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
 /* loft: a smooth skin over elliptical cross-sections stacked in y (ascending). u runs around with the seam at the front, v bottom→top.
@@ -3244,8 +3277,7 @@ function makeBowler(){
   skinned(skinByY(loftGeo([{y:1.50,rx:0.064,rz:0.062,cz:0.004},{y:1.54,rx:0.060,rz:0.058,cz:0.0},{y:1.58,rx:0.057,rz:0.056,cz:-0.004},{y:1.62,rx:0.060,rz:0.060,cz:-0.007}],32),
     [{b:BI.chest,y0:-9,y1:1.51},{b:BI.neck,y0:1.51,y1:1.59},{b:BI.head,y0:1.59,y1:9}],0.03),skinMat);
   /* head: a bald skull — parietal width, occipital bulge, mastoids, nape tapering into the neck, jaw narrowing under the ears */
-  const hg=new THREE.SphereGeometry(1,44,32);{const p=hg.attributes.position;
-    for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+  const headR=(x,y,z)=>{ /* the skull surface in metres for a unit-sphere direction: an ellipsoid with real landmarks */
       const rx=0.080,ry=0.118,rz=0.100;
       const occ=1+0.075*sstep(-0.1,0.6,z)*gauss(y+0.05,0.5);                     /* occiput, low and back */
       const par=1+0.035*gauss(y-0.3,0.35)*sstep(0.2,0.9,Math.abs(x));             /* parietal eminences */
@@ -3253,9 +3285,12 @@ function makeBowler(){
       const nape=y<-0.35?1-0.45*sstep(-0.35,-1,y)*(0.35+0.65*sstep(-0.2,0.6,z)):1;  /* the skull base curves into the neck */
       const jaw=(y<-0.15&&z<0.1)?1-0.22*sstep(-0.15,-0.9,y):1;
       const top=y>0.6?1-0.04*sstep(0.6,1,y):1;
-      p.setXYZ(i,x*rx*par*nape*jaw*mast,y*ry*(y>0?top:1),z*rz*occ*nape*mast);}
+      return [x*rx*par*nape*jaw*mast,y*ry*(y>0?top:1),z*rz*occ*nape*mast];};
+  const hg=new THREE.SphereGeometry(1,44,32);{const p=hg.attributes.position;
+    for(let i=0;i<p.count;i++){const r=headR(p.getX(i),p.getY(i),p.getZ(i));p.setXYZ(i,r[0],r[1],r[2]);}
     hg.computeVertexNormals();}
   const head=new THREE.Mesh(hg,skinMat);head.position.set(0,1.685,-0.008);B.head.attach(head);
+  head.add(makeCap(headR)); /* a fitted cap, built on the skull itself so it sits tight */
   [-1,1].forEach(s=>{const ear=new THREE.Mesh(new THREE.SphereGeometry(1,18,14),skinMat);ear.scale.set(0.012,0.033,0.023);ear.position.set(s*0.081,1.668,-0.004);ear.rotation.y=s*0.3;ear.rotation.z=s*-0.12;B.head.attach(ear);
     const cup=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),darkMat);cup.scale.set(0.004,0.017,0.012);cup.position.set(s*0.087,1.669,-0.013);B.head.attach(cup);});
   const chain=new THREE.Mesh(new THREE.TorusGeometry(0.066,0.0045,8,56),goldMat);chain.position.set(0,1.545,-0.004);chain.rotation.x=Math.PI/2+0.38;B.neck.attach(chain);
@@ -3308,7 +3343,7 @@ function makeBowler(){
   return G;
 }
 const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
-let bVis=false,bRollT=0,bLastPhase='';const walk={amt:0,dir:1,phase:0};
+let bVis=false,bRollT=0,bLastPhase='';let bCamOv=null;const walk={amt:0,dir:1,phase:0};
 const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.PerspectiveCamera(47,LW/VH,0.05,140);
 function bowlerScreenX(x){homeCam.position.set((x||0)*0.25,1.32,3.5);homeCam.lookAt((x||0)*0.2,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*0.76,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
@@ -3377,6 +3412,7 @@ function renderBowler(gs,dt,nw){
   const spd=dt>0?Math.abs(dxw)/dt:0;walk.amt+=(Math.min(1,spd/0.8)-walk.amt)*Math.min(1,dt*9);if(Math.abs(dxw)>1e-4)walk.dir=Math.sign(dxw);walk.phase+=Math.abs(dxw)*13*(0.4+0.6*walk.amt);
   poseBowler(gs,dt,nw);
   bRim.color.set(LEDCOLS[ledCol]);
+  const cz=bowler.position.z*BSCALE;if(bCamOv){bCam.position.set(bCamOv[0],bCamOv[1],bCamOv[2]);bCam.lookAt(bCamOv[3],bCamOv[4],bCamOv[5]);}else{bCam.position.set(0,2.05,BCAM_D+cz);bCam.lookAt(0,1.98,cz);} /* the camera walks with him down the approach, so he never shrinks into the distance */
   renderer.autoClear=false;renderer.clearDepth();renderer.render(bScene,bCam);renderer.autoClear=true;
 }
 
@@ -3426,7 +3462,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
