@@ -162,10 +162,10 @@ select{
   <div class="mast">
     <div>
       <h1>Restaurant <em>DM Queue</em></h1>
-      <p class="sub">Fresh Inland Empire batch — Riverside, Corona, West Covina, and the surrounding
-        IE cities, sourced 17&nbsp;Sep. The prior Orange County batch is done and has been cleared off
-        this list. Tap <b>Open app</b> to jump straight into Instagram, copy the pitch, then check it
-        off. Your ticks are saved in this browser.</p>
+      <p class="sub">Rolling list, topped up automatically — starting from inner LA and expanding
+        outward city by city, keeping roughly 50–60 leads here at all times. Tap <b>Open app</b> to
+        jump straight into Instagram, copy the pitch, then check it off. Your ticks are saved in this
+        browser.</p>
     </div>
     <div class="tally">
       <div><b id="tShown">0</b><span>Showing</span></div>
@@ -195,10 +195,11 @@ select{
   <div class="list" id="list"></div>
   <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
 
-  <p class="note"><b>Riverside, Corona, West Covina and the Inland Empire — all verified.</b> Every
-    business below was checked for a real, currently-active Instagram handle before it went on this
-    list — nothing guessed. A few real IE spots turned up without a confirmable handle or already
-    closed and were left off rather than included with bad contact info.</p>
+  <p class="note"><b>Every business here — all verified.</b> Every restaurant on this list was checked
+    for a real, currently-active Instagram handle before it went on — nothing guessed. Real spots that
+    turned up without a confirmable handle, or already closed, were left off rather than included with
+    bad contact info. The list is refilled daily starting from inner LA and working outward, so the
+    cities covered will keep changing.</p>
 
   <p class="note"><b>Stale-feed check is manual, not automatic.</b> This page has no way to reach
     Instagram's servers itself to check post dates. When you open a profile, glance at the feed —
@@ -275,12 +276,16 @@ const LIGHT = new Set([
   "Vazquez Bakery"                      // bakery
 ]);
 
+// id is derived from the Instagram handle, not array position — the list
+// gets appended to and trimmed by an automated daily refill, and a
+// position-based id would silently reassign someone's saved checkmarks
+// to a different restaurant the moment rows get inserted or removed.
 const LEADS = RAW.map((r,i)=>({
-  id:"l"+i, name:r[0], cat:r[1], hood:r[2], ig:r[3], site:r[4], tel:r[5], hook:r[6],
+  id:r[3].slice(1).toLowerCase(), name:r[0], cat:r[1], hood:r[2], ig:r[3], site:r[4], tel:r[5], hook:r[6],
   region:REGION[r[2]]||"Other", light:LIGHT.has(r[0])
 }));
 
-const KEY="antidote.dmqueue.v3";
+const KEY="antidote.dmqueue.v4";
 let done={};
 try{ done=JSON.parse(localStorage.getItem(KEY)||"{}") }catch(e){ done={} }
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(done)) }catch(e){} };
@@ -290,7 +295,7 @@ const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(done)) }catch(e){}
 // has to be a manual call: glance at the feed when you open the profile,
 // tap Mark stale if it's gone quiet. Stored separately from "contacted"
 // since a lead can be both, either, or neither.
-const STALE_KEY="antidote.dmqueue.stale.v2";
+const STALE_KEY="antidote.dmqueue.stale.v3";
 let stale={};
 try{ stale=JSON.parse(localStorage.getItem(STALE_KEY)||"{}") }catch(e){ stale={} }
 const saveStale=()=>{ try{ localStorage.setItem(STALE_KEY,JSON.stringify(stale)) }catch(e){} };
