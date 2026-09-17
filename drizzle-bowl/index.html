@@ -699,6 +699,11 @@ function updateParts(dt){
 }
 
 /* ---------- crowd ---------- */
+/* the fans are real people: a sprite sheet of 12 supporters, three poses each (idle, arms up, phone up). It loads in the background; the drawn fans stand in until it arrives. */
+var CROWD_ATLAS='https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/b8a576e3-758b-4c79-ab43-4184618d4444.webp',
+    CA_COLS=6,CA_W=224,CA_H=448,CA_PEOPLE=12,crowdImg=new Image(),crowdReady=false;
+crowdImg.crossOrigin='anonymous';crowdImg.onload=function(){crowdReady=true;};crowdImg.onerror=function(){crowdReady=false;};
+try{crowdImg.src=CROWD_ATLAS;}catch(e){}
 var SKINS=['#b8845c','#7a4a2a','#d9a577','#5a3520','#c9946a','#3d2415'],
     SHIRTS=['#4d8bf0','#b8322c','#43aa8b','#f2a81d','#9b5de5','#fbe9c4','#ff6b35','#2ec4b6','#e07be0','#8ecae6','#d62828','#606c38'],
     HAIRC=['#120b0d','#2a1a10','#4a2c14','#000000'],
@@ -798,6 +803,14 @@ function drawCrowd(){
     ctx.save();ctx.translate(c.x,c.y);ctx.globalAlpha=c.a*cfade;ctx.scale(sc*(c.ws||1),sc*(c.hs||1));
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,1,15,4.5,0,0,7);ctx.fill();
     ctx.translate(0,-bob);
+    if(crowdReady){
+      var pose=0;if(c.state==='in'){if(c.phone&&(ch2||c.flashT>0||g.streak>=3))pose=2;else if(ch2)pose=1;}
+      var who=(c.n*5+(c.n>>1)+(g.crowdSeed||0))%CA_PEOPLE,cell=who*3+pose,sx=(cell%CA_COLS)*CA_W,sy=Math.floor(cell/CA_COLS)*CA_H;
+      var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0;
+      ctx.drawImage(crowdImg,sx,sy,CA_W,CA_H,-17+shake+step*0.3,-68,34,68);
+      if(pose===2&&c.flashT>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(1,-50,3.5+Math.random()*2.5,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(1,-50,10,0,7);ctx.fill();}
+      if(c.sign&&c.state==='in'&&pose!==2){var sy2=ch2?-88:-80;ctx.fillStyle='#fbe9c4';rr(-21,sy2-9,42,18,2);ctx.fill();ctx.strokeStyle='#8a5a2e';ctx.lineWidth=1.5;rr(-21,sy2-9,42,18,2);ctx.stroke();txt(c.sign,0,sy2,'bold 9px Impact,"Arial Black",sans-serif','#b8322c');}
+    }else{
     ctx.strokeStyle='#141012';ctx.lineWidth=5.5;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(-4.5,-20);ctx.lineTo(-4.5+step,-1);ctx.moveTo(4.5,-20);ctx.lineTo(4.5-step,-1);ctx.stroke();
     ctx.fillStyle='#241a16';ctx.beginPath();ctx.ellipse(-4.5+step,0,4,2,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(4.5-step,0,4,2,0,0,7);ctx.fill();
@@ -840,6 +853,7 @@ function drawCrowd(){
     if(c.glasses){ctx.strokeStyle='#1a1214';ctx.lineWidth=1.1;ctx.strokeRect(-6.2,-55.4,5.4,4.2);ctx.strokeRect(0.8,-55.4,5.4,4.2);ctx.beginPath();ctx.moveTo(-0.8,-53.4);ctx.lineTo(0.8,-53.4);ctx.stroke();}
     if(c.beard){ctx.fillStyle='rgba(30,20,12,.85)';ctx.beginPath();ctx.moveTo(-8.6,-51);ctx.quadraticCurveTo(-8,-41.5,0,-42.6);ctx.quadraticCurveTo(8,-41.5,8.6,-51);ctx.quadraticCurveTo(6,-45.5,0,-45.2);ctx.quadraticCurveTo(-6,-45.5,-8.6,-51);ctx.fill();}
     ctx.restore();
+    }
     if(boo&&c.state==='in'&&c.n%5===0){ctx.fillStyle='#fbe9c4';rr(-20,-86,40,16,3);ctx.fill();txt('BOO!',0,-78,'bold 10px Impact,"Arial Black",sans-serif','#b8322c');}
     else if(c.chantT>0&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-27,-92,54,15,3);ctx.fill();txt('AN-TI-DOTE!',0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
     else if(c.yellT>0&&c.yell&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-26,-92,52,15,3);ctx.fill();txt(c.yell,0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
@@ -3132,6 +3146,7 @@ let soakT=0;const bDrips=[];const dripGeo=new THREE.SphereGeometry(0.012,6,6),dr
 const WETM=[[skinMat,0.58],[shirtMat,0.72],[sleeveMat,0.72],[denimMat,0.9]];WETM.forEach(w=>{w.push(w[0].color.clone());});
 function updateSoak(dt){if(soakT<=0&&!bDrips.length)return;if(soakT>0)soakT-=dt;const wet=Math.max(0,Math.min(1,soakT/2.5));
   WETM.forEach(w=>{w[0].roughness=w[1]+(0.12-w[1])*wet;w[0].color.copy(w[2]).multiplyScalar(1-0.3*wet);});
+  if(real)real.mats.forEach(m=>{m.roughness=m.__rough+(0.15-m.__rough)*wet;m.color.copy(m.__base).multiplyScalar(1-0.3*wet);});
   if(wet>0.2&&Math.random()<dt*22*wet){const m=new M(dripGeo,dripMat);const lx=(Math.random()-0.5)*0.5,ly=0.7+Math.random()*1.0,lz=(Math.random()-0.5)*0.25;
     m.position.set((bowler.position.x+lx)*BSCALE,bRoot.position.y+(bowler.position.y+ly)*BSCALE,(bowler.position.z+lz)*BSCALE);m.userData={vy:-0.2-Math.random()*0.4};bScene.add(m);bDrips.push(m);}
   for(let i=bDrips.length-1;i>=0;i--){const m=bDrips[i];m.userData.vy-=6*dt;m.position.y+=m.userData.vy*dt;if(m.position.y<bRoot.position.y-0.05){bScene.remove(m);bDrips.splice(i,1);}}}
@@ -3343,6 +3358,86 @@ function makeBowler(){
   return G;
 }
 const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
+/* ---------- THE REAL ANTIDOTE: a rigged, textured 3D scan of him built from his photos (front and back). It loads in the
+   background; the procedural bowler stands in until it arrives and then becomes the hidden control rig: every pose,
+   walk cycle and swing still runs on the old joints, and each frame the scan's skeleton is aimed to match them. ---------- */
+const BOWLER_GLB='https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/d565fa7b-246b-4456-8f64-5d83afaa5a2d.glb';
+let real=null;
+const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),DOWN=new THREE.Vector3(0,-1,0),
+      _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3();
+const BONE_NAMES={hips:['hips','pelvis'],spine:['spine02','spine'],spine1:['spine01','spine1'],spine2:['spine2','chest','spine'],neck:['neck'],head:['head'],
+  shL:['leftarm','leftupperarm','upperarml'],elL:['leftforearm','leftlowerarm','lowerarml'],wrL:['lefthand','handl'],
+  shR:['rightarm','rightupperarm','upperarmr'],elR:['rightforearm','rightlowerarm','lowerarmr'],wrR:['righthand','handr'],
+  hpL:['leftupleg','leftupperleg','leftthigh'],knL:['leftleg','leftlowerleg','leftcalf'],anL:['leftfoot'],toeL:['lefttoebase','lefttoe'],
+  hpR:['rightupleg','rightupperleg','rightthigh'],knR:['rightleg','rightlowerleg','rightcalf'],anR:['rightfoot'],toeR:['righttoebase','righttoe'],crown:['headend','headtop']};
+function findBone(root,pats){const all=[];root.traverse(o=>{if(o.isBone)all.push([o,o.name.toLowerCase().replace(/[^a-z0-9]/g,'')]);});
+  for(const p of pats){for(const [o,n] of all)if(n===p)return o;}
+  for(const p of pats){for(const [o,n] of all)if(n.endsWith(p))return o;}
+  return null;}
+function installReal(root,keepProc){
+  const bones={};for(const k in BONE_NAMES)bones[k]=findBone(root,BONE_NAMES[k]);
+  const need=['spine','head','shL','elL','wrL','shR','elR','wrR','hpL','knL','hpR','knR'].filter(k=>!bones[k]);
+  if(need.length)throw new Error('rig bones missing: '+need.join(','));
+  if(real){bowler.remove(real.root);real=null;}
+  root.rotation.set(0,Math.PI,0);root.scale.setScalar(1);root.position.set(0,0,0);root.updateMatrixWorld(true);   /* the scan faces +z; he bowls toward -z */
+  root.traverse(o=>{if(o.isSkinnedMesh&&o.skeleton)o.skeleton.update();});
+  const wp=o=>o.getWorldPosition(new THREE.Vector3());
+  const top=wp(bones.crown||bones.head).y+(bones.crown?0:0.12),floor=Math.min(0,wp(bones.toeL||bones.anL||bones.hpL).y-0.03),jh=top-floor;
+  let box=null;try{box=new THREE.Box3().setFromObject(root,true);}catch(e){box=null;}
+  if(!box||!isFinite(box.min.y)||!(box.max.y-box.min.y>jh*0.7&&box.max.y-box.min.y<jh*1.5)){const hx=wp(bones.hips||bones.spine);box=new THREE.Box3(new THREE.Vector3(hx.x-0.5,floor,hx.z-0.3),new THREE.Vector3(hx.x+0.5,top,hx.z+0.3));}
+  const sc=1.76/(box.max.y-box.min.y);   /* feet on the floor, his height in bowler units */
+  root.scale.setScalar(sc);root.position.set(-(box.min.x+box.max.x)/2*sc,-box.min.y*sc,-(box.min.z+box.max.z)/2*sc);root.updateMatrixWorld(true);
+  /* rest pose, in the bowler's frame: every bone's orientation and the direction it points; poses are deltas from these */
+  const restQ={},restD={};
+  for(const k in bones){const b=bones[k];if(!b)continue;restQ[k]=b.getWorldQuaternion(new THREE.Quaternion());
+    const c=b.children.find(x=>x.isBone),d=new THREE.Vector3();
+    if(c)d.copy(wp(c)).sub(wp(b));else d.copy(wp(b)).sub(wp(b.parent));
+    if(d.lengthSq()<1e-10)d.set(0,1,0);restD[k]=d.normalize();}
+  const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.7;mats.push(m);}});}});
+  const ws=bones.wrR.getWorldScale(new THREE.Vector3()).x||1;
+  const hb=new THREE.Mesh(ballGeo,ballMat);bones.wrR.add(hb);hb.scale.setScalar(1/ws);
+  hb.position.copy(bones.wrR.worldToLocal(wp(bones.wrR).add(restD.wrR.clone().multiplyScalar(0.16))));   /* the ball hangs a hand's length past the wrist */
+  real={root,bones,restQ,restD,mats,ball:hb,sc,ws,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
+  bowler.add(root);bowler.children.forEach(c=>{if(c!==root&&c!==bowler.userData.shadow)c.visible=!!keepProc;});
+  return real;
+}
+async function loadRealBowler(){
+  try{
+    const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+    const gltf=await new GLTFLoader().loadAsync(BOWLER_GLB);
+    installReal(gltf.scene,false);console.log('real bowler loaded');
+  }catch(e){console.warn('real bowler unavailable, keeping the built one:',e&&e.message);}
+}
+function buildRigFromSpec(spec){ /* test rig: the scan's skeleton as sticks, no mesh */
+  const root=new THREE.Group(),objs={},mat=new THREE.MeshStandardMaterial({color:0xff3366});
+  spec.nodes.forEach(n=>{const o=n.bone?new THREE.Bone():new THREE.Object3D();o.name=n.name;o.position.fromArray(n.t);o.quaternion.fromArray(n.r);o.scale.fromArray(n.s);objs[n.i]=o;});
+  spec.nodes.forEach(n=>{(n.parent<0?root:objs[n.parent]).add(objs[n.i]);});
+  spec.nodes.forEach(n=>{if(!n.bone)return;const b=objs[n.i],c=b.children.find(x=>x.isBone),L=c?c.position.length():6,dir=c?c.position.clone().normalize():new THREE.Vector3(0,1,0);
+    const g=new THREE.BoxGeometry(2.4,L,2.4);g.translate(0,L/2,0);const m=new THREE.Mesh(g,mat);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);b.add(m);});
+  return root;}
+function setBone(k,delta){const b=real.bones[k];if(!b||!real.restQ[k])return;
+  _rq.copy(delta).multiply(real.restQ[k]);                                                   /* wanted orientation, bowler frame */
+  b.parent.updateWorldMatrix(true,false);b.parent.getWorldQuaternion(_rq2).premultiply(_bq);  /* the parent, bowler frame */
+  b.quaternion.copy(_rq2.invert().multiply(_rq));}
+function aimBone(k,dir){const rd=real.restD[k];if(!rd)return;setBone(k,_rq3.setFromUnitVectors(rd,_rv.copy(dir).normalize()));}
+const qx=a=>new THREE.Quaternion().setFromAxisAngle(XA,a),qy=a=>new THREE.Quaternion().setFromAxisAngle(YA,a),qz=a=>new THREE.Quaternion().setFromAxisAngle(ZA,a);
+function driveReal(){ /* read the control rig's joint angles (already smoothed) and pose the scan's skeleton to match */
+  const U=bowler.userData,A=U.arms,L=U.legs,B=U.B;
+  bowler.getWorldQuaternion(_bq).invert();
+  const sp=B.spine.rotation.x,lean=bowler.rotation.x;
+  setBone('spine',qx(sp*0.4));setBone('spine1',qx(sp*0.7));setBone('spine2',qx(sp));
+  setBone('neck',qx(sp+B.head.rotation.x*0.5));
+  setBone('head',qx(sp+B.head.rotation.x).multiply(qy(B.head.rotation.y)));
+  ['L','R'].forEach(s=>{const sh=A[s].sh.rotation,el=A[s].el.rotation.x,wr=A[s].wr.rotation.x;
+    const qs=qx(sp).multiply(qx(sh.x)).multiply(qz(sh.z));                    /* chest, then the shoulder joint */
+    aimBone('sh'+s,_rv2.copy(DOWN).applyQuaternion(qs));
+    const qe=qs.clone().multiply(qx(el));aimBone('el'+s,_rv2.copy(DOWN).applyQuaternion(qe));
+    aimBone('wr'+s,_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))));
+    const hp=L[s].hp.rotation.x,kn=L[s].kn.rotation.x;
+    setBone('hp'+s,qx(hp));setBone('kn'+s,qx(hp+kn));setBone('an'+s,qx(-lean));});
+  real.ball.visible=A.R.ball.visible;
+}
+loadRealBowler();
 let bVis=false,bRollT=0,bLastPhase='';let bCamOv=null;const walk={amt:0,dir:1,phase:0};
 const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.PerspectiveCamera(47,LW/VH,0.05,140);
 function bowlerScreenX(x){homeCam.position.set((x||0)*0.25,1.32,3.5);homeCam.lookAt((x||0)*0.2,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*0.76,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
@@ -3397,6 +3492,7 @@ function poseBowler(gs,dt,nw){
   B.chest.scale.y=1+0.008*br;B.chest.rotation.x=-0.01*br;
   A.R.ball.visible=!(ph==='roll'||ph==='settle'||ph==='result')&&!(ph==='throw'&&tp>=0.87)&&!cheer;
   U.shadow.scale.setScalar(1-0.35*Math.max(0,bowler.position.y));
+  if(real)driveReal();
 }
 function renderBowler(gs,dt,nw){
   updateSoak(dt);
@@ -3462,7 +3558,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
