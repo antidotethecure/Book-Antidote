@@ -253,7 +253,22 @@ const RAW = [
 ["Basil & Co","Thai","Diamond Bar","@thebasilandcompany","https://basilandco.net","(909) 551-0202",""],
 ["Pho Ha Plus","Vietnamese","Diamond Bar","@phoha_plus","https://phohaplusdiamondbar.com","",""],
 ["Pradera Brunch","Breakfast/Brunch (Mexican)","Baldwin Park","@praderabrunch","","",""],
-["Mr. Pho California Kitchen","Vietnamese","Walnut","@mrphocaliforniakitchen","","(909) 468-5866",""]
+["Mr. Pho California Kitchen","Vietnamese","Walnut","@mrphocaliforniakitchen","","(909) 468-5866",""],
+["Redbird","Modern American","Downtown Los Angeles","@redbirdla","https://redbird.la/","(213) 788-1191",""],
+["Joyce Soul & Sea","Southern / Seafood","Downtown Los Angeles","@joyce_dtla","https://www.joycela.com/","(213) 395-0202",""],
+["Soban","Korean","Koreatown","@sobanlosangeles","https://www.sobanla.com/","(323) 936-9106","soy-marinated raw crab (ganjang gejang)"],
+["Biriyani Kabob House","Pakistani/Indian/Bangladeshi Halal","Koreatown","@biriyanikabobhouse","https://biriyanikabobhouse.com/","(213) 384-3570",""],
+["Thien Huong","Vietnamese","Chinatown (LA)","@thienhuong.727","https://thienhuongla.squarespace.com/","(213) 626-0764","bun bo hue"],
+["Nam Coffee","Vietnamese Coffee/Cafe","Chinatown (LA)","@namcoffeeco","https://www.nam.coffee/","(213) 988-7155",""],
+["Woon","Chinese (Home-Style)","Historic Filipinotown","@woonkitchen","https://www.woonkitchen.com/","(213) 674-7434",""],
+["Grá","Pizza/Natural Wine Bar","Historic Filipinotown","@gra_la_","https://www.grarestaurant.com/","",""],
+["Gigi's Bakery & Cafe","Cuban Bakery/Cafe","Historic Filipinotown","@gigis__bakery_","https://gigisbakeryla.com/","(213) 483-6152",""],
+["El Parian","Mexican (Goat Birria)","Pico-Union","@elparianbirria","","(213) 386-7361","goat birria"],
+["El Colmao","Cuban","Pico-Union","@el_colmao_","https://elcolmaoca.com/","(213) 386-6131","ropa vieja"],
+["Langer's Delicatessen","Jewish Deli","Westlake","@langersdeli","https://www.langersdeli.com/","(213) 483-8050","the No. 19 pastrami sandwich"],
+["Mama's International Tamales","Salvadoran/Mexican","Westlake","@mamastamales","","(818) 554-3987","vegan pupusas (jackfruit revuelta)"],
+["Ditroit Taqueria","Mexican Street Food","Arts District (LA)","@ditroitdtla","https://ditroittacos.com/","(213) 559-7257","cochinita pibil tacos"],
+["Bread Lounge","Bakery/Cafe","Arts District (LA)","@breadlounge","https://breadlounge.com/","(213) 327-0782",""]
 ];
 
 const REGION = {
@@ -265,7 +280,11 @@ const REGION = {
   "La Puente":"San Gabriel Valley","Walnut":"San Gabriel Valley",
   "Diamond Bar":"San Gabriel Valley","Pomona":"San Gabriel Valley",
   "Rialto":"Inland Empire","Fontana":"Inland Empire",
-  "Colton":"Inland Empire","Redlands":"Inland Empire"
+  "Colton":"Inland Empire","Redlands":"Inland Empire",
+  "Downtown Los Angeles":"Downtown & Inner LA","Koreatown":"Downtown & Inner LA",
+  "Chinatown (LA)":"Downtown & Inner LA","Historic Filipinotown":"Downtown & Inner LA",
+  "Pico-Union":"Downtown & Inner LA","Westlake":"Downtown & Inner LA",
+  "Arts District (LA)":"Downtown & Inner LA"
 };
 
 /* Places that lead with pastry, coffee or a light bite rather than a full plate.
@@ -273,7 +292,10 @@ const REGION = {
    Toggle the filter to see them. */
 const LIGHT = new Set([
   "Toasted Inc (Coffee & Toast Bar)",  // coffee/toast only
-  "Vazquez Bakery"                      // bakery
+  "Vazquez Bakery",                     // bakery
+  "Nam Coffee",                         // coffee only
+  "Gigi's Bakery & Cafe",               // bakery
+  "Bread Lounge"                        // bakery
 ]);
 
 // id is derived from the Instagram handle, not array position — the list
