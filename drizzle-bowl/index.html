@@ -575,6 +575,7 @@ function projTop(x,y){var d=(y-0.9)/0.16;var sy=300-d*70;var sc=1.15-d*0.25;retu
 
 /* ---------- state ---------- */
 var g;
+var CHG_AT=0.775,CHG_W=0.075; /* the charge window on the power meter: land inside it for a charged ball; with the ultimate flame lit, that is the only throw that detonates */
 function meterMul(){return Math.min(2.75,1+0.25*Math.max(0,(g&&g.streak||0)-3));} /* spin and power meters run 25% faster for every strike past the third */
 function newGame(){sfx.fireStop();
   g={frame:0,rolls:[],fr:[],phase:'aim',t:0,x:0,spin:0,spinDir:1,ball:null,pins:[],parts:[],splats:[],msg:'',msgT:0,taunt:null,tauntT:1.5,over:false,shake:0,cheer:0,throwT:0,bowlerX:0,flash:0,fx:null,giggleT:0,crowd:[],crowdTarget:3,stall:0,lastTotal:0,submitted:false,board:null,boardT:0,streak:0,conf:[],confT:0,power:0.5,powerDir:1,xT:0,bonus:0,floats:[],cam:{z:1,fx:W/2,fy:BOT.y+210}};
@@ -700,10 +701,11 @@ function updateParts(dt){
 
 /* ---------- crowd ---------- */
 /* the fans are real people: a sprite sheet of 12 supporters, three poses each (idle, arms up, phone up). It loads in the background; the drawn fans stand in until it arrives. */
-var CROWD_ATLAS='https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/b8a576e3-758b-4c79-ab43-4184618d4444.webp',
+var CROWD_ATLASES=['assets/crowd.webp','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/b8a576e3-758b-4c79-ab43-4184618d4444.webp'],crowdSrcI=0,
     CA_COLS=6,CA_W=224,CA_H=448,CA_PEOPLE=12,crowdImg=new Image(),crowdReady=false;
-crowdImg.crossOrigin='anonymous';crowdImg.onload=function(){crowdReady=true;};crowdImg.onerror=function(){crowdReady=false;};
-try{crowdImg.src=CROWD_ATLAS;}catch(e){}
+crowdImg.crossOrigin='anonymous';crowdImg.onload=function(){crowdReady=true;};
+crowdImg.onerror=function(){crowdReady=false;crowdSrcI++;if(crowdSrcI<CROWD_ATLASES.length){try{crowdImg.src=CROWD_ATLASES[crowdSrcI];}catch(e){}}};
+try{crowdImg.src=CROWD_ATLASES[0];}catch(e){}
 var SKINS=['#b8845c','#7a4a2a','#d9a577','#5a3520','#c9946a','#3d2415'],
     SHIRTS=['#4d8bf0','#b8322c','#43aa8b','#f2a81d','#9b5de5','#fbe9c4','#ff6b35','#2ec4b6','#e07be0','#8ecae6','#d62828','#606c38'],
     HAIRC=['#120b0d','#2a1a10','#4a2c14','#000000'],
@@ -711,15 +713,16 @@ var SKINS=['#b8845c','#7a4a2a','#d9a577','#5a3520','#c9946a','#3d2415'],
 function spawnConfetti(){
   for(var i=0;i<140;i++)g.conf.push({x:Math.random()*W,y:-20-Math.random()*320,vx:(Math.random()-0.5)*40,vy:70+Math.random()*100,rot:Math.random()*6.3,rv:(Math.random()-0.5)*9,w:4+Math.random()*5,h:6+Math.random()*7,c:SHIRTS[i%SHIRTS.length],ph:Math.random()*6.3});
 }
-function crowdSlot(n){ /* two columns per side, from the foreground floor up the lane rail */
-  var side=n%2?1:-1,k=Math.floor(n/2),row=Math.floor(k/2),col=k%2;
-  var y=Math.max(536,772-row*30),x0=15+col*27+((row%2)*9)+((k*13)%7);
-  return {x:side<0?x0:W-x0,y:y,side:side};
+var ROW_Y=[790,750,712,678],ROW_S=[1.28,1.1,0.94,0.8];
+function crowdSlot(n){ /* the stands: four rows a side beside the approach, the front row nearest the camera, packed and overlapping */
+  var side=n%2?1:-1,k=Math.floor(n/2),row=k%4,col=Math.floor(k/4)%4;
+  var y=ROW_Y[row],x0=26+col*30+(row%2)*15+((k*7)%9);
+  return {x:side<0?x0+34:W-x0,y:y,side:side,row:row}; /* the left stand sits a step in, clear of the player card */
 }
 function seedCrowd(){for(var n=0;n<6;n++)addFan(n,true);}
 function addFan(n,instant){
   var sl=crowdSlot(n),n0=n;n=(n*31+(g.crowdSeed||0))%9973;var female=(n*7+3)%5<2;   /* looks are drawn from a fresh seed each game */
-  g.crowd.push({n:n0,x:sl.x,y:sl.y,tx:sl.x,side:sl.side,ex:sl.side<0?-40:W+40,
+  g.crowd.push({n:n0,x:sl.x,y:sl.y,tx:sl.x,side:sl.side,row:sl.row||0,ex:sl.side<0?-40:W+40,
     skin:SKINS[n%SKINS.length],shirt:SHIRTS[(n*5+1)%SHIRTS.length],hair:HAIRC[n%HAIRC.length],
     female:female,hairStyle:(n*3)%4,phone:(n*11)%10<6,flashT:0,foodE:(((n*13)%10<4)&&(n*11)%10>=6)?['\ud83c\udf69','\ud83c\udf55','\ud83c\udf54','\ud83c\udf2d','\ud83c\udf5f'][n%5]:null,
     sign:n%3===0?SIGNS[(n*7)%SIGNS.length]:null,state:'in',a:instant?1:0,ph:Math.random()*6.3,
@@ -747,7 +750,7 @@ function crowdUpdate(dt){
 function crowdReact(total,goodRoll,pinsDown){
   /* going viral: the crowd grows with the score, extra on big rolls */
   var byScore=5+Math.floor(total/6)+(goodRoll?2:0);
-  g.crowdTarget=Math.max(1,Math.min(34,byScore));
+  g.crowdTarget=Math.max(1,Math.min(32,byScore));
   /* the more pins fall, the more they turn up */
   g.hype=Math.max(g.hype||0,Math.min(1,pinsDown/10+(goodRoll?0.35:0)));
   if(pinsDown>=6)g.crowd.forEach(function(f){if(f.state==='in')f.hypeT=Math.max(f.hypeT||0,1.5+pinsDown*0.3);});
@@ -806,10 +809,10 @@ function drawCrowd(){
     if(crowdReady){
       var pose=0;if(c.state==='in'){if(c.phone&&(ch2||c.flashT>0||g.streak>=3))pose=2;else if(ch2)pose=1;}
       var who=(c.n*5+(c.n>>1)+(g.crowdSeed||0))%CA_PEOPLE,cell=who*3+pose,sx=(cell%CA_COLS)*CA_W,sy=Math.floor(cell/CA_COLS)*CA_H;
-      var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0;
-      ctx.drawImage(crowdImg,sx,sy,CA_W,CA_H,-17+shake+step*0.3,-68,34,68);
-      if(pose===2&&c.flashT>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(1,-50,3.5+Math.random()*2.5,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(1,-50,10,0,7);ctx.fill();}
-      if(c.sign&&c.state==='in'&&pose!==2){var sy2=ch2?-88:-80;ctx.fillStyle='#fbe9c4';rr(-21,sy2-9,42,18,2);ctx.fill();ctx.strokeStyle='#8a5a2e';ctx.lineWidth=1.5;rr(-21,sy2-9,42,18,2);ctx.stroke();txt(c.sign,0,sy2,'bold 9px Impact,"Arial Black",sans-serif','#b8322c');}
+      var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0,kk=ROW_S[c.row||0]/sc,sw=48*kk,shh=96*kk;
+      ctx.drawImage(crowdImg,sx,sy,CA_W,CA_H,-sw/2+shake+step*0.3,-shh,sw,shh);
+      if(pose===2&&c.flashT>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(1,-shh*0.74,3.5+Math.random()*2.5,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(1,-shh*0.74,10,0,7);ctx.fill();}
+      if(c.sign&&c.state==='in'&&pose!==2){var sy2=-shh-(ch2?14:6);ctx.fillStyle='#fbe9c4';rr(-21,sy2-9,42,18,2);ctx.fill();ctx.strokeStyle='#8a5a2e';ctx.lineWidth=1.5;rr(-21,sy2-9,42,18,2);ctx.stroke();txt(c.sign,0,sy2,'bold 9px Impact,"Arial Black",sans-serif','#b8322c');}
     }else{
     ctx.strokeStyle='#141012';ctx.lineWidth=5.5;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(-4.5,-20);ctx.lineTo(-4.5+step,-1);ctx.moveTo(4.5,-20);ctx.lineTo(4.5-step,-1);ctx.stroke();
@@ -1038,7 +1041,7 @@ function update(dt){
   if(g.phase==='spin'){g.spin+=g.spinDir*dt*1.9*meterMul();if(g.spin>1){g.spin=1;g.spinDir=-1;}if(g.spin<-1){g.spin=-1;g.spinDir=1;}}
   if(g.phase==='power'){g.power+=g.powerDir*dt*2.2*meterMul();if(g.power>1){g.power=1;g.powerDir=-1;}if(g.power<0.05){g.power=0.05;g.powerDir=1;}}
   if(g.phase==='throw'){g.throwT+=dt;if(g.throwT>1.0){g.phase='roll'; /* the ball leaves his hand at the bottom of the swing, 1.0 s into the approach */
-    var chg=Math.abs((g.power||0.5)-0.775)<0.016;
+    var chg=Math.abs((g.power||0.5)-CHG_AT)<CHG_W;
     if(chg){g.msg='CHARGED UP!';g.msgT=1.4;g.flash=Math.max(g.flash,0.3);sfx.tick();setTimeout(sfx.tick,90);setTimeout(sfx.tick,180);}
     if(USE3D){g.ball={x:g.x,x0:g.x,spin:g.spin,y:0,vx:0,vy:throwSpeed(),rot:0,gutter:false,free:true,hit:false,done:false,rest:false,pit:0,charged:chg};g.ball.fire=g.streak>=3;g.ball.ult=g.streak>=6;if(B3D.setFire)B3D.setFire(g.streak>=6?2:(g.streak>=3?1:0));B3D.throwBall(g.x,g.spin,g.power,chg);}
     else{var wob=Math.max(0,(g.power||0.5)-0.7)*0.20*(Math.random()<0.5?-1:1)*(0.4+Math.random()*0.6);g.ball={x:g.x,x0:g.x,spin:g.spin,y:0,vx:wob,vy:throwSpeed(),rot:0,gutter:false,free:true,hit:false,done:false};}
@@ -1507,7 +1510,8 @@ function drawPowerBar(){
   txt('POWER',x+w/2,y-15,'bold 9px Verdana,sans-serif','#fbe9c4');
   ctx.fillStyle='#241a16';rr(x,y,w,h,5);ctx.fill();
   ctx.fillStyle='rgba(67,170,139,.35)';ctx.fillRect(x,y+h*0.10,w,h*0.25); /* sweet spot 65-90% */
-  ctx.save();ctx.shadowColor='#ffd166';ctx.shadowBlur=8;ctx.fillStyle='#fff';ctx.fillRect(x-2,y+h*0.225-1.1,w+4,2.2);ctx.restore(); /* CHARGE line */
+  ctx.save();ctx.shadowColor='#ffd166';ctx.shadowBlur=10;ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(x-2,y+h*(1-CHG_AT-CHG_W),w+4,h*CHG_W*2);ctx.fillStyle='#fff';ctx.fillRect(x-3,y+h*(1-CHG_AT-CHG_W)-1,w+6,2);ctx.fillRect(x-3,y+h*(1-CHG_AT+CHG_W)-1,w+6,2);ctx.restore(); /* the CHARGE window */
+  if(g.streak>=6){txt('BOOM',x+w/2,y+h*(1-CHG_AT)+3,'bold 8px Verdana,sans-serif','#1a1214');}
   var p=g.power,fh=h*p;
   var grd=ctx.createLinearGradient(0,y+h,0,y);grd.addColorStop(0,'#43aa8b');grd.addColorStop(0.55,'#f2a81d');grd.addColorStop(1,'#e63946');
   ctx.save();ctx.beginPath();rr(x,y+h-fh,w,fh,5);ctx.clip();ctx.fillStyle=grd;ctx.fillRect(x,y,w,h);ctx.restore();
@@ -2218,7 +2222,7 @@ function spawnRiders(tc){
     r.userData={t:0,x0:r.position.x,x1:tc.park+(tc.park<0?-5.5:5.5),ph:Math.random()*6};
     amb.add(r);riders.push(r);}
   /* the new arrivals join the crowd, already hyped */
-  try{const g=window.ADB&&window.ADB.g;if(g){g.crowdTarget=Math.min(34,(g.crowdTarget||6)+2);g.cheer=Math.max(g.cheer||0,1.4);g.hype=Math.max(g.hype||0,0.6);}}catch(e){}
+  try{const g=window.ADB&&window.ADB.g;if(g){g.crowdTarget=Math.min(32,(g.crowdTarget||6)+2);g.cheer=Math.max(g.cheer||0,1.4);g.hype=Math.max(g.hype||0,0.6);}}catch(e){}
 }
 teslas.forEach(tc=>{tc.grp.position.set(-14,1.42,-18.30);amb.add(tc.grp);});
 const carBanT=bake(256,64,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#a32c26';g.fillRect(0,6,w,h-12);
@@ -2922,7 +2926,7 @@ function throwBall(ox,spin,power,charged){
       if(f&&!f.counted){f.counted=true;bonusEvents.push({pts:f.pts,e:f.e,ox:e.body.position.x*OLDX,oy:zToOld(e.body.position.z)});}}
     else if(e.body.__pin){const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
       e.body.wakeUp();
-      if(!S.hit){S.hit=true;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;if(fireLevel>=2)explodeAt(ballBody.position);spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
+      if(!S.hit){S.hit=true;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;if(fireLevel>=2&&S.charged)explodeAt(ballBody.position);spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
         if(A3.pinHit)A3.pinHit(Math.max(iv,5),'ball');
         if(A3.playCrash){A3.playCrash(0.8,0.98+Math.random()*0.06);}else if(A3.sfx)A3.sfx.crash();}
       else if(nw-lastCrash>0.05){lastCrash=nw;if(A3.pinHit)A3.pinHit(iv,'ball');else if(A3.sfx)A3.sfx.crash();
@@ -3361,7 +3365,7 @@ const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BS
 /* ---------- THE REAL ANTIDOTE: a rigged, textured 3D scan of him built from his photos (front and back). It loads in the
    background; the procedural bowler stands in until it arrives and then becomes the hidden control rig: every pose,
    walk cycle and swing still runs on the old joints, and each frame the scan's skeleton is aimed to match them. ---------- */
-const BOWLER_GLB='https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/d565fa7b-246b-4456-8f64-5d83afaa5a2d.glb';
+const BOWLER_GLBS=['assets/antidote.glb','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/5a12dc24-6b58-4d35-9a91-652a6b689b9c.glb'];
 let real=null;
 const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),DOWN=new THREE.Vector3(0,-1,0),
       _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3();
@@ -3393,7 +3397,7 @@ function installReal(root,keepProc){
     const c=b.children.find(x=>x.isBone),d=new THREE.Vector3();
     if(c)d.copy(wp(c)).sub(wp(b));else d.copy(wp(b)).sub(wp(b.parent));
     if(d.lengthSq()<1e-10)d.set(0,1,0);restD[k]=d.normalize();}
-  const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.7;mats.push(m);}});}});
+  const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){if(m.roughness!=null)m.roughness=Math.max(m.roughness,0.78);if(m.metalness!=null)m.metalness=0;m.flatShading=false;if(m.emissiveIntensity!=null)m.emissiveIntensity=0.3;if(m.specularIntensity!=null)m.specularIntensity=0.3;if(m.specularColor)m.specularColor.setScalar(1);if(m.map){m.map.anisotropy=8;m.map.needsUpdate=true;}m.needsUpdate=true;m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.78;mats.push(m);}});}});
   const ws=bones.wrR.getWorldScale(new THREE.Vector3()).x||1;
   const hb=new THREE.Mesh(ballGeo,ballMat);bones.wrR.add(hb);hb.scale.setScalar(1/ws);
   hb.position.copy(bones.wrR.worldToLocal(wp(bones.wrR).add(restD.wrR.clone().multiplyScalar(0.16))));   /* the ball hangs a hand's length past the wrist */
@@ -3404,7 +3408,9 @@ function installReal(root,keepProc){
 async function loadRealBowler(){
   try{
     const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
-    const gltf=await new GLTFLoader().loadAsync(BOWLER_GLB);
+    let gltf=null,err=null;
+    for(const u of BOWLER_GLBS){try{gltf=await new GLTFLoader().loadAsync(u);break;}catch(e){err=e;}}
+    if(!gltf)throw err||new Error('no source');
     installReal(gltf.scene,false);console.log('real bowler loaded');
   }catch(e){console.warn('real bowler unavailable, keeping the built one:',e&&e.message);}
 }
