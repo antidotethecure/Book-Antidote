@@ -311,6 +311,25 @@ function startMusic(){
 function playTrack(){if(!music.el)return;music.el.src=SONGS[music.i].url;var p=music.el.play();if(p&&p.catch)p.catch(function(){});}
 function toggleMute(){music.muted=!music.muted;if(music.el)music.el.muted=music.muted;ytToggleMute();}
 
+/* ---------- gamepad (PS5 DualSense, Xbox, any standard-mapping pad): the Gamepad API works in Safari, Chrome, Edge on phones, tablets, laptops and TVs ---------- */
+var pad={conn:false,prev:{},hint:0};
+window.addEventListener('gamepadconnected',function(e){pad.conn=true;pad.hint=4;g.msg='🎮 CONTROLLER READY';g.msgT=2.2;padRumble(0.4,0.6,180);});
+window.addEventListener('gamepaddisconnected',function(){pad.conn=false;});
+function padEdge(gp,i){var b=gp.buttons[i];var on=!!(b&&(b.pressed||b.value>0.5));var was=!!pad.prev[i];pad.prev[i]=on;return on&&!was;}
+function pollPad(dt){var gps=null;try{gps=navigator.getGamepads?navigator.getGamepads():null;}catch(e){}if(!gps)return;
+  var gp=null;for(var i=0;i<gps.length;i++){if(gps[i]&&gps[i].connected){gp=gps[i];break;}}if(!gp)return;
+  if(!pad.conn){pad.conn=true;pad.hint=4;}
+  var ax=gp.axes[0]||0;if(Math.abs(ax)<0.16)ax=0;else ax=(ax-0.16*Math.sign(ax))/0.84;
+  var dl=padEdge(gp,14),dr=padEdge(gp,15),ok=padEdge(gp,0)||padEdge(gp,7)||padEdge(gp,5),back=padEdge(gp,1)||padEdge(gp,6),start=padEdge(gp,9);
+  if(g.over){if(g.nameEntry){if(ok&&g.nameEntry.name.length)finishName(g.nameEntry.name);else if(back)finishName('');}else if(ok||start)newGame();return;}
+  if(g.phase==='aim'){var cur=(g.xT!=null?g.xT:g.x);if(ax)g.xT=clamp(cur+ax*dt*1.7);if(dl)g.xT=clamp(cur-0.08);if(dr)g.xT=clamp(cur+0.08);
+    if(ok){g.phase='spin';g.spin=0;g.spinDir=1;sfx.tick();}}
+  else if(g.phase==='spin'){if(ok){g.phase='power';g.power=0.15;g.powerDir=1;sfx.tick();}else if(back)goBack();}
+  else if(g.phase==='power'){if(ok)throwBall();else if(back)goBack();}
+}
+function padRumble(strong,weak,ms){try{var gps=navigator.getGamepads?navigator.getGamepads():null;if(!gps)return;
+  for(var i=0;i<gps.length;i++){var gp=gps[i];if(!gp||!gp.connected)continue;var a=gp.vibrationActuator||(gp.hapticActuators&&gp.hapticActuators[0]);
+    if(a&&a.playEffect){var pr=a.playEffect('dual-rumble',{startDelay:0,duration:ms,strongMagnitude:strong,weakMagnitude:weak});if(pr&&pr.catch)pr.catch(function(){});}else if(a&&a.pulse)a.pulse(strong,ms);}}catch(e){}}
 /* ---------- sfx ---------- */
 var AC=null;
 function ac(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();setTimeout(preloadClips,0);}if(AC.state==='suspended')AC.resume();return AC;}catch(e){return null;}}
@@ -341,7 +360,7 @@ function loadCrash(){var a=ac();if(!a||crashBuf||crashLoading)return;crashLoadin
   try{var bin=atob(CRASH_B64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
     a.decodeAudioData(arr.buffer,function(b){crashBuf=b;},function(){crashBuf=null;});}catch(e){}}
 function playCrash(vol,rate){var a=ac();if(!a)return false;loadCrash();if(!crashBuf)return false;
-  var t=performance.now();if(t-lastCrash<90)return true;lastCrash=t;
+  var t=performance.now();if(t-lastCrash<90)return true;lastCrash=t;padRumble(Math.min(1,(vol||0.5)+0.2),0.5,260);
   try{var s=a.createBufferSource(),v=a.createGain();s.buffer=crashBuf;s.playbackRate.value=rate||1;v.gain.value=vol||0.5;s.connect(v);v.connect(a.destination);s.start();return true;}catch(e){return false;}}
 /* ---- pin impact synth: maple-pin body resonances under a sharp transient, sized by impact speed ---- */
 var hitComp=null;function hitBus(){var a=ac();if(!a)return null;if(!hitComp){hitComp=a.createDynamicsCompressor();hitComp.threshold.value=-14;hitComp.knee.value=12;hitComp.ratio.value=5;hitComp.attack.value=0.002;hitComp.release.value=0.12;hitComp.connect(a.destination);}return hitComp;}
@@ -381,11 +400,13 @@ var sfx={
   giggle:function(){ /* mischievous pin giggle: fast staccato "hee-hee-hee" climbing then falling */
     var seq=[880,990,1100,1180,1050,940,860,780];seq.forEach(function(f,i){setTimeout(function(){tone(f,0.07,'triangle',0.05,i<4?90:-120);tone(f*1.5,0.05,'sine',0.02,40);},i*75);});},
   splat:function(){noise(0.18,0.2,600);tone(120,0.15,'sine',0.08,-60);},
-  gutter:function(){tone(280,0.45,'sawtooth',0.08,-200);},
+  gutter:function(){padRumble(0.35,0.2,160);tone(280,0.45,'sawtooth',0.08,-200);},
   strike:function(){ /* you: "CLAMP!" then the kid: "Yeah! Antidote!" */
+    padRumble(1,1,520);
     setTimeout(function(){if(!playClip('clamp',1.0)){try{var v=new Audio(VOICE_CLAMP);v.volume=1;var pp=v.play();if(pp&&pp.catch)pp.catch(function(){});}catch(e){}}},120);
     setTimeout(function(){playClip('kidyeah',0.85,0.98+Math.random()*0.05);},1050);},
   spare:function(){ /* you: "ANTIDOTE DRIZZLE!" (jingle only if the clip is not decoded yet) */
+    padRumble(0.7,0.9,380);
     setTimeout(function(){if(!playClip('drizzle',1.0))[523,659,784].forEach(function(f,i){setTimeout(function(){tone(f,0.16,'square',0.08);},i*100);});},120);},
   taunt:function(){tone(300,0.1,'triangle',0.05,120);setTimeout(function(){tone(380,0.1,'triangle',0.05,-100);},110);setTimeout(sfx.giggle,220);},
   laugh:function(){[220,180,160].forEach(function(f,i){setTimeout(function(){tone(f,0.12,'sawtooth',0.06,-40);},i*140);});},
@@ -492,6 +513,7 @@ cv.addEventListener('pointerdown',function(e){e.preventDefault();ac();preloadCli
 });
 cv.addEventListener('pointermove',function(e){if(!down||g.phase!=='aim')return;var dx=ptX(e)-sx;if(Math.abs(dx)>6)moved=true;g.xT=clamp(sbx+dx/130);});
 cv.addEventListener('pointerup',function(e){if(!down)return;down=false;var px=ptX(e),py=ptY(e);
+  if(inBack(px,py)){goBack();return;}
   if(g.phase==='aim'&&!moved){var bpx=g.bowlerPx||W/2;
     if(py>BOT.y&&py<668&&Math.abs(px-bpx)<85){g.phase='spin';g.spin=0;g.spinDir=1;sfx.tick();}}
   else if(g.phase==='spin'){g.phase='power';g.power=0.15;g.powerDir=1;sfx.tick();}
@@ -506,12 +528,18 @@ window.addEventListener('keydown',function(e){
     e.preventDefault();return;}
   if(g.over&&(e.code==='Space'||e.code==='Enter')){newGame();return;}
   if(e.code==='KeyM'){toggleMute();return;}
+  if((e.code==='Escape'||e.code==='Backspace')&&(g.phase==='spin'||g.phase==='power')){goBack();return;}
   if(g.phase==='aim'){if(e.code==='ArrowLeft')g.xT=clamp((g.xT!=null?g.xT:g.x)-0.08);if(e.code==='ArrowRight')g.xT=clamp((g.xT!=null?g.xT:g.x)+0.08);if(e.code==='Space'||e.code==='Enter'){g.phase='spin';g.spin=0;g.spinDir=1;}}
   else if(g.phase==='spin'&&(e.code==='Space'||e.code==='Enter')){g.phase='power';g.power=0.15;g.powerDir=1;}
   else if(g.phase==='power'&&(e.code==='Space'||e.code==='Enter'))throwBall();
 });
 function clamp(v){return Math.max(-0.85,Math.min(0.85,v));}
-function throwBall(){g.phase='throw';g.throwT=0;g.taunt=null;}
+function throwBall(){g.phase='throw';g.throwT=0;g.taunt=null;padRumble(0.2,0.45,140);}
+function goBack(){ /* BACK: from power back to the spin meter, from spin back to aiming; a thrown ball cannot be recalled */
+  if(g.phase==='power'){g.phase='spin';g.spinDir=g.spin>=0.99?-1:(g.spin<=-0.99?1:(g.spinDir||1));sfx.tick();}
+  else if(g.phase==='spin'){g.phase='aim';g.spin=0;sfx.tick();}}
+function inBack(px,py){var r=g.backRect;return !!r&&(g.phase==='spin'||g.phase==='power')&&px>=r[0]&&px<=r[0]+r[2]&&py>=r[1]&&py<=r[1]+r[3];}
+function drawBackBtn(){var bw=86,bh=34,bx=W-bw-8,by=H-bh-10;g.backRect=[bx,by,bw,bh];ctx.save();ctx.fillStyle='rgba(10,6,7,.84)';rr(bx,by,bw,bh,17);ctx.fill();ctx.strokeStyle='#f2a81d';ctx.lineWidth=2;ctx.stroke();txt('◀ BACK',bx+bw/2,by+bh/2,'bold 12px Impact,"Arial Black",sans-serif','#f2a81d');ctx.restore();}
 /* the hook: ball travels straight for 40% of the lane, then bends with the spin */
 function hookX(x0,spin,y){return y>0.4?x0+spin*Math.pow((y-0.4)/0.6,1.35)*0.6:x0;}
 /* lateral acceleration from spin: nothing in the skid, full bite on the back half of the lane */
@@ -849,8 +877,8 @@ function update(dt){
     if(g.taunt){g.taunt.t-=dt;if(g.taunt.t<=0)g.taunt=null;}
   }
   if(g.phase==='aim'&&g.xT!=null)g.x+=(g.xT-g.x)*Math.min(1,dt*14);
-  if(g.phase==='spin'){g.spin+=g.spinDir*dt*3.5;if(g.spin>1){g.spin=1;g.spinDir=-1;}if(g.spin<-1){g.spin=-1;g.spinDir=1;}}
-  if(g.phase==='power'){g.power+=g.powerDir*dt*2.4;if(g.power>1){g.power=1;g.powerDir=-1;}if(g.power<0.05){g.power=0.05;g.powerDir=1;}}
+  if(g.phase==='spin'){g.spin+=g.spinDir*dt*1.9;if(g.spin>1){g.spin=1;g.spinDir=-1;}if(g.spin<-1){g.spin=-1;g.spinDir=1;}}
+  if(g.phase==='power'){g.power+=g.powerDir*dt*2.2;if(g.power>1){g.power=1;g.powerDir=-1;}if(g.power<0.05){g.power=0.05;g.powerDir=1;}}
   if(g.phase==='throw'){g.throwT+=dt;if(g.throwT>0.55){g.phase='roll';
     var chg=Math.abs((g.power||0.5)-0.775)<0.016;
     if(chg){g.msg='CHARGED UP!';g.msgT=1.4;g.flash=Math.max(g.flash,0.3);sfx.tick();setTimeout(sfx.tick,90);setTimeout(sfx.tick,180);}
@@ -1370,6 +1398,7 @@ function drawBottom(){
   ctx.restore(); /* camera off — HUD below is screen-space */
   drawYouCard();
   var vg=ctx.createRadialGradient(W/2,BOT.y+230,150,W/2,BOT.y+230,430);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.36)');ctx.fillStyle=vg;ctx.fillRect(0,BOT.y,W,H-BOT.y);
+  if(g.phase==='spin'||g.phase==='power')drawBackBtn();
   if(g.phase==='spin'){
     var mx=W/2,my=BOT.y+22;ctx.fillStyle='rgba(10,6,7,.75)';rr(mx-110,my-12,220,24,12);ctx.fill();ctx.strokeStyle='#f2a81d';ctx.lineWidth=1.5;ctx.stroke();
     txt('\u25C0 spin',mx-80,my,'bold 10px Verdana,sans-serif','#fbe9c4');txt('spin \u25B6',mx+80,my,'bold 10px Verdana,sans-serif','#fbe9c4');
@@ -1384,7 +1413,7 @@ function drawBottom(){
     ctx.font='bold 16px Impact,"Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.lineWidth=4;ctx.strokeStyle='#0a0607';ctx.strokeText(FL.txt,FL.x,FL.y);ctx.fillStyle='#7CFC9A';ctx.fillText(FL.txt,FL.x,FL.y);ctx.restore();});
   ctx.globalAlpha=1;
-  var hint=g.phase==='aim'?'Swipe below him to move  •  Tap SPIN above his head':g.phase==='spin'?'Tap to lock the curve':g.phase==='power'?'Tap to lock the power and bowl':'';
+  var hint=pad.conn?(g.phase==='aim'?'Stick / D-pad to move  •  \u2715 to spin':g.phase==='spin'?'\u2715 lock the curve  •  \u25cb back':g.phase==='power'?'\u2715 lock the power and bowl  •  \u25cb back':''):(g.phase==='aim'?'Swipe below him to move  •  Tap SPIN above his head':g.phase==='spin'?'Tap to lock the curve  •  BACK to re-aim':g.phase==='power'?'Tap to lock the power and bowl  •  BACK to redo the spin':'');
   if(g.phase==='aim'&&!g.over){var sbxp=g.bowlerPx||W/2,sby=598,pu2=1+Math.sin(g.t*5)*0.08;
     ctx.save();ctx.translate(sbxp,sby);ctx.scale(pu2,pu2);
     ctx.fillStyle='rgba(10,6,7,.78)';ctx.beginPath();ctx.arc(0,0,26,0,7);ctx.fill();
@@ -1724,7 +1753,7 @@ function draw(){
   ctx.restore();
 }
 var last=0;
-function loop(now){if(!last)last=now;var dt=Math.min(0.05,(now-last)/1000);last=now;try{update(dt);draw();b3dFrame();}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
+function loop(now){if(!last)last=now;var dt=Math.min(0.05,(now-last)/1000);last=now;try{pollPad(dt);update(dt);draw();b3dFrame();}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
 function b3dFrame(){
   if(!window.B3D||!B3D.ok)return;
   if(!USE3D&&g.phase==='aim'){
@@ -2654,7 +2683,7 @@ const pathGrp=new THREE.Group();pathDots.forEach(d=>pathGrp.add(d));pathGrp.add(
 let gWorld=null,gBall=null,gKey='',gLastT=0;
 const gTipP=new THREE.Vector3(),gTipQ=new THREE.Quaternion();
 function ghostInit(){
-  gWorld=new CANNON.World();gWorld.gravity.set(0,-9.82,0);gWorld.solver.iterations=14;
+  gWorld=new CANNON.World();gWorld.gravity.set(0,-9.82,0);gWorld.solver.iterations=world.solver.iterations;gWorld.solver.tolerance=world.solver.tolerance; /* same solver as the real lane, so the arrow lands where the ball lands */
   const gLane=new CANNON.Material('gLane'),gB=new CANNON.Material('gBall');
   const add2=(hx,hy,hz,x,y,z)=>{gWorld.addBody(new CANNON.Body({mass:0,material:gLane,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:new CANNON.Vec3(x,y,z)}));};
   gWorld.defaultContactMaterial.contactEquationStiffness=1e8;
@@ -2663,8 +2692,8 @@ function ghostInit(){
   add2(0.03,0.12,10.475,-0.945,-0.06,-7.625);add2(0.03,0.12,10.475,0.945,-0.06,-7.625);
   gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gLane,{friction:0,restitution:0.05}));
   gFoodMat=new CANNON.Material('gFood');
-  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gFoodMat,{friction:0.38,restitution:0.50}));
-  gWorld.addContactMaterial(new CANNON.ContactMaterial(gFoodMat,gLane,{friction:0.032,restitution:0.12}));
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gB,gFoodMat,{friction:0.03,restitution:0.68,contactEquationStiffness:1e8})); /* the lane snacks use the pin material in the real world: mirror those numbers exactly */
+  gWorld.addContactMaterial(new CANNON.ContactMaterial(gFoodMat,gLane,{friction:0,restitution:0.02}));
   gBall=new CANNON.Body({mass:PHYS.ballM,material:gB,shape:new CANNON.Sphere(BR)});
   gBall.linearDamping=0.01;gBall.angularDamping=0.01;gBall.allowSleep=false;
   gWorld.addBody(gBall);
@@ -2677,7 +2706,7 @@ function showPath(ox,spin,power,on){
   const fSig=foods.filter(f=>f.lane&&!f.counted).map(f=>f.body.position.x.toFixed(2)+f.body.position.z.toFixed(2)).join(';');
   const key=ox.toFixed(3)+'|'+spin.toFixed(3)+'|'+pw.toFixed(3)+'|'+fSig;
   const nowMs=performance.now();
-  if(key!==gKey&&nowMs-gLastT>70){
+  if(key!==gKey&&nowMs-gLastT>33){ /* 30 recomputes a second: tracks the meter closely, still cheap on phones */
     gKey=key;gLastT=nowMs;
     if(!gWorld)ghostInit();
     /* ghost ball: byte-for-byte the same launch as throwBall (minus the random overthrow wobble) */
@@ -2691,7 +2720,7 @@ function showPath(ox,spin,power,on){
     gFoods.forEach(fb=>gWorld.removeBody(fb));gFoods=[];
     foods.forEach(f=>{if(!f.lane||f.counted)return;
       const fb=new CANNON.Body({mass:0.07,material:gFoodMat,shape:new CANNON.Box(new CANNON.Vec3(0.05,0.05,0.05)),position:f.body.position.clone()});
-      fb.quaternion.copy(f.body.quaternion);gWorld.addBody(fb);gFoods.push(fb);});
+      fb.quaternion.copy(f.body.quaternion);fb.allowSleep=true;fb.sleepSpeedLimit=0.25;fb.sleepTimeLimit=0.5;gWorld.addBody(fb);if(f.body.sleepState===CANNON.Body.SLEEPING)fb.sleep();gFoods.push(fb);});
     gPts=[];
     let gut=false;
     for(let i=0;i<PHYS.hz*8;i++){
@@ -2707,7 +2736,7 @@ function showPath(ox,spin,power,on){
   for(let k=0;k<pathDots.length;k++){
     const j=Math.floor(k*(pts.length-1)/(pathDots.length-1));
     const d=pathDots[k];d.visible=true;
-    if(!pathGrp.visible)d.position.set(pts[j][0],0.02,pts[j][1]);else{d.position.x+=(pts[j][0]-d.position.x)*0.35;d.position.z+=(pts[j][1]-d.position.z)*0.35;d.position.y=0.02;}
+    if(!pathGrp.visible)d.position.set(pts[j][0],0.02,pts[j][1]);else{d.position.x+=(pts[j][0]-d.position.x)*0.6;d.position.z+=(pts[j][1]-d.position.z)*0.6;d.position.y=0.02;}
     const sc2=1.15-0.55*(j/(pts.length-1));d.scale.set(sc2,1,sc2);
     d.material.opacity=0.9-0.35*(j/(pts.length-1));
   }
@@ -2716,7 +2745,7 @@ function showPath(ox,spin,power,on){
   gTipP.set(B2[0],0.03,B2[1]);
   gTipQ.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(ax/al,0,az/al));
   if(!pathGrp.visible){pathTip.position.copy(gTipP);pathTip.quaternion.copy(gTipQ);}
-  else{pathTip.position.lerp(gTipP,0.35);pathTip.quaternion.slerp(gTipQ,0.35);}
+  else{pathTip.position.lerp(gTipP,0.6);pathTip.quaternion.slerp(gTipQ,0.6);}
   pathGrp.visible=true;
   if(window.B3D)B3D.lastPath=pts.filter((p,i)=>i%2===0).map(p=>[p[0]*OLDX,zToOld(p[1])]);
 }
@@ -2843,8 +2872,8 @@ function makeBowler(){
   const G=new THREE.Group();
   /* skeleton: bind pose standing, arms at the sides. World bind positions → local offsets */
   const BP={pelvis:[0,0.95,0],spine:[0,1.08,0],chest:[0,1.28,0],neck:[0,1.52,0],head:[0,1.60,0],
-    shL:[0.185,1.47,0],elL:[0.185,1.15,0],wrL:[0.185,0.88,0],shR:[-0.185,1.47,0],elR:[-0.185,1.15,0],wrR:[-0.185,0.88,0],
-    hpL:[0.095,0.92,0],knL:[0.095,0.50,0],anL:[0.095,0.07,0],hpR:[-0.095,0.92,0],knR:[-0.095,0.50,0],anR:[-0.095,0.07,0]};
+    shL:[-0.185,1.47,0],elL:[-0.185,1.15,0],wrL:[-0.185,0.88,0],shR:[0.185,1.47,0],elR:[0.185,1.15,0],wrR:[0.185,0.88,0],
+    hpL:[-0.095,0.92,0],knL:[-0.095,0.50,0],anL:[-0.095,0.07,0],hpR:[0.095,0.92,0],knR:[0.095,0.50,0],anR:[0.095,0.07,0]}; /* he faces the pins (-z), so his right hand is on +x, the viewer's right */
   const PAR={spine:'pelvis',chest:'spine',neck:'chest',head:'neck',shL:'chest',elL:'shL',wrL:'elL',shR:'chest',elR:'shR',wrR:'elR',hpL:'pelvis',knL:'hpL',anL:'knL',hpR:'pelvis',knR:'hpR',anR:'knR'};
   const bones=[],B={},BI={};
   for(const k of Object.keys(BP)){const b=new THREE.Bone();b.name=k;const p=BP[k],q=PAR[k]?BP[PAR[k]]:[0,0,0];b.position.set(p[0]-q[0],p[1]-q[1],p[2]-q[2]);B[k]=b;BI[k]=bones.length;bones.push(b);}
@@ -2884,7 +2913,7 @@ function makeBowler(){
   const chain=new THREE.Mesh(new THREE.TorusGeometry(0.066,0.0045,8,56),goldMat);chain.position.set(0,1.545,-0.004);chain.rotation.x=Math.PI/2+0.38;B.neck.attach(chain);
   /* arms: one continuous skin from the deltoid to the wrist, bending at the elbow; the tee sleeve over the top */
   const arms={};
-  [['L',1],['R',-1]].forEach(([k,s])=>{
+  [['L',-1],['R',1]].forEach(([k,s])=>{
     const X=s*0.185,sh=BI['sh'+k],el=BI['el'+k],wr=BI['wr'+k];
     const ad=armDisp(s);const shift=f=>(a,y,x,z,sec)=>{const o=f(a,y,x,z,sec);return o;};
     const armSecs=[{y:0.875,rx:0.030,rz:0.020},{y:0.93,rx:0.034,rz:0.026},{y:1.00,rx:0.041,rz:0.035},{y:1.06,rx:0.047,rz:0.043},{y:1.11,rx:0.044,rz:0.042},
@@ -2905,10 +2934,10 @@ function makeBowler(){
       const face=new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.006,20),darkMat);face.position.set(X,0.905,0.028);face.rotation.x=Math.PI/2;B.elL.attach(face);}
     arms[k]={sh:B['sh'+k],el:B['el'+k],wr:B['wr'+k],hand};
   });
-  const hb=new THREE.Mesh(ballGeo,ballMat);hb.position.set(-0.185,0.72,-0.02);B.wrR.attach(hb);arms.R.ball=hb;
+  const hb=new THREE.Mesh(ballGeo,ballMat);hb.position.set(0.185,0.72,-0.02);B.wrR.attach(hb); /* the ball sits in the right hand */arms.R.ball=hb;
   /* legs: one skin hip to ankle, bending at the knee */
   const legs={};
-  [['L',1],['R',-1]].forEach(([k,s])=>{
+  [['L',-1],['R',1]].forEach(([k,s])=>{
     const X=s*0.095,hp=BI['hp'+k],kn=BI['kn'+k],an=BI['an'+k];
     const secs=[{y:0.06,rx:0.037,rz:0.041},{y:0.12,rx:0.041,rz:0.047},{y:0.20,rx:0.049,rz:0.057},{y:0.30,rx:0.058,rz:0.070,cz:0.008},{y:0.38,rx:0.059,rz:0.067,cz:0.004},
       {y:0.46,rx:0.057,rz:0.061},{y:0.50,rx:0.059,rz:0.062},{y:0.55,rx:0.065,rz:0.069},{y:0.65,rx:0.076,rz:0.083,cz:0.004},{y:0.75,rx:0.085,rz:0.093},{y:0.84,rx:0.089,rz:0.097,cx:-s*0.006},{y:0.905,rx:0.087,rz:0.095,cx:-s*0.012}]
@@ -2932,8 +2961,8 @@ function makeBowler(){
 }
 const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
 let bVis=false,bRollT=0,bLastPhase='';
-const bProj=new THREE.Vector3(),HAND_PX=0.185*BSCALE*bPxPerM;
-function bowlerScreenX(x){bProj.set((x||0)*0.76,BR,2.30).project(cam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point, eased in at the edges so he stays in frame */
+const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.PerspectiveCamera(47,LW/VH,0.05,140);
+function bowlerScreenX(x){homeCam.position.set((x||0)*0.25,1.32,3.5);homeCam.lookAt((x||0)*0.2,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*0.76,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
 function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation.x=c*0.9;g.userData.tip.rotation.x=c*1.1;}h.userData.th.rotation.x=0.5+c*0.6;}
 function poseBowler(gs,dt,nw){
@@ -2944,14 +2973,14 @@ function poseBowler(gs,dt,nw){
   const br=Math.sin(nw*1.7)*0.5+0.5;
   /* target joint angles */
   let t={lean:-0.05,spine:-0.03,bob:0,hz:0,
-    shL:[0.62,0,-0.34],elL:1.55,shR:[0.55,0,-0.28],elR:1.15,curl:0.75,
+    shL:[0.62,0,0.34],elL:1.55,shR:[0.55,0,0.28],elR:1.15,curl:0.75,
     hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0};
-  if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,0.35],elL:0.25,shR:[2.9,0,-0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
+  if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,-0.35],elL:0.25,shR:[2.9,0,0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
   else if(ph==='throw'||ph==='roll'){
     const back=Math.min(1,tp/0.5),fwd=Math.max(0,(tp-0.5)/0.5),fol=Math.min(1,rl/0.35);
     const swR=back<1?THREE.MathUtils.lerp(0.55,-1.45,Math.sin(back*Math.PI/2)):THREE.MathUtils.lerp(-1.45,0.32,Math.sin(fwd*Math.PI/2))+1.35*sstep(0,1,fol); /* straight down the lane: rotation about x only, release near the bottom */
     t={lean:-0.14-0.24*tp-0.05*fol,spine:-0.06-0.08*tp,bob:-0.06*tp-0.10*fwd,hz:-0.12*tp,
-       shL:[0.25+0.45*fwd,0,0.75+0.55*fwd],elL:0.9-0.4*fwd,shR:[swR,0,-0.16],elR:1.15-1.0*back+0.1*fwd,curl:tp<0.98?0.8:0.2,
+       shL:[0.25+0.45*fwd,0,-(0.75+0.55*fwd)],elL:0.9-0.4*fwd,shR:[swR,0,0.16],elR:1.15-1.0*back+0.1*fwd,curl:tp<0.98?0.8:0.2,
        hpL:0.6+0.4*fwd,knL:-0.6-0.55*fwd,hpR:-0.25-0.4*tp,knR:-0.12,headX:0.26+0.1*tp,headY:0};
   }
   const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?16:7));
@@ -2971,11 +3000,12 @@ function renderBowler(gs,dt,nw){
   const ph=gs.phase;
   if(ph!==bLastPhase){if(ph==='roll')bRollT=0;bLastPhase=ph;}
   if(ph==='roll')bRollT+=dt;
-  bVis=(ph==='aim'||ph==='spin'||ph==='power'||ph==='throw'||(ph==='roll'&&bRollT<0.62&&camP.z>3.2))&&!gs.over; /* gone once the camera leaves the approach */
-  bRoot.position.y=0.20-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:0); /* the camera rolls past him: he drops out of frame */
-  if(!bVis)return;
-  const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2;
-  bowler.position.x+=((px/(bPxPerM*BSCALE))-bowler.position.x)*Math.min(1,dt*10);
+  const home=Math.max(0,Math.min(1,(3.5-camP.z)/0.35)); /* 0 with the camera parked on the approach, 1 while it is still flying back from the pins */
+  bVis=(ph==='aim'||ph==='spin'||ph==='power'||ph==='throw'||(ph==='roll'&&bRollT<0.62&&camP.z>3.2))&&!gs.over&&home<1;
+  bRoot.position.y=0.20-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:home*2.6); /* drops out as the camera rolls past him, rises back in as it settles home */
+  const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=px/(bPxPerM*BSCALE);
+  if(!bVis){bowler.position.x=tx;if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
+  bowler.position.x+=(tx-bowler.position.x)*Math.min(1,dt*10);
   poseBowler(gs,dt,nw);
   bRim.color.set(LEDCOLS[ledCol]);
   renderer.autoClear=false;renderer.clearDepth();renderer.render(bScene,bCam);renderer.autoClear=true;
