@@ -166,12 +166,12 @@ select{
     </div>
   </div>
 
-  <p class="note warn"><b>Every Instagram link on this page — the name, the handle, and the
-    "Open app" button — jumps straight into the app now, not the website.</b> If tapping any
-    of them lands you on instagram.com in a browser instead, you're either viewing this page
-    inside another app's built-in browser (Instagram DMs, Messages link previews, Claude,
-    Gmail, or a third-party browser app all handle this differently — open this page in
-    Safari or Chrome and try again), or Instagram isn't installed on this device.</p>
+  <p class="note warn"><b>"Open app" doesn't work in every browser, and that's outside this
+    page's control.</b> DuckDuckGo, Opera, Arc Search, Brave and similar browsers often block
+    handing off to other apps on purpose (a privacy feature), and no link on any page can
+    override that. Try Safari or Chrome for the direct jump — or on any browser, tap
+    <b>Copy handle</b>, open Instagram yourself, and paste the handle into search. That always
+    works.</p>
 
   <div class="bar">
     <input class="search" id="q" type="search" placeholder="Search name, area, dish or handle…" aria-label="Search leads">
@@ -318,6 +318,7 @@ function render(){
       <div class="acts">
         <a class="btn btn-ig" href="${appUrl}">Open app</a>
         <button class="btn js-copy" type="button" data-id="${l.id}">Copy pitch</button>
+        <button class="btn js-copy-handle" type="button" data-handle="${esc(l.ig)}">Copy handle</button>
         ${l.site?`<a class="btn" href="${l.site}" target="_blank" rel="noopener">Site</a>`:""}
         ${l.tel?`<a class="btn" href="tel:${l.tel.replace(/[^0-9+]/g,"")}">Call</a>`:""}
       </div>
@@ -345,6 +346,18 @@ list.addEventListener("click",e=>{
     b.textContent="Copied"; b.classList.add("copied");
     setTimeout(()=>{b.textContent="Copy pitch";b.classList.remove("copied")},1400);
   }).catch(()=>{ b.textContent="Copy failed"; setTimeout(()=>b.textContent="Copy pitch",1400) });
+});
+
+// Guaranteed fallback: some browsers (DuckDuckGo, Opera, Arc, Brave and
+// similar) block handing off to other apps entirely, by design, and no
+// link on this page can force that. Copying the handle always works —
+// open Instagram yourself and paste it into search.
+list.addEventListener("click",e=>{
+  const b=e.target.closest(".js-copy-handle"); if(!b) return;
+  navigator.clipboard.writeText(b.dataset.handle).then(()=>{
+    b.textContent="Copied"; b.classList.add("copied");
+    setTimeout(()=>{b.textContent="Copy handle";b.classList.remove("copied")},1400);
+  }).catch(()=>{ b.textContent="Copy failed"; setTimeout(()=>b.textContent="Copy handle",1400) });
 });
 
 [q,fRegion,fCat,fHide,fMeal].forEach(el=>el.addEventListener("input",render));
