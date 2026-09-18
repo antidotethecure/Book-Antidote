@@ -3670,7 +3670,7 @@ function renderBowler(gs,dt,nw){
    Every drawn frame of a live roll is kept for six seconds: where the ball was, where every pin was.
    On a strike the roll is played back at a third speed from three angles, and a blast that went off
    during it is drawn again at the moment it happened. Nothing here touches the physics. */
-const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0};
+const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0,fov0:0,vis:[]};
 const _rqa=new THREE.Quaternion(),_rqb=new THREE.Quaternion();
 const RPL_RATE=0.32;                       /* a third of real speed */
 function rplSnap(nw){
@@ -3692,6 +3692,10 @@ function rplStart(force){
   RPL.from=RPL.clip[0].t;RPL.to=RPL.clip[RPL.clip.length-1].t;
   if(RPL.to-RPL.from<0.5)return 0;
   RPL.on=true;RPL.clock=RPL.from;RPL.boomDone=false;RPL.t0=performance.now()/1000;
+  RPL.fov0=cam.fov;bumper.visible=false;   /* the pit bumper sits right across the pit camera's sightline */
+  RPL.vis=[];  /* remember every prop's state so the ones pulled off the lens go back exactly as they were */
+  for(const f of foods){if(f&&f.mesh)RPL.vis.push({o:f.mesh,v:f.mesh.visible});}
+  for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible});}
   return (RPL.to-RPL.from)/RPL_RATE;
 }
 function rplFrame(dt,nw){
@@ -3713,13 +3717,23 @@ function rplFrame(dt,nw){
   if(!RPL.boomDone&&S.boomAt&&S.boomPos&&t>=S.boomAt){RPL.boomDone=true;explodeAt({x:S.boomPos[0],y:S.boomPos[1],z:S.boomPos[2]},true);}
   /* three angles across the replay: low behind the deck, side on, then high over the pocket */
   const prog=(t-RPL.from)/Math.max(0.001,RPL.to-RPL.from);
-  const bx=ballMesh&&ballMesh.visible?ballMesh.position.x:0;
   let cp,cl;
-  if(prog<0.34){const u2=prog/0.34;cp=[bx*0.45+0.30,0.27+u2*0.10,-18.55+u2*0.25];cl=[0,0.26,-16.5];}
-  else if(prog<0.68){const u2=(prog-0.34)/0.34;cp=[2.15-u2*0.45,0.58+u2*0.10,-15.2-u2*0.5];cl=[0,0.26,-16.5];}
-  else{const u2=(prog-0.68)/0.32;cp=[-0.55+u2*0.2,1.45-u2*0.30,-13.9-u2*0.5];cl=[0,0.18,-16.7];}
+  /* Shot one and the shot he wants: the pit camera, down in the pit behind the rack looking straight back up
+     the lane as the ball comes in. It sits in front of the back wall at z=-18.35 and under the pit bumper at
+     z=-17.0, so nothing masks the rack, and the whole ten-pin set plus the approaching ball are in frame. */
+  let fv;
+  if(prog<0.45){const u2=prog/0.45;cp=[0,0.36-u2*0.02,-17.78+u2*0.16];cl=[0,0.24,-15.5];fv=68;}
+  /* then low off the pocket looking back at the rack, then high over the deck */
+  else if(prog<0.72){const u2=(prog-0.45)/0.27;cp=[0.52-u2*0.06,0.27,-15.05-u2*0.30];cl=[0,0.19,-16.45];fv=66;}
+  else{const u2=(prog-0.72)/0.28;cp=[-0.40+u2*0.05,1.00-u2*0.08,-14.75-u2*0.30];cl=[0,0.14,-16.5];fv=60;}
+  if(Math.abs(cam.fov-fv)>0.01){cam.fov=fv;cam.updateProjectionMatrix();}  /* the lane is a portrait frame: the rack only fits on a wide lens */
   cam.position.set(cp[0],cp[1],cp[2]);cam.lookAt(cl[0],cl[1],cl[2]);
-  if(done||nw-RPL.t0>14)RPL.on=false;   /* a stuttering device never gets parked in the replay */
+  const CULL=1.35;  /* a burger pressed against the lens hides the whole rack */
+  for(const r of RPL.vis)r.o.visible=r.v&&r.o.position.distanceTo(cam.position)>CULL;
+  if(done||nw-RPL.t0>14){RPL.on=false;
+    if(RPL.fov0){cam.fov=RPL.fov0;cam.updateProjectionMatrix();}
+    bumper.visible=true;
+    for(const r of RPL.vis)r.o.visible=r.v;RPL.vis=[];}   /* a stuttering device never gets parked in the replay */
 }
 
 function render(gs){
@@ -3771,7 +3785,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
