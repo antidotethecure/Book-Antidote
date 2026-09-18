@@ -116,46 +116,57 @@ keep that function and its call exactly as they are. Never remove them.
    - Do a stubbed-DOM `render()` execution (see recent commits to `dm-queue` for the pattern
      used) and confirm the row count matches expectations and ids are unique.
 
-10. **Build the BARE page first — this is the master copy.** No `<!doctype>`, no `<html>`,
-    no `<head>`, no `<body>` tags — it starts directly with `<title>Restaurant DM
-    Queue</title>` and ends with `</script>`. This exact bare form is what gets published to
-    the Claude artifact. If you build the wrapped standalone form (step 11) before this, you
-    will be tempted to publish that to the artifact instead — don't; a prior run did exactly
-    that and produced a broken, doubly-wrapped artifact page. Publish the bare form to the
-    artifact now, following the artifact tool's read-then-publish flow (read the current live
-    version first, then publish your merged file over it — it refuses a publish that hasn't
-    seen the latest live version).
+10. **Push to the repo FIRST — this is the actual deliverable, do this before touching the
+    artifact.** Two runs in a row (2026-09-17 and 2026-09-18) got as far as publishing to the
+    Claude artifact and then silently stopped — never reached the repo push, never updated
+    `dm-progress.json` — with no error, no message, nothing. The cause wasn't fully diagnosed,
+    but the pattern was the same both times: the artifact publish happened, the repo push
+    didn't. Whatever the reason, the fix is priority order: **the live site at
+    antidotethefoodie.com/dm is what the site owner actually looks at. If you only get through
+    one of "push to repo" or "publish to artifact" before running out of room, it must be the
+    repo push.** So do that first, not last:
+    a. Build the BARE page (no `<!doctype>`, no `<html>`, no `<head>`, no `<body>` — starts
+       directly with `<title>Restaurant DM Queue</title>`, ends with `</script>`).
+    b. Wrap it for the repo: `<!doctype html>\n<html lang="en"><head>\n<meta
+       charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,
+       viewport-fit=cover">\n<meta name="robots" content="noindex,nofollow">\n` then the bare
+       content unchanged, closed with `\n</body></html>`. (Confirm against `dm/index.html`'s
+       current head before writing, in case the pattern has shifted.)
+    c. Write it to `dm/index.html`. In the SAME commit, also update
+       `automation/dm-progress.json` (append the new batch — today's date, `"source":"auto"`,
+       the ring name, the new handles; append those handles to `usedHandles`; remove the
+       trimmed batch's entry from `batches` if you trimmed; set `nextRingIndex` to the next
+       index, wrapping to 0 past the end of `rings`). One commit, both files, so a partial
+       run can't leave the page and the state file disagreeing with each other.
+    d. `git fetch origin main` + merge (state may have changed since step 1 — this repo is
+       shared with other work, e.g. an unrelated "Drizzle Bowl" feature; never discard those
+       commits). Commit with a message naming the ring and city list. Push.
+    e. **Verify it before doing anything else**: re-fetch `dm/index.html` from `origin/main`
+       (the actual remote, not your local working copy) and confirm its `RAW` row count
+       matches what you intended, and that `dm-progress.json` on `origin/main` shows the
+       `nextRingIndex` you just set. Do not proceed to the artifact until this is confirmed —
+       if it fails, that is the "fundamentally broken" case in step 12, stop and say so rather
+       than trying the artifact anyway.
 
-11. **Derive the standalone form from the bare form for the repo — do not skip this step,
-    it is not optional.** Take the exact bare content from step 10 and wrap it:
-    `<!doctype html>\n<html lang="en"><head>\n<meta charset="utf-8">\n<meta name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta name="robots"
-    content="noindex,nofollow">\n` then the bare content unchanged, closed with
-    `\n</body></html>`. (Confirm against `dm/index.html`'s current head before writing, in
-    case the pattern has shifted.) Write the result to `dm/index.html`. `git fetch origin
-    main` + merge again (state may have changed since step 1 — this repo is shared with
-    other work, e.g. an unrelated "Drizzle Bowl" feature; never discard those commits).
-    Commit with a clear message naming the ring and city list, and push.
+11. **Then publish the same bare page to the Claude artifact** (from step 10a), following the
+    artifact tool's read-then-publish flow (read the current live version first, then publish
+    your merged file over it — it refuses a publish that hasn't seen the latest live version).
+    This is a secondary mirror — if you're low on room and the repo push in step 10 already
+    succeeded, it's fine to skip this and let the next run catch it up; it is never fine to
+    skip step 10.
 
-12. **Update `automation/dm-progress.json` and push it too — also not optional.** Append the
-    new batch to `batches` (today's date, `"source": "auto"`, the ring name, and the list of
-    new handles), append those handles to `usedHandles`, remove the trimmed batch's entry
-    from `batches` if you trimmed, and set `nextRingIndex` to the next index (wrapping to 0
-    past the end of `rings`).
+    **Sizing the batch when a trim is needed:** if adding fewer new leads than the oldest
+    batch contains would drop the total below `targetMin` once that batch is removed, research
+    a bigger batch that day — enough new verified leads that, after the trim, the total lands
+    back at or near `targetMax`, not just whatever a single ring happens to yield. A small
+    fixed-size batch colliding with a large trim is how the list ends up far under the floor
+    for days at a stretch.
 
-13. **Verify the push actually landed before finishing.** Re-fetch `dm/index.html` from
-    `origin/main` (not your local working copy — the actual remote) and confirm its `RAW`
-    row count matches what you intended to publish, and that `automation/dm-progress.json`
-    on `origin/main` shows the `nextRingIndex` you just set. A run that published to the
-    artifact but never confirmed the repo push landed is an incomplete run, not a finished
-    one — if steps 11–12 didn't actually reach `origin/main`, that's the "fundamentally
-    broken" case in step 14, not a silent partial success.
-
-14. **Do not message the user** if everything above completed and verified. This was
-    explicitly requested to run fully autonomously with no per-run check-in — the person
-    will look at the site itself if they want to see what changed. Only break this rule if
-    something is fundamentally broken and you cannot proceed at all, or step 13's
-    verification fails — in that case, a brief note is better than a silent partial run.
+12. **Do not message the user** if step 10 completed and verified (step 11 is optional, see
+    above). This was explicitly requested to run fully autonomously with no per-run check-in —
+    the person will look at the site itself if they want to see what changed. Only break this
+    rule if step 10 is fundamentally broken and you cannot get it to complete at all — in that
+    case, a brief note is better than a silent partial run.
 
 ## Guardrails — never do these
 

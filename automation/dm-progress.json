@@ -1,11 +1,11 @@
 {
   "_readme": "State file for the daily DM-queue refill job. See automation/DM_AUTOMATION.md for the full procedure. nextRingIndex points into 'rings' below; after the last ring, wrap back to 0 and keep excluding used names/handles so it naturally finds different businesses.",
-  "nextRingIndex": 1,
+  "nextRingIndex": 2,
   "targetMin": 50,
   "targetMax": 60,
   "rings": [
     {
-      "name": "Ring 0 \u2014 Downtown & Inner Core",
+      "name": "Ring 0 — Downtown & Inner Core",
       "cities": [
         "Downtown Los Angeles",
         "Koreatown",
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "name": "Ring 1 \u2014 Central LA",
+      "name": "Ring 1 — Central LA",
       "cities": [
         "Mid-City",
         "Mid-Wilshire",
@@ -28,7 +28,7 @@
       ]
     },
     {
-      "name": "Ring 2 \u2014 Hollywood & Eastside",
+      "name": "Ring 2 — Hollywood & Eastside",
       "cities": [
         "Hollywood",
         "East Hollywood",
@@ -39,7 +39,7 @@
       ]
     },
     {
-      "name": "Ring 3 \u2014 Westside Inner",
+      "name": "Ring 3 — Westside Inner",
       "cities": [
         "West Hollywood",
         "Fairfax District",
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "name": "Ring 4 \u2014 Westside Coastal",
+      "name": "Ring 4 — Westside Coastal",
       "cities": [
         "Santa Monica",
         "Venice",
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "name": "Ring 5 \u2014 South LA & Inner South Bay",
+      "name": "Ring 5 — South LA & Inner South Bay",
       "cities": [
         "South Los Angeles",
         "Leimert Park",
@@ -70,7 +70,7 @@
       ]
     },
     {
-      "name": "Ring 6 \u2014 South Bay Coastal",
+      "name": "Ring 6 — South Bay Coastal",
       "cities": [
         "Manhattan Beach",
         "Hermosa Beach",
@@ -81,7 +81,7 @@
       ]
     },
     {
-      "name": "Ring 7 \u2014 Valley Core",
+      "name": "Ring 7 — Valley Core",
       "cities": [
         "Studio City",
         "North Hollywood",
@@ -92,7 +92,7 @@
       ]
     },
     {
-      "name": "Ring 8 \u2014 Valley Outer",
+      "name": "Ring 8 — Valley Outer",
       "cities": [
         "Reseda",
         "Northridge",
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "name": "Ring 9 \u2014 Southeast LA / Gateway Cities",
+      "name": "Ring 9 — Southeast LA / Gateway Cities",
       "cities": [
         "Huntington Park",
         "South Gate",
@@ -116,7 +116,7 @@
       ]
     },
     {
-      "name": "Ring 10 \u2014 Long Beach & Harbor",
+      "name": "Ring 10 — Long Beach & Harbor",
       "cities": [
         "Long Beach",
         "San Pedro",
@@ -125,7 +125,7 @@
       ]
     },
     {
-      "name": "Ring 11 \u2014 Northeast San Gabriel Valley",
+      "name": "Ring 11 — Northeast San Gabriel Valley",
       "cities": [
         "Pasadena",
         "Altadena",
@@ -136,7 +136,7 @@
       ]
     },
     {
-      "name": "Ring 12 \u2014 Mid San Gabriel Valley",
+      "name": "Ring 12 — Mid San Gabriel Valley",
       "cities": [
         "San Gabriel",
         "Rosemead",
@@ -147,7 +147,7 @@
       ]
     },
     {
-      "name": "Ring 13 \u2014 East San Gabriel Valley",
+      "name": "Ring 13 — East San Gabriel Valley",
       "cities": [
         "El Monte",
         "South El Monte",
@@ -160,60 +160,8 @@
   "batches": [
     {
       "date": "2026-09-17",
-      "source": "manual",
-      "label": "Riverside / Corona / West Covina / Inland Empire (user-requested batch)",
-      "entryIds": [
-        "tiostacos",
-        "zacatecascafe",
-        "pho99_riversideca",
-        "phoha7.riverside",
-        "hotlantawingz",
-        "chimakhouse_riverside",
-        "tomo7.sushi",
-        "monarkasianbistro",
-        "cravin_crab_haus",
-        "lets_gettoasted",
-        "sarap.social",
-        "eduardosmex",
-        "pho_koi_corona",
-        "hibbqchicken_corona",
-        "tokai_sushi_corona",
-        "chinesefusionofficial",
-        "theboildaddy.corona",
-        "palapas_brunchstop",
-        "miskymisky626",
-        "salosalokitchen",
-        "pangsinasal",
-        "elbukanas_taqueria",
-        "banigrestaurant",
-        "wtfalafell",
-        "randrbreakfastspot",
-        "mialegriarestaurant",
-        "theflabobairportcafe",
-        "dubu.tofuhouse",
-        "rude_jerk_kitchen_",
-        "pupuseriaelencanto",
-        "saboryucateco2025",
-        "vazquezbakery",
-        "fontana_pho",
-        "corkyskitchenandbakery",
-        "woodys_roadhouse",
-        "thaihouseredlands",
-        "laschicasfresas_pomona",
-        "borreguitas_be",
-        "elmejormenudo",
-        "caramelo_cafe_",
-        "kyala_sushi_by_morisen",
-        "thebasilandcompany",
-        "phoha_plus",
-        "praderabrunch",
-        "mrphocaliforniakitchen"
-      ]
-    },
-    {
-      "date": "2026-09-17",
       "source": "auto",
-      "label": "Ring 0 \u2014 Downtown & Inner Core",
+      "label": "Ring 0 — Downtown & Inner Core",
       "entryIds": [
         "redbirdla",
         "joyce_dtla",
@@ -230,6 +178,42 @@
         "mamastamales",
         "ditroitdtla",
         "breadlounge"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "source": "auto+manual-reconciled",
+      "label": "Ring 1 — Central LA (merged: the day's automated run published a Ring 1 batch to the artifact but never reached the repo; a manual top-up independently researched more of the same ring before this was discovered, so both verified sets were merged and deduplicated by handle rather than wasting either)",
+      "entryIds": [
+        "redbirdla",
+        "joyce_dtla",
+        "sobanlosangeles",
+        "biriyanikabobhouse",
+        "thienhuong.727",
+        "namcoffeeco",
+        "woonkitchen",
+        "gra_la_",
+        "gigis__bakery_",
+        "elparianbirria",
+        "el_colmao_",
+        "langersdeli",
+        "mamastamales",
+        "ditroitdtla",
+        "breadlounge",
+        "altarestaurant",
+        "centopastabar",
+        "tlacolula_",
+        "methimatabarla",
+        "messobrestaurant",
+        "pijjapalace",
+        "santosilverlake",
+        "masaofechopark",
+        "honeyhi",
+        "morihirosunset",
+        "officialtepeyaccafe",
+        "mariscos4vientos",
+        "tenampal",
+        "laindianatamales"
       ]
     }
   ],
@@ -293,6 +277,20 @@
     "langersdeli",
     "mamastamales",
     "ditroitdtla",
-    "breadlounge"
+    "breadlounge",
+    "altarestaurant",
+    "centopastabar",
+    "tlacolula_",
+    "methimatabarla",
+    "messobrestaurant",
+    "pijjapalace",
+    "santosilverlake",
+    "masaofechopark",
+    "honeyhi",
+    "morihirosunset",
+    "officialtepeyaccafe",
+    "mariscos4vientos",
+    "tenampal",
+    "laindianatamales"
   ]
 }
