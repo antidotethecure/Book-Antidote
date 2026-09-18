@@ -410,6 +410,47 @@ function ytToggleMute(){if(!yt.p)return;yt.muted=!yt.muted;if(yt.muted)yt.p.mute
 
 /* ---------- music ---------- */
 var music={i:0,el:null,started:false,muted:false,order:[]};
+/* SAUCE ON THE LENS: the replay camera sits in the pit, so a snack flung off the deck can hit the glass.
+   The splat lands where it struck, runs down a little and dries off. */
+var lensFX=[];
+var SAUCE=['#c0392b','#e07b1f','#b8322c','#d9a428','#8e2f22','#a8431e'];
+function lensSplat(nx,ny,kind,str){
+  if(lensFX.length>15)lensFX.shift();
+  lensFX.push({x:nx*W,y:(H-400)+ny*400,t:0,life:4.2+Math.random()*1.6,r:(13+Math.random()*15)*(str||1),
+    hue:SAUCE[Math.floor(Math.random()*SAUCE.length)],seed:Math.random()*99,sq:0.8+Math.random()*0.35});
+  sfx.splat();g.shake=Math.max(g.shake,0.06);
+}
+function drawLensFX(dt){
+  if(!lensFX.length)return;
+  ctx.save();
+  for(var i=lensFX.length-1;i>=0;i--){var s2=lensFX[i];s2.t+=dt;
+    if(s2.t>s2.life){lensFX.splice(i,1);continue;}
+    var al=(s2.t<0.09?s2.t/0.09:1)*Math.max(0,Math.min(1,(s2.life-s2.t)/1.3));
+    var spread=Math.min(1,s2.t*7),R=s2.r*(0.45+0.55*spread);
+    ctx.globalAlpha=al*0.92;ctx.fillStyle=s2.hue;
+    ctx.beginPath();
+    for(var k=0;k<16;k++){var an=k/16*6.2832,rr2=R*(0.70+0.44*Math.abs(Math.sin(an*3+s2.seed)));
+      var qx=s2.x+Math.cos(an)*rr2,qy=s2.y+Math.sin(an)*rr2*s2.sq;
+      if(k===0)ctx.moveTo(qx,qy);else ctx.lineTo(qx,qy);}
+    ctx.closePath();ctx.fill();
+    for(var d2=0;d2<6;d2++){var da=s2.seed+d2*1.63,dd=R*(1.2+d2*0.26);
+      ctx.beginPath();ctx.arc(s2.x+Math.cos(da)*dd,s2.y+Math.sin(da)*dd*0.78,Math.max(1,R*0.17-d2*0.5),0,7);ctx.fill();}
+    var top=s2.y+R*0.45*s2.sq,run=Math.min(R*2.6,s2.t*34);   /* it runs down the glass from the bottom of the splat */
+    if(run>3){ctx.beginPath();ctx.moveTo(s2.x-R*0.3,top-R*0.25);ctx.lineTo(s2.x+R*0.3,top-R*0.25);
+      ctx.lineTo(s2.x+R*0.1,top+run);ctx.quadraticCurveTo(s2.x,top+run+R*0.42,s2.x-R*0.1,top+run);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.arc(s2.x,top+run+R*0.2,R*0.13,0,7);ctx.fill();}
+    ctx.globalAlpha=al*0.5;ctx.fillStyle='rgba(60,12,8,.75)';   /* a darker heart where it hit hardest */
+    ctx.beginPath();
+    for(var k2=0;k2<12;k2++){var an2=k2/12*6.2832,r3=R*0.48*(0.72+0.4*Math.abs(Math.sin(an2*2.4+s2.seed*1.7)));
+      var bx2=s2.x+Math.cos(an2)*r3,by2=s2.y+Math.sin(an2)*r3*s2.sq;
+      if(k2===0)ctx.moveTo(bx2,by2);else ctx.lineTo(bx2,by2);}
+    ctx.closePath();ctx.fill();
+    ctx.globalAlpha=al*0.45;ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.beginPath();ctx.ellipse(s2.x-R*0.32,s2.y-R*0.34,R*0.22,R*0.13,-0.5,0,7);ctx.fill();
+    ctx.beginPath();ctx.ellipse(s2.x+R*0.42,s2.y+R*0.1,R*0.1,R*0.06,0.3,0,7);ctx.fill();
+  }
+  ctx.restore();
+}
 function shuffleArr(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function curSong(){return (music.order.length?SONGS[music.order[music.i%music.order.length]]:SONGS[music.i])||SONGS[0];}
 function startMusic(){
@@ -1713,6 +1754,7 @@ function drawBottom(){
     ctx.restore();}
   if(hint)txt(hint,W/2,H-16,'bold 13px Verdana,sans-serif','rgba(251,233,196,.75)');
   txt(g.over?'':'Frame '+(g.frame+1),W-40,BOT.y+16,'bold 12px Verdana,sans-serif','#c9b899');
+  drawLensFX(Math.min(0.05,g.dtLast||0.016));   /* the sauce sits on the glass, over everything */
 }
 function drawFan(x,y){
   ctx.save();ctx.translate(x,y);
@@ -2082,7 +2124,7 @@ window.__showHalf=showHalftime;
 })();
 window.ADB={get g(){return g;},showHalftime:showHalftime,newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
   throw3d:function(x,spin,power,aim){g.x=x;g.spin=spin;g.power=power;g.aim=aim||0;g.phase='throw';g.throwT=1.01;}};
-window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,noise:noise,playCrash:playCrash,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
+window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
   hover:HOVER_REVIEWS,hoverBase:HOVER_BASE,shuffle:shuffleArr};  /* the review catalogue, so the big screen can run the previews */
 })();
 </script>
@@ -3693,13 +3735,15 @@ function renderBowler(gs,dt,nw){
    On a strike the roll is played back at a third speed from three angles, and a blast that went off
    during it is drawn again at the moment it happened. Nothing here touches the physics. */
 const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0,fov0:0,vis:[]};
-const _rqa=new THREE.Quaternion(),_rqb=new THREE.Quaternion();
+const _rqa=new THREE.Quaternion(),_rqb=new THREE.Quaternion(),_rsp=new THREE.Vector3();
 const RPL_RATE=0.32;                       /* a third of real speed */
 function rplSnap(nw){
-  const e={t:nw,b:null,p:[]};
+  const e={t:nw,b:null,p:[],f:[]};
   if(ballBody&&ballMesh&&ballMesh.visible)e.b=[ballMesh.position.x,ballMesh.position.y,ballMesh.position.z,ballMesh.quaternion.x,ballMesh.quaternion.y,ballMesh.quaternion.z,ballMesh.quaternion.w];
   for(const pn of pins){if(!pn||!pn.alive){e.p.push(null);continue;}const q=pn.grp;
     e.p.push([q.position.x,q.position.y,q.position.z,q.quaternion.x,q.quaternion.y,q.quaternion.z,q.quaternion.w,q.visible?1:0]);}
+  for(const f of foods){if(!f||!f.mesh){e.f.push(null);continue;}const m=f.mesh;
+    e.f.push([m.position.x,m.position.y,m.position.z,m.quaternion.x,m.quaternion.y,m.quaternion.z,m.quaternion.w,m.visible?1:0]);}
   RPL.buf.push(e);
   const cut=nw-6;while(RPL.buf.length>2&&RPL.buf[0].t<cut)RPL.buf.shift();
   /* the moment the ball reaches the rack, the clip is cut: the run-up is already in hand, and the
@@ -3716,8 +3760,8 @@ function rplStart(force){
   RPL.on=true;RPL.clock=RPL.from;RPL.boomDone=false;RPL.t0=performance.now()/1000;
   RPL.fov0=cam.fov;bumper.visible=false;   /* the pit bumper sits right across the pit camera's sightline */
   RPL.vis=[];  /* remember every prop's state so the ones pulled off the lens go back exactly as they were */
-  for(const f of foods){if(f&&f.mesh)RPL.vis.push({o:f.mesh,v:f.mesh.visible});}
-  for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible});}
+  for(const f of foods){if(f&&f.mesh){const e={o:f.mesh,v:f.mesh.visible,want:f.mesh.visible};f.mesh.__rv=e;f.__splat=false;RPL.vis.push(e);}}
+  for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible,want:tb.grp.visible});}
   return (RPL.to-RPL.from)/RPL_RATE;
 }
 function rplFrame(dt,nw){
@@ -3736,6 +3780,17 @@ function rplFrame(dt,nw){
     pn.grp.position.set(pa[0]+(pb[0]-pa[0])*u,pa[1]+(pb[1]-pa[1])*u,pa[2]+(pb[2]-pa[2])*u);
     _rqa.set(pa[3],pa[4],pa[5],pa[6]);_rqb.set(pb[3],pb[4],pb[5],pb[6]);_rqa.slerp(_rqb,u);pn.grp.quaternion.copy(_rqa);
     if(pn.shadow){pn.shadow.visible=pn.grp.visible&&pn.grp.position.y<0.6;pn.shadow.position.set(pn.grp.position.x,0.002,pn.grp.position.z);}}
+  for(let k=0;k<foods.length;k++){const f=foods[k];if(!f||!f.mesh)continue;
+    const fa=a.f&&a.f[k],fb=b.f&&b.f[k];if(!fa||!fb)continue;
+    if(f.mesh.__rv)f.mesh.__rv.want=!!fb[7];
+    f.mesh.position.set(fa[0]+(fb[0]-fa[0])*u,fa[1]+(fb[1]-fa[1])*u,fa[2]+(fb[2]-fa[2])*u);
+    _rqa.set(fa[3],fa[4],fa[5],fa[6]);_rqb.set(fb[3],fb[4],fb[5],fb[6]);_rqa.slerp(_rqb,u);f.mesh.quaternion.copy(_rqa);
+    /* SAUCE ON THE LENS: a snack flung into the camera leaves its mark on the shot */
+    if(!f.__splat&&A3.lensSplat){
+      const fsp=Math.hypot(fb[0]-fa[0],fb[1]-fa[1],fb[2]-fa[2])/sp,dCam=f.mesh.position.distanceTo(cam.position);
+      if(fsp>1.4&&dCam<1.15){f.__splat=true;
+        _rsp.copy(f.mesh.position).project(cam);
+        if(_rsp.z<1)A3.lensSplat((_rsp.x*0.5+0.5),(1-(_rsp.y*0.5+0.5)),f.e||'',Math.max(0.5,Math.min(1.6,1.5-dCam)));}}}
   if(!RPL.boomDone&&S.boomAt&&S.boomPos&&t>=S.boomAt){RPL.boomDone=true;explodeAt({x:S.boomPos[0],y:S.boomPos[1],z:S.boomPos[2]},true);}
   /* three angles across the replay: low behind the deck, side on, then high over the pocket */
   const prog=(t-RPL.from)/Math.max(0.001,RPL.to-RPL.from);
@@ -3750,8 +3805,8 @@ function rplFrame(dt,nw){
   else{const u2=(prog-0.72)/0.28;cp=[-0.40+u2*0.05,1.00-u2*0.08,-14.75-u2*0.30];cl=[0,0.14,-16.5];fv=60;}
   if(Math.abs(cam.fov-fv)>0.01){cam.fov=fv;cam.updateProjectionMatrix();}  /* the lane is a portrait frame: the rack only fits on a wide lens */
   cam.position.set(cp[0],cp[1],cp[2]);cam.lookAt(cl[0],cl[1],cl[2]);
-  const CULL=1.35;  /* a burger pressed against the lens hides the whole rack */
-  for(const r of RPL.vis)r.o.visible=r.v&&r.o.position.distanceTo(cam.position)>CULL;
+  const CULL=1.35;  /* a burger pressed against the lens hides the whole rack; its sauce is on the glass instead */
+  for(const r of RPL.vis){const want=(r.want!=null)?r.want:r.v;r.o.visible=want&&r.o.position.distanceTo(cam.position)>CULL;}
   if(done||nw-RPL.t0>14){RPL.on=false;
     if(RPL.fov0){cam.fov=RPL.fov0;cam.updateProjectionMatrix();}
     bumper.visible=true;
