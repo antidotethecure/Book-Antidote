@@ -1120,7 +1120,10 @@ function drawNameEntry(){
 /* ---------- update ---------- */
 var YS=2.8,BALL_R=0.12,BALL_M=5.5,PIN_M=1,REST=0.55,KICK_X=0.64,PIT_Y=1.14,DECK_FRONT=0.78,BALL_SPEED=0.30;
 function update(dt){
-  g.t+=dt;if(g.msgT>0)g.msgT-=dt;if(g.giggleT>0)g.giggleT-=dt;if(g.shake>0)g.shake-=dt;if(g.cheer>0)g.cheer-=dt;if(g.flash>0)g.flash-=dt;if(g.faceT>0)g.faceT-=dt;if(g.wetT>0)g.wetT-=dt;g.dtLast=dt;if(g.papT>0){g.papT-=dt;if(Math.random()<dt*8)g.flash=Math.max(g.flash,0.10+Math.random()*0.10);}
+  g.t+=dt;if(g.msgT>0)g.msgT-=dt;
+  if(g.replayT>0){ /* the badge and the result screen wait on the replay itself, however fast the device is drawing */
+    if(USE3D&&window.B3D&&B3D.replaying&&B3D.replaying()){g.replayT=Math.max(g.replayT,0.25);g.resT=Math.max(g.resT||0,0.4);}
+    g.replayT-=dt;}if(g.giggleT>0)g.giggleT-=dt;if(g.shake>0)g.shake-=dt;if(g.cheer>0)g.cheer-=dt;if(g.flash>0)g.flash-=dt;if(g.faceT>0)g.faceT-=dt;if(g.wetT>0)g.wetT-=dt;g.dtLast=dt;if(g.papT>0){g.papT-=dt;if(Math.random()<dt*8)g.flash=Math.max(g.flash,0.10+Math.random()*0.10);}
   g.pins.forEach(function(p){p.bob+=dt*3;p.wave+=dt*5;});
   if(g.phase==='aim'){
     g.tauntT-=dt;
@@ -1296,6 +1299,9 @@ function finishRoll(){
   if(!strike)g.streak=0;
   if(!strike&&!spare&&n<=4){g.face='mad';g.faceT=2.8;}
   g.msg=m;g.msgT=dept?3.4:((strike||spare)?2.4:1.9);g.phase='result';g.resT=dept?7.7:((strike||spare)?2.4:1.7);
+  if(USE3D&&!dept&&window.B3D&&B3D.replay){ /* ACTION REPLAY: a strike, or any ball that went off, played back slowly */
+    var rpd=B3D.replay(strike);
+    if(rpd>0){g.replayT=rpd;g.resT=Math.max(g.resT,rpd+0.6);g.msgT=Math.min(g.msgT,0.9);}}
   if(spare)setTimeout(function(){for(var i=0;i<40;i++)g.splats.push({x:W/2+(Math.random()-0.5)*220,y:300+Math.random()*40,r:5+Math.random()*9,c:i%3?'#f2a81d':'#ffd166',a:0.8,rx:1.4+Math.random()});},500);crowdReact(total(),strike||spare,n);
 }
 function nextRoll(){
@@ -1485,6 +1491,17 @@ function drawTop(){
   if(!USE3D&&g.taunt&&g.taunt.p.up){var q=projTop(g.taunt.p.x,g.taunt.p.y);bubble(g.taunt.txt,q.x,q.y-80*q.s);}
   if(g.fx&&g.fx.type==='clamp')drawClamp(g.fx.t);
   drawScorecard();drawPinDiagram();drawMuteBtn();
+  if(g.replayT>0){ /* ACTION REPLAY: broadcast bars and a live badge over the slow motion */
+    var ra=Math.min(1,g.replayT*3.5),bh2=Math.round(H*0.072);
+    ctx.save();ctx.globalAlpha=0.9*ra;ctx.fillStyle='#000';ctx.fillRect(0,0,W,bh2);ctx.fillRect(0,H-bh2,W,bh2);ctx.restore();
+    ctx.save();ctx.globalAlpha=ra;
+    var rx=12,ry=bh2+12;
+    ctx.fillStyle='rgba(184,50,44,.92)';rr(rx,ry,132,26,7);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.2;rr(rx,ry,132,26,7);ctx.stroke();
+    if(Math.sin(g.t*7)>0){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(rx+15,ry+13,4.6,0,7);ctx.fill();}
+    txt('ACTION REPLAY',rx+78,ry+14,'bold 11px Verdana,sans-serif','#fff');
+    ctx.restore();
+  }
   if(g.msgT>0&&g.msg&&!(g.fx&&g.fx.type==='clamp'&&g.fx.t<0.45)){
     var big=g.msg==='CLAMP!'||g.msg==='DRIZZLE!'||g.msg.indexOf('ON FIRE')===0||g.msg.indexOf('ULTIMATE')===0;
     ctx.save();ctx.translate(W/2,(g.fx&&g.fx.type==='drizzle')?150:210);var pul=big?1+Math.sin(g.t*14)*0.06:1;ctx.scale(pul,pul);
@@ -1607,7 +1624,7 @@ function drawPowerBar(){
   var grd=ctx.createLinearGradient(0,y+h,0,y);grd.addColorStop(0,'#43aa8b');grd.addColorStop(0.55,'#f2a81d');grd.addColorStop(1,'#e63946');
   ctx.save();ctx.beginPath();rr(x,y+h-fh,w,fh,5);ctx.clip();ctx.fillStyle=grd;ctx.fillRect(x,y,w,h);ctx.restore();
   ctx.fillStyle='#fff';ctx.fillRect(x-3,y+h-fh-1.5,w+6,3);
-  txt(Math.round(12+p*12)+' mph',x+w/2,y+h+18,'bold 10px Verdana,sans-serif','#f2a81d');
+  txt(Math.round(p<=0.10?(3+(p/0.10)*9):(12+Math.pow((p-0.10)/0.90,1.12)*18))+' mph',x+w/2,y+h+18,'bold 10px Verdana,sans-serif','#f2a81d');
 }
 function drawBottom(){
   ctx.save();ctx.beginPath();ctx.rect(0,BOT.y,W,H-BOT.y);ctx.clip();
@@ -2492,7 +2509,7 @@ function ambient(dt,gs){
   if(RETRO){day=0;dusk=0;sky.set(0x090516);}
   renderer.setClearColor(sky,1);scene.fog.color.copy(sky);
   if(RETRO&&window.__grid){window.__grid.offset.y-=dt*0.35;}
-  if(RETRO){sun.visible=false;moon.visible=true;moon.position.set(-3.2,6.4,-23);moon.material.opacity=0.85;}
+  if(RETRO){sun.visible=false;moon.visible=false;}   /* no sun and no moon over the neon arena */
   /* lane LEDs: steady glow, a stutter-flicker every ~8.5s, swapping blue <-> purple */
   ledT+=dt;
   ledPatT.offset.y-=ledPatSpeed*dt*(ledPat===3?0.5:1);   /* the light runs down the lane */
@@ -2505,27 +2522,29 @@ function ambient(dt,gs){
   starMat.opacity=Math.max(0,1-day*2-dusk)*0.9;
   /* sun arcs through the day, moon through the night */
   const dayT=ph<0.48?(ph/0.48):(ph>0.90?0:(1));
+  if(!RETRO){
   if(ph<0.48){const u=ph/0.48;sun.position.set(-8+u*16,1.9+Math.sin(u*Math.PI)*3.4,-23);sun.visible=true;}
   else if(ph>0.90){const u=(ph-0.90)/0.10*0.15;sun.position.set(-8+u*16,1.9+Math.sin(u*Math.PI)*3.4,-23);sun.visible=true;}
   else sun.visible=false;
   if(ph>=0.46&&ph<0.94){const u=(ph-0.46)/0.48;moon.position.set(-8+u*16,2.2+Math.sin(u*Math.PI)*3.1,-23);moon.visible=true;}
   else moon.visible=false;
+  }
   /* flickering windows; lit at night, dim silhouettes by day */
   const wb=0.45+(1-day)*0.55;
   for(const b of blds){b.flick-=dt;if(b.flick<0){b.flick=3+Math.random()*7;b.t.offset.y=(b.t.offset.y+0.135)%1;}b.m.material.color.setScalar(wb);}
   /* police helicopter sweep */
-  heliT+=dt;const HC=27;
+  heliT+=dt;const HC=19;
   if(heliT>HC)heliT-=HC;
-  if(!RETRO&&heliT<9){const u=heliT/9,dir=Math.floor(ambT/HC)%2?1:-1;
+  if(heliT<9){const u=heliT/9,dir=Math.floor(ambT/HC)%2?1:-1;
     heli.visible=true;heli.position.x=dir*(-12+u*24);heli.scale.x=dir;
     rotor.rotation.y+=dt*38;
     blinkL.visible=Math.sin(heliT*19)>0;
-    beam.rotation.z=Math.sin(heliT*1.7)*0.30;
+    beam.rotation.z=Math.sin(heliT*1.7)*0.30;beam.material.opacity=RETRO?0.22:0.11;  /* the searchlight reads against the neon */
   } else heli.visible=false;
   /* cop car with lights running */
   carT+=dt;const CC=16;
   if(carT>CC){carT-=CC;carDir=-carDir;}
-  if(!RETRO&&carT<6){const u=carT/6;car.visible=true;car.position.x=carDir*(-13+u*26);
+  if(carT<6){const u=carT/6;car.visible=true;car.position.x=carDir*(-13+u*26);
     lb1.visible=Math.floor(carT*9)%2===0;lb2.visible=!lb1.visible;
   } else car.visible=false;
   /* shooting stars at night */
@@ -2987,8 +3006,9 @@ function steamAt(x,y,z,dt,rate){const n=Math.floor(dt*rate*18)+(Math.random()<dt
 const fxList=[];
 const shockMat=new THREE.MeshBasicMaterial({color:0x9fd0ff,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
 const flashL=new THREE.PointLight(0xbfe0ff,0,9,1.4);scene.add(flashL);
-function explodeAt(p){
+function explodeAt(p,visOnly){   /* visOnly: the same blast drawn again for the replay, with none of the physics repeated */
   const cx=p.x,cy=p.y,cz=p.z;
+  if(!visOnly){S.boomAt=performance.now()/1000;S.boomPos=[cx,cy,cz];}
   flashL.position.set(cx,cy+0.2,cz);flashL.intensity=90;fxList.push({kind:'flash',t:0});
   const ring=new M(new THREE.RingGeometry(0.85,1,48),shockMat.clone());ring.rotation.x=-Math.PI/2;ring.position.set(cx,0.02,cz);ring.scale.setScalar(0.08);scene.add(ring);fxList.push({kind:'ring',mesh:ring,t:0});
   const dome=new M(new THREE.SphereGeometry(1,24,16),shockMat.clone());dome.material.opacity=0.35;dome.position.set(cx,cy,cz);dome.scale.setScalar(0.1);scene.add(dome);fxList.push({kind:'dome',mesh:dome,t:0});
@@ -2997,6 +3017,7 @@ function explodeAt(p){
     if(i%2)fSpawn(cx,cy,cz,dx*sp*1.3,dy*sp*1.3,dz*sp*1.3,0.7+Math.random()*0.7,0.03,2);}
   for(let i=0;i<30;i++)fSpawn(cx+(Math.random()-0.5)*0.3,cy+0.1,cz+(Math.random()-0.5)*0.3,(Math.random()-0.5)*1.2,1.0+Math.random()*1.5,(Math.random()-0.5)*1.2,1.2+Math.random()*0.8,0.18+Math.random()*0.12,6);
   S.shakeOut=Math.max(S.shakeOut,0.5);
+  if(!visOnly){
   /* the rack: shatter inside the blast, throw the rest */
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body,dx=b.position.x-cx,dz=b.position.z-cz,d=Math.hypot(dx,dz);
     if(d<0.52)shatterPin(pn,cx,cz);
@@ -3004,6 +3025,7 @@ function explodeAt(p){
   /* everything else within reach lights up */
   for(const f of foods){const dd=Math.hypot(f.body.position.x-cx,f.body.position.z-cz);if(dd<1.0){const r=recFor(f.body);if(r)ignite(r);f.body.wakeUp();f.body.velocity.y+=1.5;}}
   for(const t of tables){if(t.broken)continue;const dd=Math.hypot(t.body.position.x-cx,t.body.position.z-cz);if(dd<1.3){const r=recFor(t.body);if(r)ignite(r);}}
+  }
   if(A3.sfx&&A3.sfx.boom)A3.sfx.boom();
 }
 function shatterPin(pn,cx,cz){
@@ -3030,12 +3052,16 @@ let ballBody=null,ballMesh=null,ballShadow=null;
 const S={hit:false,gutter:false,done:false,rest:false,pit:0,age:0,rot:0,spin:0,shakeOut:0};
 let lastCrash=0,lastRoll=0;
 function removeBall(){if(A3.rumble)A3.rumble(0);if(ballBody){world.removeBody(ballBody);ballBody=null;}if(ballMesh){scene.remove(ballMesh);ballMesh=null;}if(ballShadow){scene.remove(ballShadow);ballShadow=null;}
-  S.hit=false;S.gutter=false;S.done=false;S.rest=false;S.pit=0;S.age=0;S.rot=0;S.pocket=false;}
+  S.hit=false;S.gutter=false;S.done=false;S.rest=false;S.pit=0;S.age=0;S.rot=0;S.pocket=false;S.hitAt=0;S.boomAt=0;S.boomPos=null;
+  RPL.on=false;RPL.capt=false;RPL.clip=[];}
 function throwBall(ox,spin,power,charged){
   removeBall();
   S.spin=spin;S.charged=!!charged;
   const wob=0; /* no faked release wobble: the ball goes exactly where the physics preview says */
-  const v=(4.8+power*3.4+(charged?0.6:0))*(fireLevel>=2?1.08:1); /* ultimate flame: 8% more pace */
+  const pw=Math.max(0,Math.min(1,power));
+  /* the bottom tenth of the meter is a crawl that barely creeps down the lane; everything above it drives harder than it used to */
+  const base=pw<=0.10?(1.6+(pw/0.10)*3.2):(4.8+Math.pow((pw-0.10)/0.90,1.12)*5.3);
+  const v=(base+(charged?0.6:0))*(fireLevel>=2?1.08:1); /* ultimate flame: 8% more pace */
   ballBody=new CANNON.Body({mass:PHYS.ballM,material:mBall,shape:new CANNON.Sphere(BR),position:new CANNON.Vec3(ox*0.76,BR+0.002,2.30)});
   ballBody.velocity.set(wob,0,-v);
   /* released with less roll than speed (it skids on the oil) and a tilted axis: the side component hooks it once the lane grabs */
@@ -3047,7 +3073,7 @@ function throwBall(ox,spin,power,charged){
       if(f&&!f.counted){f.counted=true;bonusEvents.push({pts:f.pts,e:f.e,ox:e.body.position.x*OLDX,oy:zToOld(e.body.position.z)});}}
     else if(e.body.__pin){const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
       e.body.wakeUp();
-      if(!S.hit){S.hit=true;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;if(fireLevel>=2&&S.charged)explodeAt(ballBody.position);spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
+      if(!S.hit){S.hit=true;S.hitAt=nw;S.shakeOut=Math.max(S.shakeOut,S.charged?0.2:0.14);lastCrash=nw;if(fireLevel>=2&&S.charged)explodeAt(ballBody.position);spawnPuddle(ballBody.position.x,ballBody.position.z,Math.floor(Math.random()*8),true);
         if(A3.pinHit)A3.pinHit(Math.max(iv,5),'ball');
         if(A3.playCrash){A3.playCrash(0.8,0.98+Math.random()*0.06);}else if(A3.sfx)A3.sfx.crash();}
       else if(nw-lastCrash>0.05){lastCrash=nw;if(A3.pinHit)A3.pinHit(iv,'ball');else if(A3.sfx)A3.sfx.crash();
@@ -3640,6 +3666,62 @@ function renderBowler(gs,dt,nw){
   renderer.autoClear=false;renderer.clearDepth();renderer.render(bScene,bCam);renderer.autoClear=true;
 }
 
+/* ---------- ACTION REPLAY ----------
+   Every drawn frame of a live roll is kept for six seconds: where the ball was, where every pin was.
+   On a strike the roll is played back at a third speed from three angles, and a blast that went off
+   during it is drawn again at the moment it happened. Nothing here touches the physics. */
+const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0};
+const _rqa=new THREE.Quaternion(),_rqb=new THREE.Quaternion();
+const RPL_RATE=0.32;                       /* a third of real speed */
+function rplSnap(nw){
+  const e={t:nw,b:null,p:[]};
+  if(ballBody&&ballMesh&&ballMesh.visible)e.b=[ballMesh.position.x,ballMesh.position.y,ballMesh.position.z,ballMesh.quaternion.x,ballMesh.quaternion.y,ballMesh.quaternion.z,ballMesh.quaternion.w];
+  for(const pn of pins){if(!pn||!pn.alive){e.p.push(null);continue;}const q=pn.grp;
+    e.p.push([q.position.x,q.position.y,q.position.z,q.quaternion.x,q.quaternion.y,q.quaternion.z,q.quaternion.w,q.visible?1:0]);}
+  RPL.buf.push(e);
+  const cut=nw-6;while(RPL.buf.length>2&&RPL.buf[0].t<cut)RPL.buf.shift();
+  /* the moment the ball reaches the rack, the clip is cut: the run-up is already in hand, and the
+     scatter is appended for the next second and change. Cutting it here means the replay survives
+     however long the pins take to settle afterwards. */
+  if(S.hitAt&&!RPL.capt){RPL.capt=true;RPL.end=S.hitAt+1.85;RPL.clip=RPL.buf.filter(function(x){return x.t>=S.hitAt-0.85;});}
+  else if(RPL.capt&&nw<=RPL.end)RPL.clip.push(e);
+}
+function rplStart(force){
+  if(RPL.on||RPL.clip.length<8)return 0;
+  if(!force&&!S.boomAt)return 0;
+  RPL.from=RPL.clip[0].t;RPL.to=RPL.clip[RPL.clip.length-1].t;
+  if(RPL.to-RPL.from<0.5)return 0;
+  RPL.on=true;RPL.clock=RPL.from;RPL.boomDone=false;RPL.t0=performance.now()/1000;
+  return (RPL.to-RPL.from)/RPL_RATE;
+}
+function rplFrame(dt,nw){
+  RPL.clock+=dt*RPL_RATE;
+  const t=Math.min(RPL.clock,RPL.to),done=RPL.clock>=RPL.to;
+  let i=1;while(i<RPL.clip.length-1&&RPL.clip[i].t<t)i++;
+  const a=RPL.clip[i-1],b=RPL.clip[i],sp=Math.max(1e-4,b.t-a.t),u=Math.max(0,Math.min(1,(t-a.t)/sp));
+  if(a.b&&b.b&&ballMesh){ballMesh.visible=true;
+    ballMesh.position.set(a.b[0]+(b.b[0]-a.b[0])*u,a.b[1]+(b.b[1]-a.b[1])*u,a.b[2]+(b.b[2]-a.b[2])*u);
+    _rqa.set(a.b[3],a.b[4],a.b[5],a.b[6]);_rqb.set(b.b[3],b.b[4],b.b[5],b.b[6]);_rqa.slerp(_rqb,u);ballMesh.quaternion.copy(_rqa);
+    if(ballShadow){ballShadow.visible=ballMesh.position.y<0.5;ballShadow.position.set(ballMesh.position.x,0.003,ballMesh.position.z);}}
+  else if(ballMesh){ballMesh.visible=false;if(ballShadow)ballShadow.visible=false;}
+  for(let k=0;k<pins.length;k++){const pn=pins[k];if(!pn||!pn.alive)continue;
+    const pa=a.p[k],pb=b.p[k];if(!pa||!pb){pn.grp.visible=false;if(pn.shadow)pn.shadow.visible=false;continue;}
+    pn.grp.visible=!!pb[7];
+    pn.grp.position.set(pa[0]+(pb[0]-pa[0])*u,pa[1]+(pb[1]-pa[1])*u,pa[2]+(pb[2]-pa[2])*u);
+    _rqa.set(pa[3],pa[4],pa[5],pa[6]);_rqb.set(pb[3],pb[4],pb[5],pb[6]);_rqa.slerp(_rqb,u);pn.grp.quaternion.copy(_rqa);
+    if(pn.shadow){pn.shadow.visible=pn.grp.visible&&pn.grp.position.y<0.6;pn.shadow.position.set(pn.grp.position.x,0.002,pn.grp.position.z);}}
+  if(!RPL.boomDone&&S.boomAt&&S.boomPos&&t>=S.boomAt){RPL.boomDone=true;explodeAt({x:S.boomPos[0],y:S.boomPos[1],z:S.boomPos[2]},true);}
+  /* three angles across the replay: low behind the deck, side on, then high over the pocket */
+  const prog=(t-RPL.from)/Math.max(0.001,RPL.to-RPL.from);
+  const bx=ballMesh&&ballMesh.visible?ballMesh.position.x:0;
+  let cp,cl;
+  if(prog<0.34){const u2=prog/0.34;cp=[bx*0.45+0.30,0.27+u2*0.10,-18.55+u2*0.25];cl=[0,0.26,-16.5];}
+  else if(prog<0.68){const u2=(prog-0.34)/0.34;cp=[2.15-u2*0.45,0.58+u2*0.10,-15.2-u2*0.5];cl=[0,0.26,-16.5];}
+  else{const u2=(prog-0.68)/0.32;cp=[-0.55+u2*0.2,1.45-u2*0.30,-13.9-u2*0.5];cl=[0,0.18,-16.7];}
+  cam.position.set(cp[0],cp[1],cp[2]);cam.lookAt(cl[0],cl[1],cl[2]);
+  if(done||nw-RPL.t0>14)RPL.on=false;   /* a stuttering device never gets parked in the replay */
+}
+
 function render(gs){
   showPath(gs.x,gs.spin||0,gs.power,gs.phase==='spin'||gs.phase==='power');
   const swayN=performance.now()/1000;
@@ -3648,6 +3730,7 @@ function render(gs){
   let tp,tl;
   const rolling=ballBody&&!S.rest&&(gs.phase==='roll'||gs.phase==='settle');
   const al=ialpha(),bI=ballBody?ipos(ballBody,al,_bI):null;
+  if(RPL.on){rplFrame(dt,nw);}else{
   if(rolling&&!S.pit){
     const b=bI,bz=Math.max(b.z,-16.6);
     tp=[b.x*0.55+swayX*0.3,1.22,Math.min(3.5,Math.max(bz+4.3,-12.2))];tl=[b.x*0.7,0.12,bz-2.6];
@@ -3673,20 +3756,22 @@ function render(gs){
   for(const d of debris){syncPos(d.body,d.mesh,al);syncQ(d.body,d.mesh,al);d.mesh.visible=d.mesh.position.y>-0.5;}
   for(const f of foods){syncPos(f.body,f.mesh,al);f.mesh.position.y+=0.035;f.mesh.visible=f.body.position.y>-0.4;}
   for(const p2 of panels){syncPos(p2.body,p2.mesh,al);syncQ(p2.body,p2.mesh,al);p2.mesh.visible=p2.mesh.position.y>-0.5;}
+  }
   updateFire(dt,nw);
-  if(ballBody&&ballMesh){ballMesh.position.copy(bI);syncQ(ballBody,ballMesh,al);
+  if(!RPL.on&&ballBody&&ballMesh){ballMesh.position.copy(bI);syncQ(ballBody,ballMesh,al);
     if(!S.rest){const wb=Math.sin(nw*11)*0.07*Math.min(1,ballBody.velocity.length()/4);ballMesh.rotateOnWorldAxis(new THREE.Vector3(0,0,1),wb);ballMesh.position.x+=Math.sin(nw*7.3)*0.006;}
     ballMesh.visible=ballBody.position.y>-0.25;
     if(ballShadow){ballShadow.visible=ballMesh.visible&&ballBody.position.y<0.5;ballShadow.position.set(bI.x,0.003,bI.z);}}
+  if(!RPL.on)rplSnap(nw);
   ambient(dt,gs);tickPuddles(dt);
   renderer.setViewport(0,0,LW,VH);renderer.setScissor(0,0,LW,VH);
   renderer.render(scene,cam);
-  renderBowler(gs,dt,nw);
+  if(!RPL.on)renderBowler(gs,dt,nw);   /* his overlay would paste itself over the replay */
   /* the TV screen: a second live camera on the very same pins */
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
