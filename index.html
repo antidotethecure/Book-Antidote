@@ -209,6 +209,9 @@ canvas.hero-driz{position:absolute !important;inset:0;z-index:2 !important;width
 .btn:active{transform:scale(.96)}
 .btn-gold{background:linear-gradient(180deg,var(--syrup-hi),var(--syrup));color:#1a1000;box-shadow:0 6px 26px rgba(245,166,35,.5)}
 .btn-ghost{border:2px solid var(--cream);color:var(--cream)}
+.btn-play{background:linear-gradient(180deg,#5cff8a,#12c246);color:#06210f;box-shadow:0 6px 26px rgba(57,255,106,.45);animation:playpulse 2.6s ease-in-out infinite}
+@keyframes playpulse{0%,100%{box-shadow:0 6px 26px rgba(57,255,106,.4)}50%{box-shadow:0 6px 34px rgba(57,255,106,.85)}}
+@media (prefers-reduced-motion:reduce){.btn-play{animation:none}}
 .scroll-hint{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);z-index:2;font-size:1.6rem;animation:bob 1.6s infinite}
 @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
 
@@ -1311,6 +1314,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
   </div>
   <div class="cta-row">
     <a class="btn btn-gold" href="tel:+14243094068">📞 Book Your Review</a>
+    <a class="btn btn-play" href="/drizzle-bowl/">🎳 Play Drizzle Bowl</a>
     <a class="btn btn-ghost" href="#reviews">See The Reviews</a>
   </div>
   <div class="scroll-hint">⬇️</div>
