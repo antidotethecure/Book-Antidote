@@ -4,10 +4,13 @@ on:
     inputs:
       glb_url:
         description: URL of the bowler scan (GLB)
-        required: true
+        required: false
       atlas_url:
         description: URL of the crowd sprite sheet (WebP)
-        required: true
+        required: false
+      food_url:
+        description: URL of the food cutout atlas (PNG, 4x2 cells with alpha)
+        required: false
 permissions:
   contents: write
 jobs:
@@ -18,13 +21,20 @@ jobs:
       - name: Fetch the assets
         run: |
           mkdir -p drizzle-bowl/assets
-          curl -fsSL "${{ github.event.inputs.glb_url }}" -o drizzle-bowl/assets/antidote.glb
-          curl -fsSL "${{ github.event.inputs.atlas_url }}" -o drizzle-bowl/assets/crowd.webp
+          if [ -n "${{ github.event.inputs.glb_url }}" ]; then
+            curl -fsSL "${{ github.event.inputs.glb_url }}" -o drizzle-bowl/assets/antidote.glb
+          fi
+          if [ -n "${{ github.event.inputs.atlas_url }}" ]; then
+            curl -fsSL "${{ github.event.inputs.atlas_url }}" -o drizzle-bowl/assets/crowd.webp
+          fi
+          if [ -n "${{ github.event.inputs.food_url }}" ]; then
+            curl -fsSL "${{ github.event.inputs.food_url }}" -o drizzle-bowl/assets/food.png
+          fi
           ls -la drizzle-bowl/assets
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add drizzle-bowl/assets
-          git commit -m "Drizzle Bowl: mirror the bowler scan and crowd sheet into assets" || echo "nothing to commit"
+          git commit -m "Drizzle Bowl: mirror the scan, crowd sheet and food cutouts into assets" || echo "nothing to commit"
           git push
