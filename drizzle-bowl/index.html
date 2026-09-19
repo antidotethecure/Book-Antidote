@@ -543,6 +543,19 @@ var AC=null;
 function ac(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();setTimeout(preloadClips,0);}if(AC.state==='suspended')AC.resume();return AC;}catch(e){return null;}}
 function tone(f,d,type,g,slide){var a=ac();if(!a)return;try{var o=a.createOscillator(),v=a.createGain();o.type=type||'square';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),a.currentTime+d);v.gain.value=g||0.07;v.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.connect(v);v.connect(a.destination);o.start();o.stop(a.currentTime+d);}catch(e){}}
 function noise(d,g,fq){var a=ac();if(!a)return;try{var b=a.createBuffer(1,a.sampleRate*d,a.sampleRate),x=b.getChannelData(0);for(var i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*(1-i/x.length);var s=a.createBufferSource(),v=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=fq||1200;s.buffer=b;v.gain.value=g;s.connect(f);f.connect(v);v.connect(a.destination);s.start();}catch(e){}}
+function woodCrack(str){ /* one fibre bundle letting go: a dry tick, then the timber complaining */
+  var v=Math.max(0.25,Math.min(1,str||0.6));
+  noise(0.05,0.10*v,2600);tone(300+Math.random()*120,0.06,'square',0.03*v,-160);
+  for(var i=0;i<3;i++)(function(i){setTimeout(function(){
+    tone(230-i*45+Math.random()*70,0.09,'square',0.030*v,-120);noise(0.04,0.055*v,1500);},20+i*34);})(i);
+}
+function woodSnap(str){ /* the whole top going at once: a tearing rip that drops into a bass thud */
+  var v=Math.max(0.3,Math.min(1,str||1));
+  noise(0.30,0.17*v,1700);tone(94,0.36,'sawtooth',0.075*v,-58);
+  for(var i=0;i<7;i++)(function(i){setTimeout(function(){
+    tone(150+Math.random()*280,0.07,'square',0.030*v,-95);noise(0.05,0.05*v,2300);},18+i*42+Math.random()*34);})(i);
+  setTimeout(function(){noise(0.22,0.07*v,700);},210);
+}
 var CRASH_B64='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CwpXVQuZPDntBNKpNvhlPvzh7SjC4aObjKYBgwIkqCyjns1RE5MrmvMcuZ8///soxOgACvRnOCe8xwElDGkw8wzsz/Q4NSX2+0NwxsDV/p0EdU96uj8jSacskd/IBZHRMge8Q2Xi7vZRp4fLhZbqi1qt+XjbMTQ66rlAoDB0XIiIPCgDIBSgHxKdrMOhIk9T/U3KjFGO+MYOkVfPKr/RWABgQ6qoUxoOBDKwlqRKSl021jAhiZ1K5sfDl2nJFA4wruA55u40Ze4gGi39j1BuYXiqhc7VMWMCQ9xpDUOEMBVI//soxOcACpEXPMwkZ0EoC2m0kwzkWok4Z2uGX+aUm07qm1DQ4WUAERlmVB6I6atAGD5UDc4L4yTobi28TzLWsiKNNUZKTBaDQikVyekbg4ik88GCNiUNVnBSVMgidCsrFGFkVuPFnrOdj7EZ8sLuZ9wSNqIoLxTzbVShgK4EgsZYYBY6IxLTb1ufio+SpKFSLklhtmtlgYcWeBQCGRdy7danJPHxddgFmRR6d4alV7/U/EWS//soxOcACuUvR6YMUWE3J2dkkI7o04qoO8V8AmvqwSEhIkM1yFnUIKgJ4mErgq4K22LcRKyowGol6gaFhKCwFKrALwVAUQhKDQ5FlvWIqyt/1YFkv6Lqn6QCCSipEOLqdhdywB1BDR7lgNZCVMxqlDkSNmGqTg1GDKJNA9CGcSssdDEhgQ6x1al/5S5MqDiQzkWd5qGRqTfzNYaw1qGsNZ/KTUmjl+TA3Eg2AiQUDwMkXLYt//soxOQACRRhUYSwZ3FHkCZkww1gOLAVlDBn4saqTEFNRTMuMTAwqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//soxOYACkx7LyewYcEKCyVI9Iw4qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//soxOsDB5gXIkMZIAGOIB1E9I3Qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'; /* real ball-into-pins strike (Freesound CC0 792203 + 514385), fires at first impact */
 /* ---- clip bank: real recordings (mp3, base64) decoded once into WebAudio buffers so they fire instantly and still play on iPhone long after the tap ---- */
 var SND_B64={ /* real recordings + voice lines, mp3 base64 (Freesound CC0: knocks 151204, roll 655945, kids 321572) */
@@ -2203,7 +2216,7 @@ window.__showHalf=showHalftime;
 setTimeout(function(){try{loadBoard();}catch(e){}},1400);   /* the ticker wants the week's board early, not just at the end of a game */
 window.ADB={get g(){return g;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
   throw3d:function(x,spin,power,aim){g.x=x;g.spin=spin;g.power=power;g.aim=aim||0;g.phase='throw';g.throwT=1.01;}};
-window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
+window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,woodCrack:woodCrack,woodSnap:woodSnap,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
   hover:HOVER_REVIEWS,hoverBase:HOVER_BASE,shuffle:shuffleArr};  /* the review catalogue, so the big screen can run the previews */
 })();
 </script>
@@ -2961,23 +2974,164 @@ function foodLoad(i){
 foodLoad(0);
 let tables=[],foods=[],panels=[],debris=[],bonusEvents=[];
 function clearBonus(){tables.forEach(t=>{if(!t.broken){world.removeBody(t.body);scene.remove(t.grp);}});foods.forEach(f=>{world.removeBody(f.body);scene.remove(f.mesh);if(f.shadow)scene.remove(f.shadow);});panels.forEach(p=>{world.removeBody(p.body);scene.remove(p.mesh);});debris.forEach(d=>{world.removeBody(d.body);scene.remove(d.mesh);});tables=[];foods=[];panels=[];debris=[];}
+/* ---------- the buffet tables are real timber ----------
+   One texture carries both states of the wood: the left half is the finished, varnished plank the table
+   is built from, the right half is the pale torn fibre you only ever see on a fresh break. Every face of
+   every piece picks its half by UV, so a single material covers an intact table and a pile of splinters. */
+const WOODT=bake(256,128,(g,w,h)=>{
+  g.fillStyle='#8a5a2e';g.fillRect(0,0,128,128);
+  for(let i=0;i<150;i++){                                   /* grain runs the length of the plank */
+    const y=Math.random()*128,a=0.05+Math.random()*0.17,dark=Math.random()<0.62;
+    g.strokeStyle=dark?'rgba(58,32,13,'+a+')':'rgba(198,152,98,'+(a*0.7)+')';
+    g.lineWidth=0.5+Math.random()*1.9;g.beginPath();g.moveTo(-4,y);
+    for(let x=0;x<=132;x+=11)g.lineTo(x,y+Math.sin((x+i*7)*0.05)*(1.1+Math.random()*1.7));
+    g.stroke();
+  }
+  for(let k=0;k<2;k++){                                     /* knots */
+    const kx=22+k*64+Math.random()*22,ky=28+Math.random()*64;
+    for(let r=9;r>0;r--){g.strokeStyle='rgba(50,27,11,'+(0.09+r*0.021)+')';g.lineWidth=1.1;
+      g.beginPath();g.ellipse(kx,ky,r*1.5,r*0.9,0.4,0,6.3);g.stroke();}
+  }
+  g.strokeStyle='rgba(36,19,7,0.5)';g.lineWidth=1.3;        /* board seams and a couple of old splits */
+  [30,72,106].forEach(y=>{g.beginPath();g.moveTo(0,y);g.lineTo(128,y+(Math.random()-0.5)*3);g.stroke();});
+  g.fillStyle='#d9b580';g.fillRect(128,0,128,128);          /* raw half: fibre torn across the grain */
+  for(let i=0;i<230;i++){
+    const x=128+Math.random()*128,y=Math.random()*128,len=5+Math.random()*26;
+    g.strokeStyle='rgba('+(96+Math.random()*62|0)+','+(60+Math.random()*52|0)+','+(26+Math.random()*32|0)+','+(0.22+Math.random()*0.42)+')';
+    g.lineWidth=0.6+Math.random()*2.0;g.beginPath();g.moveTo(x,y);g.lineTo(x+(Math.random()-0.5)*4,y+len);g.stroke();
+  }
+  for(let i=0;i<75;i++){                                    /* fresh fibre catches the light */
+    const x=128+Math.random()*128,y=Math.random()*128;
+    g.strokeStyle='rgba(255,238,204,'+(0.14+Math.random()*0.30)+')';g.lineWidth=0.5+Math.random();
+    g.beginPath();g.moveTo(x,y);g.lineTo(x+(Math.random()-0.5)*3,y+4+Math.random()*16);g.stroke();
+  }
+});
+const CRACKT=bake(256,192,(g,w,h)=>{
+  g.clearRect(0,0,w,h);g.lineCap='round';
+  const branch=(x,y,ang,len,wd,depth)=>{
+    if(len<5||wd<0.35)return;
+    const steps=Math.max(2,len/6|0),pts=[[x,y]];let px=x,py=y,a2=ang;
+    for(let st=0;st<steps;st++){a2+=(Math.random()-0.5)*0.55;px+=Math.cos(a2)*6;py+=Math.sin(a2)*6;pts.push([px,py]);}
+    const run=(ox,oy,st2,lw)=>{g.beginPath();g.moveTo(pts[0][0]+ox,pts[0][1]+oy);
+      for(let q=1;q<pts.length;q++)g.lineTo(pts[q][0]+ox,pts[q][1]+oy);
+      g.strokeStyle=st2;g.lineWidth=lw;g.stroke();};
+    run(1.7,1.5,'rgba(224,190,142,0.40)',wd*1.5);   /* one lip lifts and catches the light */
+    run(0,0,'rgba(12,6,2,0.96)',wd*1.05);           /* the dark gap down into the board */
+    run(-1.0,-0.9,'rgba(104,74,42,0.45)',wd*0.55);  /* the other side just shaded */
+    if(depth>0){branch(px,py,a2+0.55+Math.random()*0.5,len*0.55,wd*0.62,depth-1);
+                branch(px,py,a2-0.55-Math.random()*0.5,len*0.50,wd*0.58,depth-1);}
+  };
+  /* splits run with the grain, so every branch starts near horizontal and only wanders from there */
+  for(let i=0;i<4;i++)branch(40+Math.random()*176,20+Math.random()*152,(i%2?0:Math.PI)+(Math.random()-0.5)*0.8,70+Math.random()*58,4.6,3);
+  for(let i=0;i<5;i++){const x=20+Math.random()*216,y=14+Math.random()*164,L=14+Math.random()*30;
+    g.beginPath();g.moveTo(x,y);g.lineTo(x+L,y+(Math.random()-0.5)*5);
+    g.strokeStyle='rgba(214,178,128,0.40)';g.lineWidth=3.0;g.stroke();
+    g.strokeStyle='rgba(14,7,2,0.85)';g.lineWidth=1.5;g.stroke();}
+});
+const woodMat=new THREE.MeshStandardMaterial({map:WOODT,roughness:0.74,metalness:0.02});
+const legMatW=new THREE.MeshStandardMaterial({map:WOODT,color:0xbb9269,roughness:0.78,metalness:0.02});
+function uvLeft(geo){const u=geo.attributes.uv;for(let i=0;i<u.count;i++)u.setX(i,u.getX(i)*0.45+0.02);u.needsUpdate=true;return geo;}
+const FACE_N=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function woodFace(P,U,I,pts,n,raw){
+  const a=[pts[1][0]-pts[0][0],pts[1][1]-pts[0][1],pts[1][2]-pts[0][2]];
+  const b=[pts[2][0]-pts[0][0],pts[2][1]-pts[0][1],pts[2][2]-pts[0][2]];
+  const cx=a[1]*b[2]-a[2]*b[1],cy=a[2]*b[0]-a[0]*b[2],cz=a[0]*b[1]-a[1]*b[0];
+  const ord=(cx*n[0]+cy*n[1]+cz*n[2])<0?[3,2,1,0]:[0,1,2,3];   /* wind it so the normal points out */
+  const u0=raw?0.53:0.02,u1=raw?0.98:0.47,uv=[[0,0],[1,0],[1,1],[0,1]],base=P.length/3;
+  for(let k=0;k<4;k++){const q=pts[ord[k]];P.push(q[0],q[1],q[2]);U.push(u0+(u1-u0)*uv[k][0],uv[k][1]);}
+  I.push(base,base+1,base+2,base,base+2,base+3);
+}
+const WOODQ=[[1,5,6,2],[4,0,3,7],[3,2,6,7],[4,5,1,0],[5,4,7,6],[0,1,2,3]];
+/* a prism along x whose two ends carry their own cross-section, so a fibre can taper to a point */
+function woodPrism(P,U,I,x0,x1,ya,za,yb,zb,rw){
+  const V=[[x0,ya[0],za[0]],[x1,yb[0],zb[0]],[x1,yb[1],zb[0]],[x0,ya[1],za[0]],
+           [x0,ya[0],za[1]],[x1,yb[0],zb[1]],[x1,yb[1],zb[1]],[x0,ya[1],za[1]]];
+  for(let f=0;f<6;f++)woodFace(P,U,I,WOODQ[f].map(i=>V[i]),FACE_N[f],rw===true||(rw&&rw[f]));
+}
+function woodBox(P,U,I,x0,x1,y0,y1,z0,z1,rw){woodPrism(P,U,I,x0,x1,[y0,y1],[z0,z1],[y0,y1],[z0,z1],rw);}
+/* A broken plank: a sound core, and at each torn end a comb of fibres of uneven length and thickness.
+   Every surface in the break zone reads off the raw half of the texture. */
+function shardGeo(hx,hy,hz,brkL,brkR){
+  const P=[],U=[],I=[];
+  const nf=Math.max(3,Math.min(9,Math.round(hz*34))),dz=2*hz/nf;
+  const xL=brkL?-hx+2*hx*(0.15+Math.random()*0.08):-hx;
+  const xR=brkR? hx-2*hx*(0.15+Math.random()*0.08): hx;
+  woodBox(P,U,I,xL,xR,-hy,hy,-hz,hz,[brkR,brkL,false,false,false,false]);
+  /* uneven fibre widths: a break does not come off a saw */
+  const cut=[-hz];
+  for(let i=1;i<nf;i++)cut.push(-hz+2*hz*(i/nf+(Math.random()-0.5)*0.7/nf));
+  cut.push(hz);
+  const dL=xL+hx,dR=hx-xR;                       /* how deep the tear bit into each end */
+  const reach=()=>Math.random()<0.30?(0.05+Math.random()*0.25):(0.45+Math.random()*0.90);
+  for(let i=0;i<nf;i++){
+    const z0=cut[i]+dz*0.07,z1=cut[i+1]-dz*0.07,zm=(z0+z1)/2;
+    if(z1<=z0)continue;
+    /* full board at the root, drawn down to a sliver at the tip */
+    const ry=hy*(0.42+Math.random()*0.58),ty=hy*(0.05+Math.random()*0.24);
+    const tz=(z1-z0)*(0.08+Math.random()*0.34)/2,yo=(Math.random()-0.5)*hy*0.7;
+    if(brkL){const tip=xL-dL*reach()*1.5;
+      woodPrism(P,U,I,tip,xL,[yo-ty,yo+ty],[zm-tz,zm+tz],[-ry,ry],[z0,z1],true);}
+    if(brkR){const tip=xR+dR*reach()*1.5;
+      woodPrism(P,U,I,xR,tip,[-ry,ry],[z0,z1],[yo-ty,yo+ty],[zm-tz,zm+tz],true);}
+  }
+  const gg=new THREE.BufferGeometry();
+  gg.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  gg.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));
+  gg.setIndex(I);gg.computeVertexNormals();gg.computeBoundingSphere();
+  return gg;
+}
+/* A hit that is not quite enough to take the top off still splits it. Three of those and it lets go. */
+function crackTable(t,iv){
+  t.dmg=(t.dmg||0)+1;
+  if(t.crack){t.crack.mat.opacity=Math.min(0.95,0.40+t.dmg*0.27);t.crack.meshes.forEach(m=>{m.visible=true;});}
+  /* the boards part and the middle one drops: broken-backed, and it reads from down the lane */
+  if(t.planks)t.planks.forEach((pk,i)=>{const sd=i-1;
+    pk.rotation.z=sd*0.020*t.dmg;
+    pk.position.y=-(i===1?0.006:0.002)*t.dmg;
+    pk.position.x=pk.userData.x0+sd*0.006*t.dmg;});
+  const bp=t.body.position;
+  for(let i=0;i<2+((Math.random()*2)|0);i++)flySplinter(bp.x+(Math.random()-0.5)*0.5,0.44,bp.z+(Math.random()-0.5)*0.3,0.7);
+  if(A3.woodCrack)A3.woodCrack(Math.min(1,iv/4));
+}
+function flySplinter(x,y,z,kick){
+  if(debris.length>70)return;
+  const hx=0.010+Math.random()*0.022;
+  const b2=new CANNON.Body({mass:0.02,material:mPin,shape:new CANNON.Box(new CANNON.Vec3(hx,0.004,0.006)),
+    position:new CANNON.Vec3(x,y,z)});
+  b2.velocity.set((Math.random()-0.5)*2.6*kick,0.9+Math.random()*2.2*kick,(Math.random()-0.5)*2.6*kick);
+  b2.angularVelocity.set((Math.random()-0.5)*20,(Math.random()-0.5)*20,(Math.random()-0.5)*20);
+  b2.allowSleep=true;b2.sleepSpeedLimit=0.3;b2.sleepTimeLimit=0.4;world.addBody(b2);
+  const m2=new M(shardGeo(hx,0.004,0.006,true,true),woodMat);
+  scene.add(m2);debris.push({body:b2,mesh:m2});
+}
 function breakTable(t){
   if(t.broken)return;t.broken=true;
   const bq=t.body.quaternion.clone(),bp=t.body.position.clone(),bv=t.body.velocity.clone();
   world.removeBody(t.body);scene.remove(t.grp);
   bonusEvents.push({pts:25,e:'',ox:bp.x*OLDX,oy:zToOld(bp.z),table:true});
-  const mk=(hx,hy,hz,lx,ly,lz,mass,color)=>{
+  const put=(geo,mat,hx,hy,hz,lx,ly,lz,mass,kick,lift)=>{
     const wp=bq.vmult(new CANNON.Vec3(lx,ly,lz),new CANNON.Vec3()).vadd(bp);
     const b2=new CANNON.Body({mass,material:mPin,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,hz)),position:wp,quaternion:bq.clone()});
-    b2.velocity.set(bv.x+(Math.random()-0.5),Math.abs(bv.y)+Math.random()*1.2,bv.z+(Math.random()-0.5));
-    b2.angularVelocity.set((Math.random()-0.5)*6,(Math.random()-0.5)*6,(Math.random()-0.5)*6);
+    b2.velocity.set(bv.x+(Math.random()-0.5)*kick+lx*2.4,Math.abs(bv.y)+(lift||0.6)+Math.random()*1.3*kick,bv.z+(Math.random()-0.5)*kick);
+    b2.angularVelocity.set((Math.random()-0.5)*7,(Math.random()-0.5)*7,(Math.random()-0.5)*7);
     b2.allowSleep=true;b2.sleepSpeedLimit=0.25;b2.sleepTimeLimit=0.5;world.addBody(b2);
-    const m2=new M(new THREE.BoxGeometry(hx*2,hy*2,hz*2),new THREE.MeshStandardMaterial({color:color,roughness:0.7}));
-    scene.add(m2);debris.push({body:b2,mesh:m2});
+    const m2=new M(geo,mat);scene.add(m2);debris.push({body:b2,mesh:m2});
   };
-  mk(0.30,0.025,0.21,0,0,0,1.0,0xb8322c);
-  mk(0.28,0.02,0.19,0,-0.165,0,0.5,0x8a5a2e);
-  [[-0.26,-0.17],[0.26,-0.17],[-0.26,0.17],[0.26,0.17]].forEach(p=>mk(0.02,0.19,0.02,p[0],-0.21,p[1],0.14,0x5c3a1c));
+  /* the top tears along the grain into three planks, each splintered on the edge it was ripped from */
+  [[-0.20,false,true],[0,true,true],[0.20,true,false]].forEach(p=>
+    put(shardGeo(0.10,0.022,0.21,p[1],p[2]),woodMat,0.10,0.022,0.21,p[0],0.004,0,0.34,1.05,1.9));
+  /* the shelf goes in two */
+  [[-0.14,false,true],[0.14,true,false]].forEach(p=>
+    put(shardGeo(0.14,0.016,0.19,p[1],p[2]),woodMat,0.14,0.016,0.19,p[0],-0.165,0,0.26,0.85,1.0));
+  /* legs snap off at the top, so each keeps one clean foot and one torn end */
+  [[-0.26,-0.17],[0.26,-0.17],[-0.26,0.17],[0.26,0.17]].forEach(p=>{
+    const lg=shardGeo(0.19,0.02,0.02,true,false);lg.rotateZ(Math.PI/2);
+    put(lg,legMatW,0.02,0.19,0.02,p[0],-0.21,p[1],0.14,0.8,0.7);});
+  /* the skirt comes away with it */
+  put(new THREE.BoxGeometry(0.63,0.05,0.45),new THREE.MeshStandardMaterial({color:0xb8322c,roughness:0.88}),
+      0.315,0.025,0.225,0,-0.045,0,0.12,1.3,1.2);
+  for(let i=0;i<9;i++)flySplinter(bp.x+(Math.random()-0.5)*0.58,0.44+Math.random()*0.06,bp.z+(Math.random()-0.5)*0.36,1.25);
+  if(A3.woodSnap)A3.woodSnap(0.95);
   if(A3.playCrash)A3.playCrash(0.7,0.8);
 }
 function buildBonus(){
@@ -2990,15 +3144,28 @@ function buildBonus(){
     body.addShape(new CANNON.Box(new CANNON.Vec3(0.28,0.015,0.19)),new CANNON.Vec3(0,-0.165,0)); /* lower shelf */
     body.allowSleep=true;body.sleepSpeedLimit=0.3;body.sleepTimeLimit=0.6;
     world.addBody(body);body.sleep(); /* dead still until something hits it */
-    const tRef={body,grp:null,counted:false,broken:false};
+    const tRef={body,grp:null,counted:false,broken:false,dmg:0,crack:null,planks:null};
     body.addEventListener('collide',ev=>{const iv=Math.abs(ev.contact.getImpactVelocityAlongNormal());
-      if(ev.body.mass>0&&iv>3.2)breakTable(tRef);});
+      if(ev.body.mass<=0)return;
+      if(iv>2.8||(tRef.dmg>=2&&iv>1.5))breakTable(tRef);      /* already split twice? the next knock finishes it */
+      else if(iv>1.15&&tRef.dmg<3)crackTable(tRef,iv);});
     const grp=new THREE.Group();tRef.grp=grp;
-    const topM=new M(new THREE.BoxGeometry(0.60,0.04,0.42),new THREE.MeshStandardMaterial({color:0x8a5a2e,roughness:0.6}));grp.add(topM);
-    const cloth=new M(new THREE.BoxGeometry(0.62,0.015,0.44),new THREE.MeshStandardMaterial({color:0xb8322c,roughness:0.85}));cloth.position.y=0.028;grp.add(cloth);
-    const legG=new THREE.BoxGeometry(0.04,0.38,0.04),legMat=new THREE.MeshStandardMaterial({color:0x5c3a1c});
-    [[-0.26,-0.17],[0.26,-0.17],[-0.26,0.17],[0.26,0.17]].forEach(p=>{const lg2=new M(legG,legMat);lg2.position.set(p[0],-0.21,p[1]);grp.add(lg2);});
-    const shelf=new M(new THREE.BoxGeometry(0.56,0.03,0.38),new THREE.MeshStandardMaterial({color:0x8a5a2e,roughness:0.6}));shelf.position.y=-0.165;grp.add(shelf);
+    /* the top is three boards, so it can open along the joints long before it comes apart */
+    const planks=[],crkMat=new THREE.MeshBasicMaterial({map:CRACKT,transparent:true,opacity:0,depthWrite:false}),crkMesh=[];
+    [-0.20,0,0.20].forEach((px,i)=>{
+      const pk=new M(uvLeft(new THREE.BoxGeometry(0.196,0.04,0.42)),woodMat);
+      pk.position.x=px;pk.userData.x0=px;grp.add(pk);planks.push(pk);
+      const cd=new M(new THREE.PlaneGeometry(0.19,0.40),crkMat);
+      cd.rotation.x=-Math.PI/2;cd.rotation.z=i*Math.PI/2;cd.position.y=0.0215;cd.visible=false;
+      pk.add(cd);crkMesh.push(cd);});
+    tRef.planks=planks;
+    /* the cloth is a band over the edge, so the boards stay bare and the frame stays visible */
+    const rim=new M(new THREE.BoxGeometry(0.63,0.05,0.45),new THREE.MeshStandardMaterial({color:0xb8322c,roughness:0.88}));
+    rim.position.y=-0.045;grp.add(rim);
+    const legG=uvLeft(new THREE.BoxGeometry(0.04,0.38,0.04));
+    [[-0.26,-0.17],[0.26,-0.17],[-0.26,0.17],[0.26,0.17]].forEach(p=>{const lg2=new M(legG,legMatW);lg2.position.set(p[0],-0.21,p[1]);grp.add(lg2);});
+    const shelf=new M(uvLeft(new THREE.BoxGeometry(0.56,0.03,0.38)),woodMat);shelf.position.y=-0.165;grp.add(shelf);
+    tRef.crack={mat:crkMat,meshes:crkMesh};
     scene.add(grp);
     tables.push(tRef);
     const picks=FOODP.slice().sort(()=>Math.random()-0.5).concat(FOODP.slice().sort(()=>Math.random()-0.5)).slice(0,7);
@@ -4027,7 +4194,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
