@@ -439,22 +439,38 @@ function drawTicker(dt){
   if(g.over)return;
   buildTicker();
   if(!tickTxt||!(tickW>0))return;
-  var h=22,y=H-h,lab=(g.board&&g.board.length)?'SCORE TO BEAT':'SCORE TO BEAT';
+  var h=24,y=H-h,lab='SCORE TO BEAT';
+  var pulse=0.80+0.20*Math.sin(g.t*2.4);            /* the tube breathes, the way real neon does */
   ctx.save();
-  ctx.fillStyle='rgba(10,6,7,.9)';ctx.fillRect(0,y,W,h);
-  ctx.fillStyle='rgba(184,50,44,.95)';ctx.fillRect(0,y,W,2);
-  ctx.font='bold 10px Verdana,sans-serif';var lw=ctx.measureText(lab).width+20;
+  /* the housing, with a wash of gold sitting behind the glass */
+  ctx.fillStyle='rgba(8,5,6,.93)';ctx.fillRect(0,y,W,h);
+  var wash=ctx.createLinearGradient(0,y,0,y+h);
+  wash.addColorStop(0,'rgba(242,168,29,.16)');wash.addColorStop(0.5,'rgba(242,168,29,.05)');wash.addColorStop(1,'rgba(242,168,29,.16)');
+  ctx.fillStyle=wash;ctx.fillRect(0,y,W,h);
+  /* the tubes along the top and bottom edges */
+  ctx.shadowColor='#f2a81d';ctx.shadowBlur=14*pulse;
+  ctx.fillStyle='rgba(255,209,102,'+(0.85*pulse+0.15)+')';ctx.fillRect(0,y,W,2);ctx.fillRect(0,y+h-1.5,W,1.5);
+  ctx.shadowBlur=0;
+  ctx.font='bold 10px Verdana,sans-serif';var lw=ctx.measureText(lab).width+22;
   var span=tickW+70;
   tickX-=dt*56;if(tickX<-span)tickX+=span;
+  /* the names running past, lit from inside */
   ctx.save();ctx.beginPath();ctx.rect(lw,y,W-lw,h);ctx.clip();
-  ctx.font='bold 12px Verdana,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#fbe9c4';
-  var sx=lw+10+tickX;
-  ctx.fillText(tickTxt,sx,y+h/2+1);
-  if(sx+tickW<W)ctx.fillText(tickTxt,sx+span,y+h/2+1);
+  ctx.font='bold 12px Verdana,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  var sx=lw+10+tickX,ty=y+h/2+1;
+  ctx.shadowColor='#f2a81d';ctx.shadowBlur=13*pulse;ctx.fillStyle='rgba(242,168,29,.95)';
+  ctx.fillText(tickTxt,sx,ty);if(sx+tickW<W)ctx.fillText(tickTxt,sx+span,ty);
+  ctx.shadowBlur=6*pulse;ctx.fillStyle='#ffeaa7';                       /* the bright core of the tube */
+  ctx.fillText(tickTxt,sx,ty);if(sx+tickW<W)ctx.fillText(tickTxt,sx+span,ty);
   ctx.restore();
-  ctx.fillStyle='#b8322c';ctx.fillRect(0,y,lw,h);
-  ctx.fillStyle='#f2a81d';ctx.fillRect(lw-2,y,2,h);
-  txt(lab,lw/2,y+h/2+1,'bold 10px Verdana,sans-serif','#fbe9c4');
+  /* the pinned chip, its own little sign */
+  ctx.fillStyle='rgba(8,5,6,.97)';ctx.fillRect(0,y,lw,h);
+  ctx.shadowColor='#f2a81d';ctx.shadowBlur=12*pulse;
+  ctx.fillStyle='rgba(255,209,102,'+(0.9*pulse+0.1)+')';ctx.fillRect(lw-2,y,2,h);
+  ctx.fillStyle='rgba(242,168,29,.95)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold 10px Verdana,sans-serif';
+  ctx.fillText(lab,lw/2,y+h/2+1);
+  ctx.shadowBlur=5*pulse;ctx.fillStyle='#fff3cd';ctx.fillText(lab,lw/2,y+h/2+1);
   ctx.restore();
 }
 function drawLensFX(dt){
