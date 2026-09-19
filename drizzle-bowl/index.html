@@ -421,6 +421,42 @@ function lensSplat(nx,ny,kind,str){
     hue:SAUCE[Math.floor(Math.random()*SAUCE.length)],seed:Math.random()*99,sq:0.8+Math.random()*0.35});
   sfx.splat();g.shake=Math.max(g.shake,0.06);
 }
+/* THE TICKER: the week's board running along the bottom of the lane, with the number to chase pinned on the left */
+var tickX=0,tickTxt='',tickW=0,tickNext=-1;
+function buildTicker(){
+  if(tickTxt&&g.t<tickNext)return;                 /* the board barely moves: rebuild it every couple of seconds */
+  tickNext=g.t+2;
+  var rows=(g.board&&g.board.length)?g.board:mergeBoard([]),parts=[];
+  rows.slice(0,8).forEach(function(r,i){parts.push((i+1)+'. '+String(r.name||'?').toUpperCase()+'  '+r.score);});
+  if(!parts.length)parts.push('BE THE FIRST NAME ON THE BOARD');
+  if(bestScore>0)parts.push('YOUR BEST  '+bestScore);
+  parts.push('WEEKLY BOARD RESETS MONDAY');
+  var t=parts.join('    \u2022    ');
+  if(t===tickTxt)return;
+  tickTxt=t;ctx.save();ctx.font='bold 12px Verdana,sans-serif';tickW=ctx.measureText(t).width;ctx.restore();
+}
+function drawTicker(dt){
+  if(g.over)return;
+  buildTicker();
+  if(!tickTxt||!(tickW>0))return;
+  var h=22,y=H-h,lab=(g.board&&g.board.length)?'SCORE TO BEAT':'SCORE TO BEAT';
+  ctx.save();
+  ctx.fillStyle='rgba(10,6,7,.9)';ctx.fillRect(0,y,W,h);
+  ctx.fillStyle='rgba(184,50,44,.95)';ctx.fillRect(0,y,W,2);
+  ctx.font='bold 10px Verdana,sans-serif';var lw=ctx.measureText(lab).width+20;
+  var span=tickW+70;
+  tickX-=dt*56;if(tickX<-span)tickX+=span;
+  ctx.save();ctx.beginPath();ctx.rect(lw,y,W-lw,h);ctx.clip();
+  ctx.font='bold 12px Verdana,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#fbe9c4';
+  var sx=lw+10+tickX;
+  ctx.fillText(tickTxt,sx,y+h/2+1);
+  if(sx+tickW<W)ctx.fillText(tickTxt,sx+span,y+h/2+1);
+  ctx.restore();
+  ctx.fillStyle='#b8322c';ctx.fillRect(0,y,lw,h);
+  ctx.fillStyle='#f2a81d';ctx.fillRect(lw-2,y,2,h);
+  txt(lab,lw/2,y+h/2+1,'bold 10px Verdana,sans-serif','#fbe9c4');
+  ctx.restore();
+}
 function drawLensFX(dt){
   if(!lensFX.length)return;
   ctx.save();
@@ -1772,9 +1808,10 @@ function drawBottom(){
     txt('AIM',0,-3,'bold 11px Impact,"Arial Black",sans-serif','#f2a81d');
     txt('TAP',0,9,'bold 8px Verdana,sans-serif','#fbe9c4');
     ctx.restore();}
-  if(hint)txt(hint,W/2,H-16,'bold 13px Verdana,sans-serif','rgba(251,233,196,.75)');
+  if(hint)txt(hint,W/2,H-34,'bold 13px Verdana,sans-serif','rgba(251,233,196,.75)');   /* clear of the ticker */
   txt(g.over?'':'Frame '+(g.frame+1),W-40,BOT.y+16,'bold 12px Verdana,sans-serif','#c9b899');
   if(!g.over&&bestScore>0)txt('BEST '+bestScore,W-40,BOT.y+32,'bold 10px Verdana,sans-serif','rgba(242,168,29,.85)');
+  drawTicker(Math.min(0.05,g.dtLast||0.016));
   if(g.fx&&g.fx.type==='drizzle')pourDrizzle(g.fx.t,W/2,BOT.y+8,668,1.05);  /* it pours over the lane as well as the deck cam, and pools on the boards */
   drawLensFX(Math.min(0.05,g.dtLast||0.016));   /* the sauce sits on the glass, over everything */
 }
@@ -1999,7 +2036,7 @@ function drawHand(x,y,ang,curl,flip){
 }
 function drawYouCard(){ /* who you're playing as: his face, bottom-left, since the bowler only ever shows his back */
   if(!USE3D)return;
-  var cw=62,ch=84,cx=8,cy=H-ch-12,r=9;
+  var cw=62,ch=84,cx=8,cy=H-ch-34,r=9;   /* lifted clear of the score ticker */
   ctx.save();
   ctx.shadowColor='rgba(242,168,29,.45)';ctx.shadowBlur=12;
   ctx.fillStyle='rgba(12,7,9,.9)';ctx.beginPath();ctx.roundRect(cx,cy,cw,ch,r);ctx.fill();ctx.shadowBlur=0;
@@ -2145,6 +2182,7 @@ window.__showHalf=showHalftime;
       el.classList.add('off');setTimeout(function(){el.style.display='none';},420);}
   },110);
 })();
+setTimeout(function(){try{loadBoard();}catch(e){}},1400);   /* the ticker wants the week's board early, not just at the end of a game */
 window.ADB={get g(){return g;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
   throw3d:function(x,spin,power,aim){g.x=x;g.spin=spin;g.power=power;g.aim=aim||0;g.phase='throw';g.throwT=1.01;}};
 window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
