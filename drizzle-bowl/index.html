@@ -859,13 +859,22 @@ function crowdSlot(n){ /* the sidelines: four rows a side standing along the rai
 function seedCrowd(){for(var n=0;n<6;n++)addFan(n,true);}
 function addFan(n,instant){
   var sl=crowdSlot(n),n0=n;n=(n*31+(g.crowdSeed||0))%9973;var female=(n*7+3)%5<2;   /* looks are drawn from a fresh seed each game */
-  g.crowd.push({n:n0,x:sl.x,y:sl.y,tx:sl.x,side:sl.side,row:sl.row||0,ex:sl.side<0?-40:W+40,
+  g.crowd.push({n:n0,x:sl.x,y:sl.y,tx:sl.x,x0:sl.x,y0:sl.y,wx:null,side:sl.side,row:sl.row||0,ex:sl.side<0?-40:W+40,
     skin:SKINS[n%SKINS.length],shirt:SHIRTS[(n*5+1)%SHIRTS.length],hair:HAIRC[n%HAIRC.length],
     female:female,hairStyle:(n*3)%4,phone:(n*11)%10<6,flashT:0,foodE:(((n*13)%10<4)&&(n*11)%10>=6)?['\ud83c\udf69','\ud83c\udf55','\ud83c\udf54','\ud83c\udf2d','\ud83c\udf5f'][n%5]:null,
     sign:n%3===0?SIGNS[(n*7)%SIGNS.length]:null,state:'in',a:instant?1:0,ph:Math.random()*6.3,
     hat:(female?[0,0,4,1]:[0,1,2,3,0,4])[(n*7)%(female?4:6)],glasses:(n*3)%4===0,beard:!female&&(n*5)%3===0,
     shirtStyle:(n*2+1)%4,hs:0.92+((n*17)%7)*0.03,ws:0.9+((n*11)%5)*0.05,yell:null,yellT:0});
   if(!instant){g.crowd[g.crowd.length-1].x=g.crowd[g.crowd.length-1].ex;}
+}
+/* Pin a fan to the floor the first time the lane is up. Their spot is read off the resting camera, so the
+   design stays exactly as drawn -- they simply stop being glued to the glass once the camera moves. */
+function fanWorld(c){
+  if(c.wx!=null||!(window.B3D&&B3D.ok&&B3D.unprojHome))return;
+  var a=B3D.unprojHome(c.x0,c.y0);if(!a)return;
+  var b=B3D.unprojHome(c.ex,c.y0)||[c.side*6,a[1],a[2]];
+  c.wtx=a[0];c.wz=a[1];c.h0=Math.max(1,a[2]);c.wex=b[0];
+  c.wx=(c.state==='in'&&Math.abs(c.x-c.x0)<2)?a[0]:b[0];
 }
 function crowdUpdate(dt){
   if(g.boo>0)g.boo-=dt;if(g.hype>0)g.hype=Math.max(0,g.hype-dt*0.22);
@@ -880,8 +889,12 @@ function crowdUpdate(dt){
     if(c.state==='in'&&Math.random()<dt*(0.08+(g.hype||0)*0.6))c.hypeT=0.9+Math.random()*0.8+(g.hype||0)*1.5;
     if(c.state==='in'&&(g.hype||0)>0.3&&c.yellT<=0&&Math.random()<dt*(0.05+(g.hype||0)*0.38)){c.yell=YELLS[(c.n*5+Math.floor(g.t))%YELLS.length];c.yellT=1.3;}
     if(c.state==='in'&&(g.streak>=2||g.confT>0||g.cheer>0.6)&&Math.random()<dt*0.55)c.chantT=1.1; /* the crowd starts the ANTIDOTE chant */
-    if(c.state==='in'){c.x+=(c.tx-c.x)*Math.min(1,dt*4);c.a=Math.min(1,c.a+dt*2);if(Math.random()<dt*0.12){var sl2=crowdSlot(c.n);c.tx=sl2.x+(Math.random()-0.5)*18;}}
-    else{c.x+=(c.ex-c.x)*Math.min(1,dt*1.6);c.lt+=dt;if(c.lt>1.6)g.crowd.splice(i,1);}
+    fanWorld(c);
+    /* once a fan has taken a spot they keep it: no drifting off the mark they crowded up on */
+    if(c.state==='in'){c.a=Math.min(1,c.a+dt*2);
+      if(c.wx!=null)c.wx+=(c.wtx-c.wx)*(1-Math.exp(-dt*4));else c.x+=(c.tx-c.x)*(1-Math.exp(-dt*4));}
+    else{if(c.wx!=null)c.wx+=(c.wex-c.wx)*(1-Math.exp(-dt*1.6));else c.x+=(c.ex-c.x)*(1-Math.exp(-dt*1.6));
+      c.lt+=dt;if(c.lt>1.6)g.crowd.splice(i,1);}
   }
 }
 function crowdReact(total,goodRoll,pinsDown){
@@ -930,12 +943,20 @@ function drawCrowd(){
   var boo=g.boo>0,cheer=g.cheer>0,lt;
   if(g.ball&&!g.ball.rest){var bq=proj(g.ball.x,g.ball.y);lt={x:bq.x,y:bq.y};}
   else lt={x:W/2,y:LANE_BOT+46}; /* the bowler */
-  g.crowd.slice().sort(function(a,b){return a.y-b.y;}).forEach(function(c){
-    var sc=(0.52+0.48*Math.max(0,Math.min(1,(c.y-536)/236)))*1.35;
+  g.crowd.forEach(function(c){
+    fanWorld(c);c.ps=1;c.off=false;
+    if(c.wx!=null&&window.B3D&&B3D.ok&&B3D.proj){
+      var q=B3D.proj(c.wx,0,c.wz);
+      if(!q[3]){c.off=true;return;}          /* behind the lens: not in this shot at all */
+      c.x=q[0];c.y=q[1];c.ps=Math.max(0.25,Math.min(3,q[2]/c.h0));
+    }
+  });
+  g.crowd.slice().filter(function(c){return !c.off;}).sort(function(a,b){return a.y-b.y;}).forEach(function(c){
+    var sc=(0.52+0.48*Math.max(0,Math.min(1,((c.y0!=null?c.y0:c.y)-536)/236)))*1.35*c.ps;
     var wave=((g.t%22)<3.2)&&Math.sin(g.t*7-c.x*0.05)>0.25;
     var ch2=(cheer||c.hypeT>0||wave)&&c.state==='in';
     var bob=ch2?Math.abs(Math.sin(g.t*14+c.ph))*(7+9*(g.hype||0)):Math.sin(c.ph)*1.5;
-    var walking=c.state==='out'||Math.abs(c.x-c.tx)>2,step=walking?Math.sin(g.t*10+c.ph)*4:0;
+    var walking=c.state==='out'||(c.wx!=null?Math.abs(c.wx-c.wtx)>0.05:Math.abs(c.x-c.tx)>2),step=walking?Math.sin(g.t*10+c.ph)*4:0;
     var dxn=lt.x-c.x,dyn=lt.y-(c.y-52*sc);
     var hox=Math.max(-3.5,Math.min(3.5,dxn*0.018)),eox=Math.max(-1.8,Math.min(1.8,dxn*0.012)),eoy=Math.max(-1.2,Math.min(1.6,dyn*0.012));
     if(boo&&c.state==='in')hox+=Math.sin(g.t*16+c.ph)*3; /* shaking their head no */
@@ -946,7 +967,7 @@ function drawCrowd(){
     if(crowdReady){
       var pose=0;if(c.state==='in'){if(c.phone&&(ch2||c.flashT>0||g.streak>=3))pose=2;else if(ch2)pose=1;}
       var who=(c.n*5+(c.n>>1)+(g.crowdSeed||0))%CA_PEOPLE,cell=who*3+pose,sx=(cell%CA_COLS)*CA_W,sy=Math.floor(cell/CA_COLS)*CA_H;
-      var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0,kk=ROW_S[c.row||0]/sc,sw=48*kk,shh=96*kk;
+      var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0,kk=ROW_S[c.row||0]*c.ps/sc,sw=48*kk,shh=96*kk;
       ctx.drawImage(crowdImg,sx,sy,CA_W,CA_H,-sw/2+shake+step*0.3,-shh,sw,shh);
       if(pose===2&&c.flashT>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(1,-shh*0.74,3.5+Math.random()*2.5,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(1,-shh*0.74,10,0,7);ctx.fill();}
       if(c.sign&&c.state==='in'&&pose!==2){var sy2=-shh-(ch2?14:6);ctx.fillStyle='#fbe9c4';rr(-21,sy2-9,42,18,2);ctx.fill();ctx.strokeStyle='#8a5a2e';ctx.lineWidth=1.5;rr(-21,sy2-9,42,18,2);ctx.stroke();txt(c.sign,0,sy2,'bold 9px Impact,"Arial Black",sans-serif','#b8322c');}
@@ -1259,7 +1280,7 @@ function update(dt){
     if(g.tauntT<=0){var up=g.pins.filter(function(p){return p.up;});if(up.length){var p=up[Math.floor(Math.random()*up.length)];g.taunt={p:p,txt:p.food.t[Math.floor(Math.random()*2)],t:2.2};}g.tauntT=3+Math.random()*2.5;} /* taunt bubbles stay silent */
     if(g.taunt){g.taunt.t-=dt;if(g.taunt.t<=0)g.taunt=null;}
   }
-  if(g.phase==='aim'&&g.xT!=null)g.x+=(g.xT-g.x)*Math.min(1,dt*14);
+  if(g.phase==='aim'&&g.xT!=null)g.x+=(g.xT-g.x)*(1-Math.exp(-dt*14));
   if(g.phase==='angle'){g.aim+=g.aimDir*dt*1.05*meterMul();if(g.aim>1){g.aim=1;g.aimDir=-1;}if(g.aim<-1){g.aim=-1;g.aimDir=1;}}
   if(g.phase==='spin'){g.spin+=g.spinDir*dt*1.9*meterMul();if(g.spin>1){g.spin=1;g.spinDir=-1;}if(g.spin<-1){g.spin=-1;g.spinDir=1;}}
   if(g.phase==='power'){g.power+=g.powerDir*dt*2.2*meterMul();if(g.power>1){g.power=1;g.powerDir=-1;}if(g.power<0.05){g.power=0.05;g.powerDir=1;}}
@@ -2081,8 +2102,18 @@ function drawYouCard(){ /* who you're playing as: his face, bottom-left, since t
   txt('YOU',cx+10,cy+0.5,'bold 8px Verdana,sans-serif','#1a1214');
   ctx.restore();
 }
+/* Critically damped spring. A plain per-frame lerp moves at whatever rate the frame happened to take and
+   snaps its velocity the instant the target jumps; this carries velocity across frames and is dt-exact, so
+   he accelerates and settles the same way at any frame rate. */
+function sdamp(cur,tgt,vel,st,dt){
+  st=Math.max(0.0001,st);
+  var om=2/st,x=om*dt,ex=1/(1+x+0.48*x*x+0.235*x*x*x);
+  var ch=cur-tgt,tmp=(vel+om*ch)*dt;
+  return [tgt+(ch+tmp)*ex,(vel-om*tmp)*ex];
+}
 function drawBowler(){
-  g.bowlerX+=(g.x-g.bowlerX)*0.35;
+  var sd=sdamp(g.bowlerX,g.x,g.bowlerV||0,0.13,g.dt||0.016);
+  g.bowlerX=sd[0];g.bowlerV=sd[1];
   var eh=HALF_BOT*0.95;
   if(USE3D&&window.B3D&&B3D.ok&&B3D.edgePx){try{eh=Math.max(50,Math.min(230,B3D.edgePx(LANE_BOT+62)-28));}catch(e){}}
   var bx=W/2+g.bowlerX*eh,by=LANE_BOT+62;
@@ -2184,7 +2215,7 @@ function drawWet(){if(!(g.wetT>0)||!g.drips)return;var dt=g.dtLast||0.016,fade=M
     var gr=ctx.createRadialGradient(d.x-d.r*0.3,d.y-d.r*0.35,d.r*0.1,d.x,d.y,d.r);gr.addColorStop(0,'rgba(255,255,255,'+(0.85*d.a*fade)+')');gr.addColorStop(0.5,'rgba(170,215,255,'+(0.35*d.a*fade)+')');gr.addColorStop(1,'rgba(120,180,255,0)');
     ctx.fillStyle=gr;ctx.beginPath();ctx.ellipse(d.x,d.y,d.r,d.r*1.35*d.sq,0,0,7);ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,'+(0.22*d.a*fade)+')';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(d.x,d.y,d.r,d.r*1.35*d.sq,0,0,7);ctx.stroke();});}
-function loop(now){if(!last)last=now;var dt=Math.min(0.05,(now-last)/1000);last=now;try{pollPad(dt);update(dt);draw();drawWet();b3dFrame();}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
+function loop(now){if(!last)last=now;var dt=Math.min(0.05,(now-last)/1000);last=now;try{if(g)g.dt=dt;pollPad(dt);update(dt);draw();drawWet();b3dFrame();}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
 function b3dFrame(){
   if(!window.B3D||!B3D.ok)return;
   if(!USE3D&&g.phase==='aim'){
@@ -2973,7 +3004,7 @@ function foodLoad(i){
 }
 foodLoad(0);
 let tables=[],foods=[],panels=[],debris=[],bonusEvents=[];
-function clearBonus(){tables.forEach(t=>{if(!t.broken){world.removeBody(t.body);scene.remove(t.grp);}});foods.forEach(f=>{world.removeBody(f.body);scene.remove(f.mesh);if(f.shadow)scene.remove(f.shadow);});panels.forEach(p=>{world.removeBody(p.body);scene.remove(p.mesh);});debris.forEach(d=>{world.removeBody(d.body);scene.remove(d.mesh);});tables=[];foods=[];panels=[];debris=[];}
+function clearBonus(){tables.forEach(t=>{if(!t.broken)world.removeBody(t.body);scene.remove(t.grp);});foods.forEach(f=>{world.removeBody(f.body);scene.remove(f.mesh);if(f.shadow)scene.remove(f.shadow);});panels.forEach(p=>{world.removeBody(p.body);scene.remove(p.mesh);});debris.forEach(d=>{world.removeBody(d.body);scene.remove(d.mesh);});tables=[];foods=[];panels=[];debris=[];}
 /* ---------- the buffet tables are real timber ----------
    One texture carries both states of the wood: the left half is the finished, varnished plank the table
    is built from, the right half is the pale torn fibre you only ever see on a fresh break. Every face of
@@ -3081,14 +3112,18 @@ function shardGeo(hx,hy,hz,brkL,brkR){
   return gg;
 }
 /* A hit that is not quite enough to take the top off still splits it. Three of those and it lets go. */
-function crackTable(t,iv){
-  t.dmg=(t.dmg||0)+1;
-  if(t.crack){t.crack.mat.opacity=Math.min(0.95,0.40+t.dmg*0.27);t.crack.meshes.forEach(m=>{m.visible=true;});}
+/* damage is a pure function of the hit count, so a replay can rebuild any stage of it from one number */
+function applyTableDmg(t,d){
+  if(t.crack){t.crack.mat.opacity=d>0?Math.min(0.95,0.40+d*0.27):0;t.crack.meshes.forEach(m=>{m.visible=d>0;});}
   /* the boards part and the middle one drops: broken-backed, and it reads from down the lane */
   if(t.planks)t.planks.forEach((pk,i)=>{const sd=i-1;
-    pk.rotation.z=sd*0.020*t.dmg;
-    pk.position.y=-(i===1?0.006:0.002)*t.dmg;
-    pk.position.x=pk.userData.x0+sd*0.006*t.dmg;});
+    pk.rotation.z=sd*0.020*d;
+    pk.position.y=-(i===1?0.006:0.002)*d;
+    pk.position.x=pk.userData.x0+sd*0.006*d;});
+}
+function crackTable(t,iv){
+  t.dmg=(t.dmg||0)+1;
+  applyTableDmg(t,t.dmg);
   const bp=t.body.position;
   for(let i=0;i<2+((Math.random()*2)|0);i++)flySplinter(bp.x+(Math.random()-0.5)*0.5,0.44,bp.z+(Math.random()-0.5)*0.3,0.7);
   if(A3.woodCrack)A3.woodCrack(Math.min(1,iv/4));
@@ -3107,7 +3142,7 @@ function flySplinter(x,y,z,kick){
 function breakTable(t){
   if(t.broken)return;t.broken=true;
   const bq=t.body.quaternion.clone(),bp=t.body.position.clone(),bv=t.body.velocity.clone();
-  world.removeBody(t.body);scene.remove(t.grp);
+  world.removeBody(t.body);t.grp.visible=false;   /* kept in the scene: a replay of the run-up still needs it standing */
   bonusEvents.push({pts:25,e:'',ox:bp.x*OLDX,oy:zToOld(bp.z),table:true});
   const put=(geo,mat,hx,hy,hz,lx,ly,lz,mass,kick,lift)=>{
     const wp=bq.vmult(new CANNON.Vec3(lx,ly,lz),new CANNON.Vec3()).vadd(bp);
@@ -4020,7 +4055,7 @@ function poseBowler(gs,dt,nw){
     t.knL=L2(t.knL,-(0.16+0.7*Math.max(0,Math.sin(P-0.6))),a);t.knR=L2(t.knR,-(0.16+0.7*Math.max(0,-Math.sin(P+0.6))),a);
     t.bob=-Math.abs(Math.sin(P))*0.03*a;t.yaw=-walk.dir*0.32*a;t.shL=[t.shL[0]+Math.sin(P+Math.PI)*0.3*a,0,t.shL[2]];t.lean-=0.05*a;
   }
-  const k=Math.min(1,dt*(ph==='throw'||ph==='roll'?24:(walk.amt>0.02?14:7)));
+  const k=1-Math.exp(-dt*(ph==='throw'||ph==='roll'?24:(walk.amt>0.02?14:7)));  /* exact at any frame rate: dt*k drifts once frames get long */
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
   lp(bowler.rotation,'x',t.lean);lp(bowler.rotation,'y',t.yaw||0);lp(B.spine.rotation,'x',t.spine);
   bowler.position.y+=(t.bob-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
@@ -4045,8 +4080,8 @@ function renderBowler(gs,dt,nw){
   const BXMAX=(HALF-0.28)/BSCALE;   /* his shoulders stop at the rail: he can stand on the edge of the lane, never over it */
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=Math.max(-BXMAX,Math.min(BXMAX,px/(bPxPerM*BSCALE)));
   if(!bVis){bowler.position.x=tx;if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
-  const dxw=(tx-bowler.position.x)*Math.min(1,dt*10);bowler.position.x+=dxw;
-  const spd=dt>0?Math.abs(dxw)/dt:0;walk.amt+=(Math.min(1,spd/0.8)-walk.amt)*Math.min(1,dt*9);if(Math.abs(dxw)>1e-4)walk.dir=Math.sign(dxw);walk.phase+=Math.abs(dxw)*13*(0.4+0.6*walk.amt);
+  const dxw=(tx-bowler.position.x)*(1-Math.exp(-dt*18));bowler.position.x+=dxw;   /* the spring upstream already shaped the move; this only takes the last edge off */
+  const spd=dt>0?Math.abs(dxw)/dt:0;walk.amt+=(Math.min(1,spd/0.8)-walk.amt)*(1-Math.exp(-dt*9));if(Math.abs(dxw)>1e-4)walk.dir=Math.sign(dxw);walk.phase+=Math.abs(dxw)*13*(0.4+0.6*walk.amt);
   poseBowler(gs,dt,nw);
   bRim.color.set(LEDCOLS[ledCol]);
   const cz=bowler.position.z*BSCALE;if(bCamOv){bCam.position.set(bCamOv[0],bCamOv[1],bCamOv[2]);bCam.lookAt(bCamOv[3],bCamOv[4],bCamOv[5]);}else{bCam.position.set(0,2.05,BCAM_D+cz);bCam.lookAt(0,1.98,cz);} /* the camera walks with him down the approach, so he never shrinks into the distance */
@@ -4057,7 +4092,7 @@ function renderBowler(gs,dt,nw){
    Every drawn frame of a live roll is kept for six seconds: where the ball was, where every pin was.
    On a strike the roll is played back at a third speed from three angles, and a blast that went off
    during it is drawn again at the moment it happened. Nothing here touches the physics. */
-const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0,fov0:0,vis:[],strike:false,forced:false};
+const RPL={buf:[],clip:[],capt:false,end:0,on:false,clock:0,from:0,to:0,boomDone:false,t0:0,fov0:0,vis:[],strike:false,forced:false,dbN:0};
 const _rqa=new THREE.Quaternion(),_rqb=new THREE.Quaternion(),_rsp=new THREE.Vector3();
 const RPL_RATE=0.32;                       /* a third of real speed */
 function rplSnap(nw){
@@ -4067,6 +4102,11 @@ function rplSnap(nw){
     e.p.push([q.position.x,q.position.y,q.position.z,q.quaternion.x,q.quaternion.y,q.quaternion.z,q.quaternion.w,q.visible?1:0]);}
   for(const f of foods){if(!f||!f.mesh){e.f.push(null);continue;}const m=f.mesh;
     e.f.push([m.position.x,m.position.y,m.position.z,m.quaternion.x,m.quaternion.y,m.quaternion.z,m.quaternion.w,m.visible?1:0]);}
+  /* the tables and their wreckage belong in the clip too, or a replay of the run-up shows a table that
+     the ball has not reached yet already in pieces */
+  e.tb=[];for(const t of tables)e.tb.push(t&&t.grp?[t.grp.visible?1:0,t.dmg||0]:null);
+  e.db=[];for(const d of debris){const m=d&&d.mesh;
+    e.db.push(m?[m.position.x,m.position.y,m.position.z,m.quaternion.x,m.quaternion.y,m.quaternion.z,m.quaternion.w,m.visible?1:0]:null);}
   RPL.buf.push(e);
   const cut=nw-6;while(RPL.buf.length>2&&RPL.buf[0].t<cut)RPL.buf.shift();
   /* the moment the ball reaches the rack, the clip is cut: the run-up is already in hand, and the
@@ -4085,10 +4125,15 @@ function rplStart(force){
   RPL.vis=[];  /* remember every prop's state so the ones pulled off the lens go back exactly as they were */
   for(const f of foods){if(f&&f.mesh){const e={o:f.mesh,v:f.mesh.visible,want:f.mesh.visible};f.mesh.__rv=e;f.__splat=false;RPL.vis.push(e);}
     if(f&&f.shadow)RPL.vis.push({o:f.shadow,v:f.shadow.visible,want:false});}
-  for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible,want:tb.grp.visible});}
+  /* tables and debris are driven straight off the clip, so the generic cull leaves them alone;
+     they are still listed here so their live state comes back when the replay ends */
+  for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible,drv:true});}
+  for(const d of debris){if(d&&d.mesh)RPL.vis.push({o:d.mesh,v:d.mesh.visible,drv:true});}
+  RPL.dbN=debris.length;   /* wreckage thrown after the cut is not in the clip and stays hidden */
   return (RPL.to-RPL.from)/RPL_RATE;
 }
 function rplFrame(dt,nw){
+  const CULL=1.35;  /* a burger pressed against the lens hides the whole rack; its sauce is on the glass instead */
   RPL.clock+=dt*RPL_RATE;
   const t=Math.min(RPL.clock,RPL.to),done=RPL.clock>=RPL.to;
   let i=1;while(i<RPL.clip.length-1&&RPL.clip[i].t<t)i++;
@@ -4115,6 +4160,18 @@ function rplFrame(dt,nw){
       if(fsp>1.4&&dCam<1.15){f.__splat=true;
         _rsp.copy(f.mesh.position).project(cam);
         if(_rsp.z<1)A3.lensSplat((_rsp.x*0.5+0.5),(1-(_rsp.y*0.5+0.5)),f.e||'',Math.max(0.5,Math.min(1.6,1.5-dCam)));}}}
+  if(b.tb)for(let k=0;k<tables.length;k++){const t=tables[k],st=b.tb[k];
+    if(!t||!t.grp||!st)continue;
+    t.grp.visible=!!st[0]&&t.grp.position.distanceTo(cam.position)>CULL;
+    applyTableDmg(t,st[1]);}
+  for(let k=0;k<Math.min(debris.length,RPL.dbN||0);k++){const d=debris[k];if(!d||!d.mesh)continue;
+    const p1=b.db&&b.db[k];
+    if(!p1){d.mesh.visible=false;continue;}
+    const p0=(a.db&&a.db[k])||p1;
+    d.mesh.position.set(p0[0]+(p1[0]-p0[0])*u,p0[1]+(p1[1]-p0[1])*u,p0[2]+(p1[2]-p0[2])*u);
+    _rqa.set(p0[3],p0[4],p0[5],p0[6]);_rqb.set(p1[3],p1[4],p1[5],p1[6]);_rqa.slerp(_rqb,u);d.mesh.quaternion.copy(_rqa);
+    d.mesh.visible=!!p1[7]&&d.mesh.position.distanceTo(cam.position)>CULL;}
+  for(let k=RPL.dbN||0;k<debris.length;k++){if(debris[k]&&debris[k].mesh)debris[k].mesh.visible=false;}
   /* a strike throws the rack apart right at the pit camera: sauce lands on the glass every time */
   if(RPL.strike&&!RPL.forced&&(t-RPL.from)/Math.max(0.001,RPL.to-RPL.from)>0.30&&A3.lensSplat){RPL.forced=true;
     const hits=2+Math.floor(Math.random()*2);
@@ -4133,12 +4190,12 @@ function rplFrame(dt,nw){
   else{const u2=(prog-0.72)/0.28;cp=[-0.40+u2*0.05,1.00-u2*0.08,-14.75-u2*0.30];cl=[0,0.14,-16.5];fv=60;}
   if(Math.abs(cam.fov-fv)>0.01){cam.fov=fv;cam.updateProjectionMatrix();}  /* the lane is a portrait frame: the rack only fits on a wide lens */
   cam.position.set(cp[0],cp[1],cp[2]);cam.lookAt(cl[0],cl[1],cl[2]);
-  const CULL=1.35;  /* a burger pressed against the lens hides the whole rack; its sauce is on the glass instead */
-  for(const r of RPL.vis){const want=(r.want!=null)?r.want:r.v;r.o.visible=want&&r.o.position.distanceTo(cam.position)>CULL;}
+  for(const r of RPL.vis){if(r.drv)continue;const want=(r.want!=null)?r.want:r.v;r.o.visible=want&&r.o.position.distanceTo(cam.position)>CULL;}
   if(done||nw-RPL.t0>14){RPL.on=false;
     if(RPL.fov0){cam.fov=RPL.fov0;cam.updateProjectionMatrix();}
     bumper.visible=true;
-    for(const r of RPL.vis)r.o.visible=r.v;RPL.vis=[];}   /* a stuttering device never gets parked in the replay */
+    for(const r of RPL.vis)r.o.visible=r.v;RPL.vis=[];
+    for(const t of tables)if(t)applyTableDmg(t,t.dmg||0);}   /* hand the live damage back; a stuttering device never gets parked in the replay */
 }
 
 function render(gs){
@@ -4194,7 +4251,31 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+const _pv=new THREE.Vector3(),_pv2=new THREE.Vector3();
+/* world point -> HUD pixel in the lane viewport, plus how tall a metre is there.
+   The crowd is drawn on the 2D canvas but has to stand in the 3D room, so it asks here every frame. */
+function projHud(x,y,z){
+  _pv.set(x,y,z).project(cam);
+  const px=(_pv.x*0.5+0.5)*LW,py=400+(1-(_pv.y*0.5+0.5))*VH;
+  _pv2.set(x,y+1,z).project(cam);
+  const py2=400+(1-(_pv2.y*0.5+0.5))*VH;
+  return [px,py,Math.abs(py-py2),(_pv.z>-1&&_pv.z<1)?1:0];
+}
+/* The reverse: a HUD spot under the resting approach camera -> the floor point standing there, plus the
+   pixels-per-metre at that point. The crowd is placed once this way and then lives in the room, so the
+   camera can fly wherever it likes and nobody drifts with it. */
+function unprojHome(px,py){
+  homeCam.position.set(0,1.32,3.5);homeCam.lookAt(0,0.15,-10);homeCam.updateMatrixWorld(true);
+  const nx=(px/LW)*2-1,ny=1-((py-400)/VH)*2;
+  _pv.set(nx,ny,-1).unproject(homeCam);_pv2.set(nx,ny,1).unproject(homeCam);
+  const dx=_pv2.x-_pv.x,dy=_pv2.y-_pv.y,dz=_pv2.z-_pv.z;
+  if(Math.abs(dy)<1e-6)return null;
+  const t=-_pv.y/dy;if(t<0)return null;
+  const wx=_pv.x+dx*t,wz=_pv.z+dz*t;
+  _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
+  return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
+}
+window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
