@@ -1,6 +1,7 @@
 
 <meta charset="utf-8">
 <title>Antidote Drizzle Bowl</title>
+<link rel="preload" as="image" href="assets/food.png">
 <style>
   html,body{margin:0;padding:0;width:100%;height:100%;background:#1a1214;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:Verdana,sans-serif}
   #yt{position:absolute;right:6px;bottom:6px;width:120px;height:68px;border:2px solid #f2a81d;border-radius:6px;overflow:hidden;background:#000;z-index:5;display:none}#yt iframe{width:100%;height:100%;border:0}
@@ -2191,10 +2192,11 @@ window.__showHalf=showHalftime;
     var flat=!!window.__b3dFail;                                  /* the 3D lane will not come up at all: nothing to wait for */
     var lane=flat||(USE3D&&window.B3D&&B3D.ok);
     var real=flat||!!(lane&&B3D.__real&&B3D.__real()),crowd=!!crowdReady;
-    var n=(lane?1:0)+(real?1:0)+(crowd?1:0),secs=(Date.now()-t0)/1000;
-    bar.style.width=Math.max(10,Math.min(100,Math.round(n/3*100)))+'%';
+    var chow=flat||!lane||!B3D.__food||B3D.__food();   /* the plates are carved from the atlas on the way in */
+    var n=(lane?1:0)+(real?1:0)+(crowd?1:0)+(chow?1:0),secs=(Date.now()-t0)/1000;
+    bar.style.width=Math.max(10,Math.min(100,Math.round(n/4*100)))+'%';
     if(secs>3.5)note.textContent='ALMOST THERE\u2026';
-    if((real&&crowd)||secs>10){clearInterval(iv);bar.style.width='100%';
+    if((real&&crowd&&chow)||secs>10){clearInterval(iv);bar.style.width='100%';
       el.classList.add('off');setTimeout(function(){el.style.display='none';},420);}
   },110);
 })();
@@ -2870,14 +2872,95 @@ function rack(keep,foodIdx){
   removeBall();
 }
 /* ---------- bonus food tables: smash them Angry-Birds style for points ---------- */
-const FOODP=[['\ud83c\udf54',10],['\ud83c\udf55',10],['\ud83c\udf2e',10],['\ud83c\udf2d',10],['\ud83c\udf5f',5],['\ud83c\udf69',5],['\ud83e\udd64',5],['\ud83e\udd57',5]];
+/* [emoji for the HUD and the sauce, points, atlas cell, half-thickness, size in metres] */
+const FOODP=[['\ud83c\udf54',10,0,0.20,0.175],['\ud83c\udf55',10,1,0.07,0.190],['\ud83c\udf2e',10,2,0.16,0.175],['\ud83c\udf2d',10,3,0.15,0.185],
+             ['\ud83c\udf5f',5,4,0.17,0.175],['\ud83c\udf69',5,5,0.12,0.160],['\ud83c\udf64',5,6,0.15,0.170],['\ud83e\uddc7',5,7,0.08,0.175]];
 function emojiTex(e){return bake(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);
   g.font='96px serif';g.textAlign='center';g.textBaseline='middle';
   g.save();g.globalAlpha=0.35;g.filter='blur(3px)';g.fillStyle='#000';g.fillText(e,w/2+4,h/2+14);g.restore();
   g.fillText(e,w/2,h/2+8);});}
 const foodTexCache={};
+/* ---------- real food: photo cutouts puffed into miniature 3D props ----------
+   assets/food.png is eight keyed photographs of real plates. The alpha mask of a cell gets blurred into a
+   rough distance field, and that field pushes a grid of vertices out of the plane both ways, so the flat
+   cutout comes back as a little model: true silhouette, a rounded body, and shading that turns with the lane.
+   A burger sits thick, a pizza slice stays thin, and every one of them tumbles when the ball arrives. */
+const FOOD_SRCS=['assets/food.png','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/716218d6-ca75-434a-806b-4d4474ca9398.png'];
+const FOOD_COLS=4,FOOD_ROWS=2,FOOD_GRID=42;
+let foodImg=null,foodTex=null,foodMat=null,foodReady=false;
+const foodGeoC={},foodMaskC={},foodPlaceM={};
+const foodPlaceGeo=new THREE.BoxGeometry(0.85,0.85,0.5);
+const foodShadowGeo=new THREE.CircleGeometry(0.075,16);foodShadowGeo.rotateX(-Math.PI/2);
+function foodMask(cell){
+  if(foodMaskC[cell]!==undefined)return foodMaskC[cell];
+  const S=FOOD_GRID+1,CW=foodImg.width/FOOD_COLS,CH=foodImg.height/FOOD_ROWS;
+  const cv=document.createElement('canvas');cv.width=S;cv.height=S;
+  const g2=cv.getContext('2d',{willReadFrequently:true});
+  g2.drawImage(foodImg,(cell%FOOD_COLS)*CW,Math.floor(cell/FOOD_COLS)*CH,CW,CH,0,0,S,S);
+  let d=null;
+  try{const px=g2.getImageData(0,0,S,S).data;d=new Float32Array(S*S);
+    for(let i=0;i<S*S;i++)d[i]=px[i*4+3]>110?1:0;
+    const tmp=new Float32Array(S*S);
+    for(let p2=0;p2<6;p2++){                       /* six box passes: the middle stays 1, the rim rolls off to 0 */
+      for(let y=0;y<S;y++)for(let x=0;x<S;x++){let sum=0,n=0;
+        for(let j=-1;j<=1;j++)for(let i2=-1;i2<=1;i2++){const yy=y+j,xx=x+i2;
+          if(yy<0||xx<0||yy>=S||xx>=S)continue;sum+=d[yy*S+xx];n++;}
+        tmp[y*S+x]=sum/n;}
+      d.set(tmp);}
+  }catch(e){d=null;}                               /* a cross-origin atlas taints the canvas: fall back to a slab */
+  foodMaskC[cell]=d;return d;
+}
+function foodGeo(cell,th){
+  const key=cell+'|'+th;if(foodGeoC[key])return foodGeoC[key];
+  const N=FOOD_GRID,S=N+1,d=foodMask(cell),col=cell%FOOD_COLS,row=Math.floor(cell/FOOD_COLS);
+  const pos=[],uvs=[],idx=[];
+  for(let sheet=0;sheet<2;sheet++){const sg=sheet?-1:1,off=sheet*S*S;
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+      const fx=x/N,fy=y/N,dd=d?d[y*S+x]:1;
+      /* the blur puts 0.5 exactly on the cut edge, so the two shells close there and swell to full
+         thickness in the middle: a rounded body, no seam to see through at a low angle */
+      const q=Math.max(0,(dd-0.5)*2);
+      pos.push(fx-0.5,0.5-fy,sg*th*Math.sqrt(q));
+      uvs.push((col+fx)/FOOD_COLS,1-(row+fy)/FOOD_ROWS);}
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+      const a=off+y*S+x,b=a+1,c2=a+S,e2=c2+1;
+      if(sheet)idx.push(a,b,c2,b,e2,c2);else idx.push(a,c2,b,b,c2,e2);}}
+  const gg=new THREE.BufferGeometry();
+  gg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  gg.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  gg.setIndex(idx);gg.computeVertexNormals();gg.computeBoundingSphere();
+  foodGeoC[key]=gg;return gg;
+}
+function foodPlaceMat(e){
+  if(!foodPlaceM[e]){if(!foodTexCache[e])foodTexCache[e]=emojiTex(e);
+    foodPlaceM[e]=new THREE.MeshStandardMaterial({map:foodTexCache[e],transparent:true,roughness:0.6});}
+  return foodPlaceM[e];
+}
+function foodSkin(m){
+  if(!m||!foodReady||m.__skin)return;m.__skin=true;
+  m.geometry=foodGeo(m.__cell,m.__th);m.material=foodMat;m.scale.setScalar(m.__size);
+}
+function makeFood(fp,size){
+  const m=new M(foodPlaceGeo,foodPlaceMat(fp[0]));
+  m.__cell=fp[2];m.__th=fp[3];m.__size=size;m.scale.setScalar(size);
+  foodSkin(m);scene.add(m);return m;
+}
+function foodShadow(){
+  const sh=new M(foodShadowGeo,shadowMat.clone());sh.material.opacity=0.30;scene.add(sh);return sh;
+}
+function foodLoad(i){
+  if(i>=FOOD_SRCS.length)return;
+  const im=new Image();if(i>0)im.crossOrigin='anonymous';
+  im.onload=function(){
+    foodImg=im;foodTex=new THREE.Texture(im);foodTex.colorSpace=THREE.SRGBColorSpace;foodTex.anisotropy=8;foodTex.needsUpdate=true;
+    foodMat=new THREE.MeshStandardMaterial({map:foodTex,alphaTest:0.5,roughness:0.52,metalness:0.03,side:THREE.DoubleSide});
+    foodReady=true;foods.forEach(f=>foodSkin(f.mesh));};
+  im.onerror=function(){foodLoad(i+1);};
+  im.src=FOOD_SRCS[i];
+}
+foodLoad(0);
 let tables=[],foods=[],panels=[],debris=[],bonusEvents=[];
-function clearBonus(){tables.forEach(t=>{if(!t.broken){world.removeBody(t.body);scene.remove(t.grp);}});foods.forEach(f=>{world.removeBody(f.body);scene.remove(f.mesh);});panels.forEach(p=>{world.removeBody(p.body);scene.remove(p.mesh);});debris.forEach(d=>{world.removeBody(d.body);scene.remove(d.mesh);});tables=[];foods=[];panels=[];debris=[];}
+function clearBonus(){tables.forEach(t=>{if(!t.broken){world.removeBody(t.body);scene.remove(t.grp);}});foods.forEach(f=>{world.removeBody(f.body);scene.remove(f.mesh);if(f.shadow)scene.remove(f.shadow);});panels.forEach(p=>{world.removeBody(p.body);scene.remove(p.mesh);});debris.forEach(d=>{world.removeBody(d.body);scene.remove(d.mesh);});tables=[];foods=[];panels=[];debris=[];}
 function breakTable(t){
   if(t.broken)return;t.broken=true;
   const bq=t.body.quaternion.clone(),bp=t.body.position.clone(),bv=t.body.velocity.clone();
@@ -2932,10 +3015,8 @@ function buildBonus(){
         if(ev.body.mass===0&&fb.position.y<0.12){entry.counted=true;
           bonusEvents.push({pts:entry.pts,e:entry.e,ox:fb.position.x*OLDX,oy:zToOld(fb.position.z)});}
       });
-      if(!foodTexCache[fp[0]])foodTexCache[fp[0]]=emojiTex(fp[0]);
-      const mm=new THREE.Sprite(new THREE.SpriteMaterial({map:foodTexCache[fp[0]],transparent:true}));
-      mm.scale.set(0.18,0.18,1);scene.add(mm);
-      foods.push({body:fb,mesh:mm,e:fp[0],pts:fp[1],counted:false,sx:fx,sz:fz});
+      const mm=makeFood(fp,fp[4]);
+      foods.push({body:fb,mesh:mm,shadow:foodShadow(),e:fp[0],pts:fp[1],counted:false,sx:fx,sz:fz});
     });
   });
   /* breakable side panels: pins blast through them into the buffet */
@@ -2953,11 +3034,9 @@ function buildBonus(){
     const fx=(Math.random()*2-1)*0.55,fz=-3-Math.random()*10.5;
     const fb2=new CANNON.Body({mass:0.07,material:mPin,shape:new CANNON.Box(new CANNON.Vec3(0.05,0.05,0.05)),position:new CANNON.Vec3(fx,0.07,fz)});
     fb2.allowSleep=true;fb2.sleepSpeedLimit=0.25;fb2.sleepTimeLimit=0.5;world.addBody(fb2);
-    if(!foodTexCache[fp[0]])foodTexCache[fp[0]]=emojiTex(fp[0]);
-    const mm2=new THREE.Sprite(new THREE.SpriteMaterial({map:foodTexCache[fp[0]],transparent:true}));
-    mm2.scale.set(0.17,0.17,1);scene.add(mm2);
+    const mm2=makeFood(fp,fp[4]*0.94);
     fb2.__laneFood=true;
-    foods.push({body:fb2,mesh:mm2,e:fp[0],pts:fp[1],counted:false,lane:true,sx:fx,sz:fz});
+    foods.push({body:fb2,mesh:mm2,shadow:foodShadow(),e:fp[0],pts:fp[1],counted:false,lane:true,sx:fx,sz:fz});
   }
 }
 buildBonus();
@@ -3837,7 +3916,8 @@ function rplStart(force){
   RPL.on=true;RPL.clock=RPL.from;RPL.boomDone=false;RPL.t0=performance.now()/1000;RPL.strike=!!force;RPL.forced=false;
   RPL.fov0=cam.fov;bumper.visible=false;   /* the pit bumper sits right across the pit camera's sightline */
   RPL.vis=[];  /* remember every prop's state so the ones pulled off the lens go back exactly as they were */
-  for(const f of foods){if(f&&f.mesh){const e={o:f.mesh,v:f.mesh.visible,want:f.mesh.visible};f.mesh.__rv=e;f.__splat=false;RPL.vis.push(e);}}
+  for(const f of foods){if(f&&f.mesh){const e={o:f.mesh,v:f.mesh.visible,want:f.mesh.visible};f.mesh.__rv=e;f.__splat=false;RPL.vis.push(e);}
+    if(f&&f.shadow)RPL.vis.push({o:f.shadow,v:f.shadow.visible,want:false});}
   for(const tb of tables){if(tb&&tb.grp)RPL.vis.push({o:tb.grp,v:tb.grp.visible,want:tb.grp.visible});}
   return (RPL.to-RPL.from)/RPL_RATE;
 }
@@ -3926,7 +4006,11 @@ function render(gs){
       const lift=Math.max(0,pn.grp.position.y-PHYS.pinCY);pn.shadow.scale.setScalar(1+lift*1.5);pn.shadow.material.opacity=0.34/(1+lift*4);}}
   for(const t of tables){if(t.broken)continue;syncPos(t.body,t.grp,al);syncQ(t.body,t.grp,al);}
   for(const d of debris){syncPos(d.body,d.mesh,al);syncQ(d.body,d.mesh,al);d.mesh.visible=d.mesh.position.y>-0.5;}
-  for(const f of foods){syncPos(f.body,f.mesh,al);f.mesh.position.y+=0.035;f.mesh.visible=f.body.position.y>-0.4;}
+  for(const f of foods){syncPos(f.body,f.mesh,al);syncQ(f.body,f.mesh,al);f.mesh.position.y+=0.02;
+    f.mesh.visible=f.body.position.y>-0.4;if(!f.mesh.__skin)foodSkin(f.mesh);
+    if(f.shadow){const yv=f.body.position.y;f.shadow.visible=f.mesh.visible&&yv<0.62;
+      if(f.shadow.visible){f.shadow.position.set(f.body.position.x,0.0025,f.body.position.z);
+        const lift=Math.max(0,yv-0.06);f.shadow.scale.setScalar(1+lift*1.8);f.shadow.material.opacity=0.30/(1+lift*5.5);}}}
   for(const p2 of panels){syncPos(p2.body,p2.mesh,al);syncQ(p2.body,p2.mesh,al);p2.mesh.visible=p2.mesh.position.y>-0.5;}
   }
   updateFire(dt,nw);
@@ -3943,7 +4027,7 @@ function render(gs){
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
