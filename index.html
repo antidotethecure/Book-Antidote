@@ -4214,7 +4214,11 @@ render();
       <button class="btn btn-ghost" id="pdCollapseBtn" type="button">▲ Collapse This Section</button>
     </div>
     </div>
-    <style>#pdBody[hidden],.ag-pitch-teaser[hidden]{display:none}</style>
+    <style>#pdBody[hidden],.ag-pitch-teaser[hidden]{display:none}
+.foot-legal{margin-top:10px;font-size:13px;opacity:.72}
+.foot-legal a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22)}
+.foot-legal a:hover{opacity:1;border-bottom-color:currentColor}
+</style>
     <script>
     (function(){
       var teaser=document.querySelector('.ag-pitch-teaser'), body=document.getElementById('pdBody'),
@@ -4320,6 +4324,11 @@ function agencySubmit(e){
     <div class="maker-sub">Every review handcrafted from concept to publication.</div>
   </div>
   © Antidote Food Review Legacy · @TheRealAntidote · (424) 309-4068
+  <div class="foot-legal">
+    <a href="/privacy/">Privacy</a> ·
+    <a href="/terms/">Terms</a> ·
+    <a href="/legal/">Game legal &amp; contest rules</a>
+  </div>
 </footer>
 
 <div id="takeover" aria-hidden="true"><canvas id="tkCanvas"></canvas></div>
