@@ -4177,6 +4177,32 @@ const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.
 function bowlerScreenX(x){homeCam.position.set((x||0)*0.43,1.32,3.5);homeCam.lookAt((x||0)*0.34,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*1.30,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
 function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation.x=c*0.9;g.userData.tip.rotation.x=c*1.1;}h.userData.th.rotation.x=0.5+c*0.6;}
+/* A keyframe with a tangent on it, evaluated as a cubic Hermite. The swing used to be four
+   independent eased lerps, and an eased lerp always arrives at its keyframe with no speed left:
+   the arm parked dead at the bottom of the arc -- exactly where a real swing is moving fastest --
+   and then snapped into the follow-through. Keys carry their own speed through, so the arm flows
+   through the bottom instead of stopping on it. Tangents are in units of value per unit u. */
+function keyed(K,u){
+  let i=0;while(i<K.length-2&&u>K[i+1][0])i++;
+  const a=K[i],b=K[i+1],h=b[0]-a[0];
+  if(h<=0)return a[1];
+  let t=(u-a[0])/h;if(t<0)t=0;else if(t>1)t=1;
+  const t2=t*t,t3=t2*t;
+  return (2*t3-3*t2+1)*a[1]+(t3-2*t2+t)*h*a[2]+(3*t2-2*t3)*b[1]+(t3-t2)*h*b[2];
+}
+/* u runs 0..1 over the 1.15 s approach. The ball launches at u=0.87, so 0.87 is where the hand
+   reaches the bottom of the arc and where the swing is quickest -- the two used to be 0.07 apart. */
+const SW_ARM=[[0,0.55,0.3],[0.15,0.98,0],[0.50,-1.85,0],[0.87,0,7.5]];
+const SW_ELB=[[0,1.15,0],[0.15,0.32,0],[0.50,0.06,0],[0.87,0.04,0.3]];
+const SW_WRI=[[0,-0.30,0],[0.15,-0.55,0],[0.50,-0.62,0],[0.87,0.10,2.0]];
+/* The throw hands over to the roll the instant the ball leaves, at u=0.87 -- u never reaches 1 --
+   so the whole follow-through hangs off the roll clock instead. Each opening tangent is the
+   u-curve's closing one times 0.35/1.15, the ratio of the two clocks, which is what makes the arm
+   keep its speed across the hand-off rather than stopping dead and setting off again. */
+const SW_AFOL=[[0,0,2.28],[1,2.00,0]];
+const SW_EFOL=[[0,0,0.09],[1,1.30,0]];
+const SW_WFOL=[[0,0,0.61],[1,0.50,0]];
+
 function poseBowler(gs,dt,nw){
   const U=bowler.userData,B=U.B,A=U.arms,L=U.legs;
   const cheer=gs.cheer>0,ph=gs.phase;
@@ -4188,22 +4214,28 @@ function poseBowler(gs,dt,nw){
     shL:[0.62,0,0.34],elL:1.55,shR:[0.55,0,0.28],elR:1.15,curl:0.75,
     hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0,wr:-0.3,yaw:0};
   if(ph==='throw'||ph==='roll'){
-    /* THE APPROACH: three quick steps and a slide toward the line while the ball pushes away, swings back high,
-       comes through and leaves the hand at the bottom of the arc, then the arm follows through up and over */
+    /* THE APPROACH: steps into a slide while the ball pushes away, swings back high and comes back
+       through. Every quantity below is continuous in speed as well as in value -- across each key,
+       and across the throw/roll hand-off -- so nothing in the motion stops and restarts. */
     const u=tp,fol=Math.min(1,rl/0.35),L2=THREE.MathUtils.lerp;
-    const P=Math.min(u,0.66)/0.66*3*Math.PI;
-    let hpR=Math.sin(P)*0.55,hpL=-Math.sin(P)*0.55,knR=-(0.15+0.6*Math.max(0,Math.sin(P-0.5))),knL=-(0.15+0.6*Math.max(0,Math.sin(P+Math.PI-0.5)));
-    const lg=sstep(0.66,0.86,u);hpL=L2(hpL,0.85,lg);knL=L2(knL,-1.15,lg);hpR=L2(hpR,-0.55,lg);knR=L2(knR,-0.25,lg);   /* the slide: left leg planted deep, right trailing */
-    let swR,elR;
-    if(u<0.2){const q=u/0.2;swR=L2(0.55,0.95,Math.sin(q*Math.PI/2));elR=L2(1.15,0.35,q);}                                /* push-away */
-    else if(u<0.62){const q=(u-0.2)/0.42;swR=L2(0.95,-1.75,0.5-0.5*Math.cos(q*Math.PI));elR=L2(0.35,0.08,q);}          /* backswing, arm straightening */
-    else if(u<0.88){const q=(u-0.62)/0.26;swR=L2(-1.75,0.45,0.5-0.5*Math.cos(q*Math.PI));elR=0.08+0.1*q;}              /* downswing to release */
-    else{const q=(u-0.88)/0.12;swR=L2(0.45,1.55,Math.sin(q*Math.PI/2));elR=0.2+0.3*q;}                                   /* follow-through */
-    swR+=0.6*sstep(0,1,fol);
-    const wr=u<0.62?-0.55:(u<0.88?L2(-0.55,0.35,(u-0.62)/0.26):0.35);                                                   /* wrist cupped in the backswing, flicks through at release */
-    t={lean:-0.10-0.30*u-0.05*fol,spine:-0.05-0.08*u,bob:-Math.abs(Math.sin(P))*0.025*(1-lg)-0.12*lg,hz:-0.72*u,
-       shL:[0.25+0.55*u,0,-(0.7+0.6*u)],elL:0.9-0.5*u,shR:[swR,0,0.16],elR:elR,curl:u<0.87?0.8:0.2,
-       hpL:hpL,knL:knL,hpR:hpR,knR:knR,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0};
+    const swR=keyed(SW_ARM,u)+keyed(SW_AFOL,fol),
+          elR=keyed(SW_ELB,u)+keyed(SW_EFOL,fol),
+          wr =keyed(SW_WRI,u)+keyed(SW_WFOL,fol);
+    /* The step clock used to be min(u,0.66), which froze his legs mid-stride in one frame. It now
+       eases its own rate to nothing by u=0.72, arriving at the slide with the stride already spent. */
+    const d=Math.max(0,u-0.50),pu=u<=0.50?u:Math.min(0.61,0.50+d-d*d/0.44),P=pu/0.61*3*Math.PI;
+    let hpR=Math.sin(P)*0.55,hpL=-Math.sin(P)*0.55,
+        knR=-(0.15+0.6*Math.max(0,Math.sin(P-0.5))),knL=-(0.15+0.6*Math.max(0,Math.sin(P+Math.PI-0.5)));
+    const lg=sstep(0.58,0.88,u);
+    hpL=L2(hpL,0.85,lg);knL=L2(knL,-1.15,lg);hpR=L2(hpR,-0.55,lg);knR=L2(knR,-0.25,lg);   /* the slide: left leg planted deep, right trailing */
+    const ea=sstep(0,1,u);                       /* short first step, quickening, sliding to a stop */
+    t={lean:-0.10-0.30*ea-0.05*fol,spine:-0.05-0.08*u,bob:-Math.abs(Math.sin(P))*0.025*(1-lg)-0.12*lg,hz:-0.72*ea-0.08*fol,
+       shL:[0.25+0.62*ea,0,-(0.7+0.75*sstep(0.3,1,u))],elL:0.9-0.5*ea,shR:[swR,0,0.16],elR:elR,
+       curl:0.8-0.6*sstep(0.82,0.88,u),
+       hpL:hpL,knL:knL,hpR:hpR,knR:knR,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0,
+       /* shoulders counter-rotate against the swing and drop toward the ball through the downswing,
+          which is most of what separates a thrown ball from an arm waved on a hinge */
+       spineY:-swR*0.055,spineZ:-0.07*sstep(0.45,0.90,u)*(1-0.5*fol)};
   }
   else if(soakT>0){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
     const sv=Math.min(1,soakT/2);t={lean:0.02,spine:0.14*sv,bob:Math.sin(nw*27)*0.007*sv,hz:Math.sin(nw*31)*0.004*sv,shL:[1.05,0,0.55],elL:2.25,shR:[0.55,0,0.28],elR:1.15,curl:0.75,hpL:-0.14,knL:-0.26,hpR:-0.14,knR:-0.26,headX:0.32,headY:Math.sin(nw*23)*0.035*sv};}
@@ -4214,9 +4246,10 @@ function poseBowler(gs,dt,nw){
     t.knL=L2(t.knL,-(0.16+0.7*Math.max(0,Math.sin(P-0.6))),a);t.knR=L2(t.knR,-(0.16+0.7*Math.max(0,-Math.sin(P+0.6))),a);
     t.bob=-Math.abs(Math.sin(P))*0.03*a;t.yaw=-walk.dir*0.32*a;t.shL=[t.shL[0]+Math.sin(P+Math.PI)*0.3*a,0,t.shL[2]];t.lean-=0.05*a;
   }
-  const k=1-Math.exp(-dt*(ph==='throw'||ph==='roll'?24:(walk.amt>0.02?14:7)));  /* exact at any frame rate: dt*k drifts once frames get long */
+  const k=1-Math.exp(-dt*(ph==='throw'||ph==='roll'?34:(walk.amt>0.02?14:7)));  /* exact at any frame rate: dt*k drifts once frames get long */
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
   lp(bowler.rotation,'x',t.lean);lp(bowler.rotation,'y',t.yaw||0);lp(B.spine.rotation,'x',t.spine);
+  lp(B.spine.rotation,'y',t.spineY||0);lp(B.spine.rotation,'z',t.spineZ||0);
   bowler.position.y+=(t.bob-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
   ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);
     lp(L[s].hp.rotation,'x',t['hp'+s]);lp(L[s].kn.rotation,'x',t['kn'+s]);L[s].an.rotation.x=-L[s].hp.rotation.x-L[s].kn.rotation.x-bowler.rotation.x;});
@@ -4450,7 +4483,7 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
