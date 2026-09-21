@@ -4129,7 +4129,12 @@ function installReal(root,keepProc){
   const ws=bones.wrR.getWorldScale(new THREE.Vector3()).x||1;
   const hb=new THREE.Mesh(ballGeo,ballMat);bones.wrR.add(hb);hb.scale.setScalar(1/ws);
   hb.position.copy(bones.wrR.worldToLocal(wp(bones.wrR).add(restD.wrR.clone().multiplyScalar(0.16))));   /* the ball hangs a hand's length past the wrist */
-  real={root,bones,restQ,restD,mats,ball:hb,sc,ws,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
+  /* His legs are not our legs. Solving against our own bone lengths aimed the scan's thigh and shin
+     correctly but put its foot wherever its own proportions happened to land, which is why the foot
+     still skated. Measure the scan: segment lengths and how high the ankle joint rides above the
+     sole, in the bowler's units, and solve against those instead. */
+  const legLen={};
+  real={root,bones,restQ,restD,mats,ball:hb,sc,ws,legLen,ankY:null,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
   bowler.add(root);bowler.children.forEach(c=>{if(c!==root&&c!==bowler.userData.shadow)c.visible=!!keepProc;});
   return real;
 }
@@ -4167,8 +4172,13 @@ function driveReal(){ /* read the control rig's joint angles (already smoothed) 
     aimBone('sh'+s,_rv2.copy(DOWN).applyQuaternion(qs));
     const qe=qs.clone().multiply(qx(el));aimBone('el'+s,_rv2.copy(DOWN).applyQuaternion(qe));
     aimBone('wr'+s,_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))));
-    const hp=L[s].hp.rotation.x,kn=L[s].kn.rotation.x;
-    setBone('hp'+s,qx(hp));setBone('kn'+s,qx(hp+kn));setBone('an'+s,qx(-lean));});
+    /* The legs were qx(hp) and qx(hp+kn): one plane, no roll, so they could only ever swing like a
+       pendulum. Aim them along the solved thigh and shin instead, the way the arms already work. */
+    const ld=U.legDir&&U.legDir[s];
+    if(ld){aimBone('hp'+s,ld.t);aimBone('kn'+s,ld.s);}
+    else{const hp=L[s].hp.rotation.x,kn=L[s].kn.rotation.x;setBone('hp'+s,qx(hp));setBone('kn'+s,qx(hp+kn));}
+    setBone('an'+s,qx(-lean));});
+  setBone('hips',qy(B.pelvis.rotation.y).multiply(qz(B.pelvis.rotation.z)));
   real.ball.visible=A.R.ball.visible;
 }
 loadRealBowler();
@@ -4177,6 +4187,178 @@ const bProj=new THREE.Vector3(),HAND_PX=-0.185*BSCALE*bPxPerM,homeCam=new THREE.
 function bowlerScreenX(x){homeCam.position.set((x||0)*0.43,1.32,3.5);homeCam.lookAt((x||0)*0.34,0.15,-10);homeCam.updateMatrixWorld(true);bProj.set((x||0)*1.30,BR,2.30).project(homeCam);const px=(bProj.x*0.5+0.5)*LW;return Math.max(64,Math.min(LW-64,LW/2+(px-LW/2)*0.85))+HAND_PX;} /* his right hand sits over the spawn point; projected with the approach camera at rest so the camera flying back from the pins never drags him around */
 /* bone conventions (bind pose hangs down): rotation.x + swings a limb forward (toward the pins); knees bend with −x; z splays the arm out */
 function curlHand(h,c){for(let f=0;f<4;f++){const g=h.userData['f'+f];g.rotation.x=c*0.9;g.userData.tip.rotation.x=c*1.1;}h.userData.th.rotation.x=0.5+c*0.6;}
+/* ---------- GAIT: planted feet, solved legs ----------
+   The legs used to be two sine waves on the hip and knee, in one plane, which is a hinge pretending
+   to be a person: his feet skated along the floor because nothing ever held them still, and they
+   could not move sideways at all. Now the feet are what the animation drives. Each one is a point on
+   the ground that stays exactly where it was put until the body has travelled far enough to need a
+   step; then it lifts, swings past the body the way a real step overshoots, and sets down again.
+   The joints are whatever gets the hip to that point -- solved, not keyframed. */
+const LEG={hipY:0.92,thigh:0.42,shin:0.43,half:0.095,reach:0.85,crouch:0,
+  trig:0.185,      /* how far the hip may drift past the foot before that foot has to step */
+  lift:0.075,      /* toe clearance at the top of a swing */
+  minSw:0.15};     /* a step is never quicker than this, however fast he is moving */
+const feet={L:{x:-LEG.half,y:0,z:0,sw:-1,dur:0.3,fx:0,fy:0,fz:0,tx:0,ty:0,tz:0},
+            R:{x: LEG.half,y:0,z:0,sw:-1,dur:0.3,fx:0,fy:0,fz:0,tx:0,ty:0,tz:0}};
+const _gv=new THREE.Vector3(),_gv2=new THREE.Vector3(),_gv3=new THREE.Vector3(),_gv4=new THREE.Vector3(),
+      _gq=new THREE.Quaternion(),_gq2=new THREE.Quaternion(),_gm=new THREE.Matrix4(),
+      DOWNV=new THREE.Vector3(0,-1,0),FWDV=new THREE.Vector3(0,0,-1);
+function feetHome(bx,bz){for(const k of ['L','R']){const f=feet[k];
+  f.x=bx+(k==='L'?-LEG.half:LEG.half);f.z=bz;f.y=0;f.sw=-1;}}
+/* one foot in the air at a time, and it goes where the body is heading rather than where it has been */
+function stepGait(dt,bx,bz,vx,vz){
+  const sp=Math.hypot(vx,vz);
+  for(const k of ['L','R']){
+    const f=feet[k],o=feet[k==='L'?'R':'L'],dx=bx+(k==='L'?-LEG.half:LEG.half),dz=bz;
+    if(f.sw<0){
+      f.lock=true;                                   /* the gait is holding this one still */
+      const off=Math.hypot(f.x-dx,f.z-dz);
+      /* Normally he takes one step at a time. But if a foot has been left so far behind that the leg
+         would have to stretch to stay on it, it has to come now, whatever the other foot is doing --
+         otherwise the solve clamps and the foot is dragged along the floor, which is the skating we
+         were trying to get rid of. People do the same thing: outrun your feet and you take a quick
+         one to catch up. */
+      const urgent=off>LEG.reach*0.40;
+      if(off>LEG.trig&&(o.sw<0||urgent)){
+        f.fx=f.x;f.fy=f.y;f.fz=f.z;
+        const lead=Math.min(LEG.reach*0.38,sp*0.17);
+        f.tx=dx+(sp>1e-5?vx/sp*lead:0);f.tz=dz+(sp>1e-5?vz/sp*lead:0);f.ty=0;
+        f.sw=0;f.lock=false;
+        f.dur=urgent?LEG.minSw*0.55:Math.max(LEG.minSw,Math.min(0.5,off/Math.max(0.35,LEG.reach)*0.7));
+      }
+    }else{
+      f.sw+=dt/f.dur;
+      /* A foot in the air keeps aiming at where he is going, not at where he was when it left the
+         floor. Committing to the original mark is what leaves a leg trailing behind a body that has
+         not stopped moving. */
+      const lead2=Math.min(LEG.reach*0.38,sp*0.17),ad=Math.min(1,dt*10);
+      f.tx+=((dx+(sp>1e-5?vx/sp*lead2:0))-f.tx)*ad;
+      f.tz+=((dz+(sp>1e-5?vz/sp*lead2:0))-f.tz)*ad;
+      if(f.sw>=1){f.x=f.tx;f.y=0;f.z=f.tz;f.sw=-1;f.lock=true;}
+      else{const t=f.sw,e=t*t*(3-2*t);
+        f.x=f.fx+(f.tx-f.fx)*e;f.z=f.fz+(f.tz-f.fz)*e;f.y=Math.sin(Math.PI*t)*LEG.lift;}
+    }
+  }
+}
+/* Where the feet want to be this frame. Ordinary movement hands off to the gait; the slide is its
+   own thing, because a bowler's lead foot genuinely does skate -- that part is not a bug to fix --
+   while the trail leg sweeps behind and across him for balance. */
+let _fvx=0,_fvz=0,_fpx=null,_fpz=null;
+function placeFeet(gs,dt,slide,tp){
+  const bx=bowler.position.x,bz=bowler.position.z;
+  if(_fpx==null){_fpx=bx;_fpz=bz;}
+  const ivx=dt>0?(bx-_fpx)/dt:0,ivz=dt>0?(bz-_fpz)/dt:0;
+  _fpx=bx;_fpz=bz;
+  const sm=1-Math.exp(-dt*12);                     /* his own speed, smoothed, so one long frame cannot fake a sprint */
+  _fvx+=(ivx-_fvx)*sm;_fvz+=(ivz-_fvz)*sm;
+  if(gs&&gs.cheer>0){
+    /* Celebrating, he bobs nine centimetres. Feet nailed to the floor through that is a man being
+       stretched; a man that pleased with himself comes off the ground. */
+    const up=Math.max(0,bowler.position.y+(LEG.crouch||0)),kk=1-Math.exp(-dt*10);
+    for(const k of ['L','R']){const f=feet[k];f.sw=-1;f.lock=false;
+      f.x+=((bx+(k==='L'?-LEG.half:LEG.half))-f.x)*kk;f.z+=(bz-f.z)*kk;f.y=up*0.92;}
+    return;
+  }
+  if(slide>0.02){
+    const lead=feet.L,trail=feet.R;lead.sw=-1;trail.sw=-1;lead.lock=false;trail.lock=false;
+    const kl=1-Math.exp(-dt*9*slide),kt=1-Math.exp(-dt*6*slide),R=LEG.reach;
+    lead.x+=(bx-R*0.07-lead.x)*kl;lead.z+=(bz-R*0.20-lead.z)*kl;lead.y=0;
+    trail.x+=(bx+R*0.38-trail.x)*kt;trail.z+=(bz+R*0.58-trail.z)*kt;trail.y=R*0.13*slide;
+    return;
+  }
+  stepGait(dt,bx,bz,_fvx,_fvz);
+}
+/* Measure him once, on the first frame that actually draws, and do every part of this in one frame
+   of reference -- the one the feet live in. The earlier version took his segment lengths in his own
+   local frame and placed his feet in his parent's, which are not the same size, so the targets came
+   out further away than his legs are long. The solve then clamped every frame and the foot landed
+   wherever it could reach, which is exactly what skating looks like. Nothing below is a constant
+   picked by eye: his stance width, his stride and his step height all come off his own skeleton. */
+let legCal=false;
+function calibrateLegs(){
+  if(legCal||!real||!real.bones.anL||!real.bones.anR||!real.bones.knL||!real.bones.hpL)return;
+  const a=new THREE.Vector3(),c=new THREE.Vector3(),d=new THREE.Vector3();
+  let accY=0,accHalf=0,accLen=0;
+  for(const k of ['L','R']){
+    real.bones['hp'+k].getWorldPosition(a);bowler.parent.worldToLocal(a);
+    real.bones['kn'+k].getWorldPosition(c);bowler.parent.worldToLocal(c);
+    real.bones['an'+k].getWorldPosition(d);bowler.parent.worldToLocal(d);
+    /* How far his leg actually is from hip to ankle as he stands. Capping reach at thigh+shin minus a
+       margin sounds safe but is not: a scan stands with near-straight legs, so his own resting pose
+       already exceeded that cap and the solve clamped on every frame, standing still included. */
+    real.legLen[k]={thigh:a.distanceTo(c),shin:c.distanceTo(d),rest:a.distanceTo(d)};
+    feet[k].x=d.x;feet[k].z=d.z;feet[k].y=0;feet[k].sw=-1;      /* his feet start exactly where they already are */
+    accY+=d.y;accHalf+=Math.abs(d.x-bowler.position.x);
+    accLen+=real.legLen[k].thigh+real.legLen[k].shin;
+  }
+  real.ankY=accY/2;
+  LEG.half=accHalf/2;                       /* how far apart he actually stands */
+  const legL=accLen/2;
+  /* A scan stands with its knees locked, hip almost exactly a leg's length above the ankle. Nobody
+     stands like that, and geometrically it leaves no room at all: any sideways offset whatsoever is
+     already further than a straight leg can cover, so the solve clamps and the foot gets dragged.
+     Give him the bend a standing person has, and the room to step comes with it. */
+  real.bones.hpL.getWorldPosition(_gv2);bowler.parent.worldToLocal(_gv2);
+  const hipH=_gv2.y-real.ankY,maxL=Math.max(real.legLen.L.rest,real.legLen.L.thigh+real.legLen.L.shin-0.015);
+  LEG.crouch=Math.max(0,Math.min(legL*0.09,hipH-Math.sqrt(Math.max(0.02,maxL*maxL-legL*0.30*legL*0.30))));
+  const vert=Math.max(0.05,hipH-LEG.crouch);
+  const room=Math.sqrt(Math.max(0.0004,maxL*maxL-vert*vert));   /* how far to the side his foot can be and still be reachable */
+  LEG.trig=Math.min(legL*0.24,room*0.70);
+  LEG.lift=legL*0.10;
+  LEG.reach=legL;
+  legCal=true;
+}
+/* Two-bone solve, entirely in the feet's frame: the hip and knee orientations that put his ankle on
+   the foot's mark, with the knee kept pointing the way he faces. */
+const _bwq=new THREE.Quaternion(),_dq=new THREE.Quaternion(),_pq2=new THREE.Quaternion(),_liq=new THREE.Quaternion();
+function aimLocal(bone,dirLocal){
+  _dq.setFromUnitVectors(DOWNV,dirLocal);
+  _dq.premultiply(_bwq);
+  bone.parent.updateMatrixWorld(true);
+  bone.parent.getWorldQuaternion(_pq2).invert();
+  bone.quaternion.copy(_pq2).multiply(_dq);
+  bone.updateMatrixWorld(true);
+}
+function solveLegs(){
+  const U=bowler.userData,L=U.legs;
+  bowler.updateMatrix();bowler.updateMatrixWorld(true);
+  calibrateLegs();
+  bowler.getWorldQuaternion(_bwq);
+  _liq.copy(bowler.quaternion).invert();                   /* parent directions -> his own frame */
+  if(!U.legDir)U.legDir={L:{t:new THREE.Vector3(),s:new THREE.Vector3()},R:{t:new THREE.Vector3(),s:new THREE.Vector3()}};
+  const ah=(real&&real.ankY!=null)?real.ankY:0.07;
+  LEG.solves=(LEG.solves||0)+2;
+  for(const k of ['L','R']){
+    const f=feet[k],lg=L[k],out=U.legDir[k];
+    const gm=(real&&real.legLen&&real.legLen[k])||null;
+    const A=gm?gm.thigh:LEG.thigh,Bn=gm?gm.shin:LEG.shin;
+    const maxL=gm?Math.max(gm.rest,A+Bn-0.015):(A+Bn-0.015);
+    const hipObj=(real&&real.bones['hp'+k])||lg.hp;
+    hipObj.parent.updateMatrixWorld(true);
+    hipObj.getWorldPosition(_gv2);bowler.parent.worldToLocal(_gv2);   /* the hip socket, in the feet's frame */
+    _gv.set(f.x,ah+f.y,f.z).sub(_gv2);                                /* hip -> the mark he is standing on */
+    let len=_gv.length();
+    if(len>maxL){_gv.multiplyScalar(maxL/len);len=maxL;LEG.clamps=(LEG.clamps||0)+1;}
+    else if(len<maxL*0.2){_gv.setLength(maxL*0.2);len=maxL*0.2;}
+    const c=(A*A+len*len-Bn*Bn)/(2*A*len),hipOff=Math.acos(Math.max(-1,Math.min(1,c)));
+    _gv3.copy(_gv).normalize();
+    _gv4.copy(_gv3).cross(FWDV);                                      /* the axis the knee bends about */
+    if(_gv4.lengthSq()<1e-8)_gv4.set(1,0,0);else _gv4.normalize();
+    _dq.setFromAxisAngle(_gv4,hipOff);
+    out.t.copy(_gv3).applyQuaternion(_dq);
+    _dq.setFromAxisAngle(_gv4,-hipOff);
+    _gv3.applyQuaternion(_dq);
+    if(_gv3.z<out.t.z)out.t.copy(_gv3);                               /* a knee never bends backwards */
+    out.t.normalize();
+    out.s.copy(_gv).addScaledVector(out.t,-A).normalize();            /* knee -> foot */
+    out.t.applyQuaternion(_liq);out.s.applyQuaternion(_liq);          /* into his frame, which is what aims a bone */
+    aimLocal(lg.hp,out.t);
+    aimLocal(lg.kn,out.s);
+    lg.kn.getWorldQuaternion(_pq2).invert();                          /* the sole stays flat to the floor */
+    lg.an.quaternion.copy(_pq2).multiply(_bwq);
+  }
+}
+
 /* A keyframe with a tangent on it, evaluated as a cubic Hermite. The swing used to be four
    independent eased lerps, and an eased lerp always arrives at its keyframe with no speed left:
    the arm parked dead at the bottom of the arc -- exactly where a real swing is moving fastest --
@@ -4224,15 +4406,15 @@ function poseBowler(gs,dt,nw){
     /* The step clock used to be min(u,0.66), which froze his legs mid-stride in one frame. It now
        eases its own rate to nothing by u=0.72, arriving at the slide with the stride already spent. */
     const d=Math.max(0,u-0.50),pu=u<=0.50?u:Math.min(0.61,0.50+d-d*d/0.44),P=pu/0.61*3*Math.PI;
-    let hpR=Math.sin(P)*0.55,hpL=-Math.sin(P)*0.55,
-        knR=-(0.15+0.6*Math.max(0,Math.sin(P-0.5))),knL=-(0.15+0.6*Math.max(0,Math.sin(P+Math.PI-0.5)));
     const lg=sstep(0.58,0.88,u);
-    hpL=L2(hpL,0.85,lg);knL=L2(knL,-1.15,lg);hpR=L2(hpR,-0.55,lg);knR=L2(knR,-0.25,lg);   /* the slide: left leg planted deep, right trailing */
     const ea=sstep(0,1,u);                       /* short first step, quickening, sliding to a stop */
     t={lean:-0.10-0.30*ea-0.05*fol,spine:-0.05-0.08*u,bob:-Math.abs(Math.sin(P))*0.025*(1-lg)-0.12*lg,hz:-0.72*ea-0.08*fol,
        shL:[0.25+0.62*ea,0,-(0.7+0.75*sstep(0.3,1,u))],elL:0.9-0.5*ea,shR:[swR,0,0.16],elR:elR,
        curl:0.8-0.6*sstep(0.82,0.88,u),
-       hpL:hpL,knL:knL,hpR:hpR,knR:knR,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0,
+       slide:lg,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0,
+       /* the hips lag the shoulders through the swing: the separation between the two is what a
+          throw looks like from behind, and a body that turns in one piece never does */
+       pelvY:-swR*0.022,pelvZ:0,
        /* shoulders counter-rotate against the swing and drop toward the ball through the downswing,
           which is most of what separates a thrown ball from an arm waved on a hinge */
        spineY:-swR*0.055,spineZ:-0.07*sstep(0.45,0.90,u)*(1-0.5*fol)};
@@ -4240,22 +4422,36 @@ function poseBowler(gs,dt,nw){
   else if(soakT>0){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
     const sv=Math.min(1,soakT/2);t={lean:0.02,spine:0.14*sv,bob:Math.sin(nw*27)*0.007*sv,hz:Math.sin(nw*31)*0.004*sv,shL:[1.05,0,0.55],elL:2.25,shR:[0.55,0,0.28],elR:1.15,curl:0.75,hpL:-0.14,knL:-0.26,hpR:-0.14,knR:-0.26,headX:0.32,headY:Math.sin(nw*23)*0.035*sv};}
   else if(cheer){t={lean:0.05,spine:0.08,bob:Math.abs(Math.sin(nw*15))*0.09,hz:0,shL:[2.9,0,-0.35],elL:0.25,shR:[2.9,0,0.35],elR:0.25,curl:0.2,hpL:-0.05,knL:-0.1,hpR:-0.05,knR:-0.1,headX:-0.2,headY:Math.sin(nw*6)*0.08};}
-  if((ph==='aim'||ph==='spin'||ph==='power')&&walk.amt>0.02&&!cheer){ /* sidestepping to his mark: legs stepping, a little bob, turned slightly the way he is going */
-    const a=walk.amt,P=walk.phase,L2=THREE.MathUtils.lerp;
-    t.hpL=L2(t.hpL,Math.sin(P)*0.5,a);t.hpR=L2(t.hpR,-Math.sin(P)*0.5,a);
-    t.knL=L2(t.knL,-(0.16+0.7*Math.max(0,Math.sin(P-0.6))),a);t.knR=L2(t.knR,-(0.16+0.7*Math.max(0,-Math.sin(P+0.6))),a);
-    t.bob=-Math.abs(Math.sin(P))*0.03*a;t.yaw=-walk.dir*0.32*a;t.shL=[t.shL[0]+Math.sin(P+Math.PI)*0.3*a,0,t.shL[2]];t.lean-=0.05*a;
+  if((ph==='aim'||ph==='spin'||ph==='power')&&!cheer){
+    /* Sidestepping to his mark. The legs are not driven from here any more -- the gait owns them --
+       so what is left is what the rest of the body does about it: he leans into the direction he is
+       travelling and carries his weight over whichever foot is down, his hips drop a little on the
+       side that is swinging, and his arms swing against each other. */
+    const a=walk.amt,L2=THREE.MathUtils.lerp,sw=(feet.L.sw>=0?-1:(feet.R.sw>=0?1:0));
+    t.yaw=-walk.dir*0.30*a;
+    t.lean-=0.05*a;
+    t.roll=walk.dir*0.075*a;                  /* leaning into the step, the way you do carrying weight sideways */
+    t.pelvZ=sw*0.055*a;                       /* the pelvis lists toward the airborne leg */
+    t.pelvY=walk.dir*0.05*a;
+    t.shL=[t.shL[0]+0.34*a*walk.dir,0,t.shL[2]];
+    t.shR=[t.shR[0]-0.30*a*walk.dir,0,t.shR[2]];
+    t.headY=(t.headY||0)-walk.dir*0.10*a;     /* his eyes stay down the lane while his body turns */
   }
   const k=1-Math.exp(-dt*(ph==='throw'||ph==='roll'?34:(walk.amt>0.02?14:7)));  /* exact at any frame rate: dt*k drifts once frames get long */
   const lp=(o,key,v)=>{o[key]+=(v-o[key])*k;};
-  lp(bowler.rotation,'x',t.lean);lp(bowler.rotation,'y',t.yaw||0);lp(B.spine.rotation,'x',t.spine);
-  lp(B.spine.rotation,'y',t.spineY||0);lp(B.spine.rotation,'z',t.spineZ||0);
-  bowler.position.y+=(t.bob-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
-  ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);
-    lp(L[s].hp.rotation,'x',t['hp'+s]);lp(L[s].kn.rotation,'x',t['kn'+s]);L[s].an.rotation.x=-L[s].hp.rotation.x-L[s].kn.rotation.x-bowler.rotation.x;});
+  lp(bowler.rotation,'x',t.lean);lp(bowler.rotation,'y',t.yaw||0);lp(bowler.rotation,'z',t.roll||0);
+  lp(B.spine.rotation,'x',t.spine);lp(B.spine.rotation,'y',t.spineY||0);lp(B.spine.rotation,'z',t.spineZ||0);
+  lp(B.pelvis.rotation,'y',t.pelvY||0);lp(B.pelvis.rotation,'z',t.pelvZ||0);
+  bowler.position.y+=((t.bob-(LEG.crouch||0))-bowler.position.y)*k;bowler.position.z+=(t.hz-bowler.position.z)*k;
+  ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);});
+  placeFeet(gs,dt,t.slide||0,tp);solveLegs();
   lp(A.R.wr.rotation,'x',t.wr!=null?t.wr:-0.3);A.L.wr.rotation.x=-0.2;
   curlHand(A.R.hand,t.curl);curlHand(A.L.hand,0.35);
-  lp(B.head.rotation,'x',t.headX);lp(B.head.rotation,'y',t.headY+Math.sin(nw*0.7)*0.04);
+  /* a person keeps their head level and their eyes on the target; a rig that does not looks like a
+     mannequin being carried. Whatever the torso does, the head takes most of it back. */
+  lp(B.head.rotation,'x',t.headX-0.55*(bowler.rotation.x+B.spine.rotation.x));
+  lp(B.head.rotation,'y',(t.headY||0)-0.5*(bowler.rotation.y||0)+Math.sin(nw*0.7)*0.04);
+  B.head.rotation.z=-0.6*(bowler.rotation.z||0);
   B.chest.scale.y=1+0.008*br;B.chest.rotation.x=-0.01*br;
   A.R.ball.visible=!(ph==='roll'||ph==='settle'||ph==='result')&&!(ph==='throw'&&tp>=0.87)&&!cheer;
   U.shadow.scale.setScalar(1-0.35*Math.max(0,bowler.position.y));
@@ -4271,7 +4467,7 @@ function renderBowler(gs,dt,nw){
   bRoot.position.y=0.20-(ph==='roll'?Math.max(0,(bRollT-0.3)/0.3)*2.6:home*2.6); /* drops out as the camera rolls past him, rises back in as it settles home */
   const BXMAX=(HALF-0.28)/BSCALE;   /* his shoulders stop at the rail: he can stand on the edge of the lane, never over it */
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=Math.max(-BXMAX,Math.min(BXMAX,px/(bPxPerM*BSCALE)));
-  if(!bVis){bowler.position.x=tx;bPrevTx=tx;if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
+  if(!bVis){bowler.position.x=tx;bPrevTx=tx;_fpx=null;_fpz=null;feetHome(tx,bowler.position.z);if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
   const dxw=(tx-bowler.position.x)*(1-Math.exp(-dt*34));bowler.position.x+=dxw;   /* the spring upstream already shaped the move; this only takes the last edge off */
   /* Speed and facing come off the mark he is walking to, not off his own trailing position: an un-lagged
      signal, so his legs start with his body instead of catching up to it. And walk.dir is a blend now --
@@ -4483,7 +4679,41 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},__reach:function(){const o={};const v=new THREE.Vector3(),h=new THREE.Vector3();
+  const ah=(real&&real.ankY!=null)?real.ankY:0.07;
+  for(const k of ['L','R']){const f=feet[k],gm=(real&&real.legLen&&real.legLen[k])||null;
+    if(!gm||!real.bones['hp'+k]){o[k]=null;continue;}
+    real.bones['hp'+k].getWorldPosition(h);bowler.parent.worldToLocal(h);
+    v.set(f.x,ah+f.y,f.z);
+    const reach=v.distanceTo(h),maxL=Math.max(gm.rest,gm.thigh+gm.shin-0.015);
+    o[k]={reach:+reach.toFixed(4),maxL:+maxL.toFixed(4),rest:+gm.rest.toFixed(4),
+      over:+(reach-maxL).toFixed(4),air:f.sw>=0,
+      hip:[+h.x.toFixed(3),+h.y.toFixed(3),+h.z.toFixed(3)],
+      foot:[+f.x.toFixed(3),+(ah+f.y).toFixed(3),+f.z.toFixed(3)]};}
+  o.body=[+bowler.position.x.toFixed(3),+bowler.position.y.toFixed(3),+bowler.position.z.toFixed(3)];
+  o.half=+LEG.half.toFixed(4);o.trig=+LEG.trig.toFixed(4);o.crouch=+(LEG.crouch||0).toFixed(4);
+  return o;},__legdbg:function(){const U=bowler.userData,o={};const v=new THREE.Vector3();
+  for(const k of ['L','R']){const f=feet[k],gm=(real&&real.legLen&&real.legLen[k])||null;
+    const ah=(real&&real.ankY!=null)?real.ankY:0.07;
+    v.set(f.x,ah+f.y,f.z);bowler.parent.localToWorld(v);          /* where the ankle is supposed to be */
+    const want=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
+    let got=null;if(real&&real.bones['an'+k]){real.bones['an'+k].getWorldPosition(v);got=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
+    let hip=null;if(real&&real.bones['hp'+k]){real.bones['hp'+k].getWorldPosition(v);hip=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
+    const rd=real?real.restD['kn'+k]:null,rh=real?real.restD['hp'+k]:null;
+    o[k]={want,got,hip,gm:gm?[+gm.thigh.toFixed(4),+gm.shin.toFixed(4),+ah.toFixed(4)]:null,scale:+bowler.scale.x.toFixed(4),
+      restHp:rh?[+rh.x.toFixed(3),+rh.y.toFixed(3),+rh.z.toFixed(3)]:null,
+      restKn:rd?[+rd.x.toFixed(3),+rd.y.toFixed(3),+rd.z.toFixed(3)]:null,
+      reach:hip?+Math.hypot(hip[0]-want[0],hip[1]-want[1],hip[2]-want[2]).toFixed(4):null,
+      maxL:gm?+(gm.thigh+gm.shin-0.015).toFixed(4):null,
+      err:got?+Math.hypot(got[0]-want[0],got[1]-want[1],got[2]-want[2]).toFixed(4):null};}
+  o.dir=U.legDir?{L:[+U.legDir.L.t.x.toFixed(3),+U.legDir.L.t.y.toFixed(3),+U.legDir.L.t.z.toFixed(3)]}:null;
+  return o;},__feet:function(){const o={};for(const k of ['L','R']){const f=feet[k];o[k]={x:+f.x.toFixed(5),y:+f.y.toFixed(5),z:+f.z.toFixed(5),air:f.sw>=0?+f.sw.toFixed(3):-1,lock:!!f.lock};}
+  o.body=[+bowler.position.x.toFixed(5),+bowler.position.y.toFixed(5),+bowler.position.z.toFixed(5)];
+  o.clamps=LEG.clamps||0;o.solves=LEG.solves||0;o.roll=+bowler.rotation.z.toFixed(4);o.pelv=[+bowler.userData.B.pelvis.rotation.y.toFixed(4),+bowler.userData.B.pelvis.rotation.z.toFixed(4)];
+  if(real&&real.bones.anL&&real.bones.anR){const v=new THREE.Vector3();
+    real.bones.anL.getWorldPosition(v);o.aL=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
+    real.bones.anR.getWorldPosition(v);o.aR=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
+  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
