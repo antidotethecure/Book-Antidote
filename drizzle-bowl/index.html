@@ -1453,8 +1453,12 @@ function finishRoll(){
   g.keepIds=g.pins.filter(function(p){return p.up;}).map(function(p){return p.id;}); /* frozen here: the deck is re-racked from this list, so the score and the pins on the deck always agree */
   g.rolls.push(n);g.fr.push(n);
   var tenth=g.frame===9,fr=g.fr,m='';
-  sfx.fireStop();var wasFire=!!(g.ball&&g.ball.fire),dept=wasFire&&(g.ball.gutter||n===0); /* on fire and you missed: the fire department rolls in */
+  sfx.fireStop();var wasFire=!!(g.ball&&g.ball.fire);
   var strike=n===10&&(fr.length===1||(tenth&&(fr[fr.length-2]===10||(fr.length===3&&fr[0]+fr[1]===10))));
+  /* On fire and the strike did not come: the department rolls out, every time. It used to need a
+     gutter or a clean whiff, so leaving one pin standing while you were burning got you nothing --
+     which is the throw that most deserves the hose. */
+  var dept=wasFire&&!strike;
   var spare=!strike&&fr.length>=2&&fr[fr.length-2]!==10&&fr[fr.length-2]+n===10;
   if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;g.fx={type:'clamp',t:0};if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});setTimeout(sfx.chomp,280);setTimeout(sfx.laugh,700);if(g.streak>=2){setTimeout(sfx.chant,900);setTimeout(sfx.chant,1650);}}
   else if(spare){m='DRIZZLE!';sfx.spare();g.cheer=1.6;g.fx={type:'drizzle',t:0};g.crowd.forEach(function(c){if(c.phone&&Math.random()<0.6)c.flashT=0.3+Math.random()*0.5;});setTimeout(sfx.pour,150);setTimeout(sfx.laugh,900);}
@@ -3755,6 +3759,163 @@ let prevKey='';
    Two lines that disagreed, and the ball followed neither. The simulated path in showPath() is launched
    from the same numbers as throwBall(), so it is the only aim line now. */
 function preview(show,x,spin,power,aim){prevLine.visible=false;}
+/* ---------- THE LANES EITHER SIDE, AND THE CONCOURSE ----------
+   Both flanks were empty floor out to the skyline, which is most of why the place read as a diorama.
+   There is a working lane on each side now, a robot on each, and a concourse beyond the left one.
+
+   Where things sit is set by what the camera can actually see, not by what is tidy. On this lens the
+   frame is only 0.78 m wide either side of centre at the foul line, so a bowler stood next to the
+   player is off-screen no matter how close the lane is; at ten metres down it opens out to 7 m. So
+   the neighbouring lanes are narrower than the player's and tucked in at 2.75, and the robots release
+   from well down the approach where there is frame to see them in.
+
+   None of it is physical: no bodies, no contacts, nothing that can reach the player's lane, his pins
+   or his score. It all hangs off one visibility switch so a slow device can drop the lot. */
+const NL_HALF=0.78,NL_XS=[2.75,-2.75];
+const nlWood=new THREE.MeshStandardMaterial({map:woodT,roughness:0.34,metalness:0.05});
+const nlDark=new THREE.MeshStandardMaterial({color:0x14100f,roughness:0.7,metalness:0.2});
+const nlSteel=new THREE.MeshStandardMaterial({color:0x2b2320,roughness:0.45,metalness:0.55});
+const nlPinM=new THREE.MeshStandardMaterial({color:0xf2ece1,roughness:0.42,metalness:0.05,emissive:0x140f0c});
+const nlGlow=(c,o)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o==null?0.85:o,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+const arena=new THREE.Group();scene.add(arena);
+const aAdd=m=>{arena.add(m);return m;};
+const NL_T={swing:1.5,rel:1.95,land:3.6,rise:5.2,done:7.0};
+const nlLanes=[];
+
+function makeNeighbourLane(cx,tint,t0){
+  const g=new THREE.Group();arena.add(g);
+  const gAdd=m=>{g.add(m);return m;};
+  gAdd(new M(new THREE.BoxGeometry(NL_HALF*2,0.04,22.1),nlWood)).position.set(cx,-0.02,-8.15);
+  for(const sg of [-1,1]){
+    gAdd(new M(new THREE.BoxGeometry(0.20,0.03,22.1),nlDark)).position.set(cx+sg*(NL_HALF+0.10),-0.09,-8.15);
+    gAdd(new M(new THREE.BoxGeometry(0.05,0.26,22.1),nlDark)).position.set(cx+sg*(NL_HALF+0.22),-0.02,-8.15);
+  }
+  gAdd(new M(new THREE.BoxGeometry(NL_HALF*2+0.5,2.2,0.16),nlDark)).position.set(cx,0.9,-19.7);
+  gAdd(new M(new THREE.PlaneGeometry(NL_HALF*2+0.5,0.07),nlGlow(tint,0.75))).position.set(cx,1.95,-19.6);
+  /* a ball return between this lane and the player's */
+  const dx=cx+(cx>0?-1:1)*(NL_HALF+0.36);
+  gAdd(new M(new THREE.BoxGeometry(0.26,0.40,19.0),nlDark)).position.set(dx,0.06,-8.4);
+  gAdd(new M(new THREE.BoxGeometry(0.20,0.05,19.0),nlSteel)).position.set(dx,0.30,-8.4);
+
+  const pins=[];
+  for(let i=0;i<10;i++){
+    const l=LAYOUT[i],m=gAdd(new M(pinGeo,nlPinM));
+    const px=cx+l[0]*PDXm*0.64,pz=Z_HEAD-l[1]*PDZm*0.64;
+    m.position.set(px,0,pz);m.userData={hx:px,hz:pz};
+    pins.push({m,down:0,ax:0,az:0});
+  }
+  const ball=gAdd(new M(ballGeo,new THREE.MeshStandardMaterial({color:tint,roughness:0.18,metalness:0.5,emissive:tint,emissiveIntensity:0.12})));
+  ball.visible=false;ball.scale.setScalar(0.85);
+
+  /* the robot: treads rather than legs, so it glides and never has to walk convincingly */
+  const bot=new THREE.Group();g.add(bot);
+  const body=new M(new THREE.BoxGeometry(0.30,0.42,0.24),nlSteel);body.position.y=0.80;bot.add(body);
+  const head=new M(new THREE.BoxGeometry(0.20,0.16,0.18),nlSteel);head.position.y=1.11;bot.add(head);
+  const visor=new M(new THREE.PlaneGeometry(0.15,0.06),nlGlow(tint,0.95));visor.position.set(0,1.12,-0.096);bot.add(visor);
+  const base=new M(new THREE.BoxGeometry(0.36,0.18,0.30),nlDark);base.position.y=0.46;bot.add(base);
+  for(const sg of [-1,1]){const tr=new M(new THREE.CylinderGeometry(0.13,0.13,0.08,10),nlDark);
+    tr.rotation.z=Math.PI/2;tr.position.set(sg*0.17,0.26,0);bot.add(tr);}
+  const shoulder=new THREE.Group();shoulder.position.set(cx>0?0.17:-0.17,0.95,0);bot.add(shoulder);
+  const arm=new M(new THREE.BoxGeometry(0.08,0.38,0.08),nlSteel);arm.position.y=-0.19;shoulder.add(arm);
+  const held=new M(ballGeo,new THREE.MeshStandardMaterial({color:tint,roughness:0.2,metalness:0.5}));
+  held.position.y=-0.44;held.scale.setScalar(0.85);shoulder.add(held);
+  bot.position.set(cx,0,-1.2);
+
+  const L={cx,pins,ball,bot,shoulder,held,visor,t:t0,hit:-1};
+  nlLanes.push(L);return L;
+}
+makeNeighbourLane(NL_XS[0],0x29d8c6,0.0);
+makeNeighbourLane(NL_XS[1],0xff7a3c,3.4);
+
+/* the concourse, out past the left-hand lane where there is frame for it by mid-lane */
+const nlSitters=[],nlScreens=[];
+{
+  const CX=-5.9;
+  aAdd(new M(new THREE.BoxGeometry(3.0,0.06,16.0),nlDark)).position.set(CX,-0.10,-7.0);
+  aAdd(new M(new THREE.BoxGeometry(2.2,0.12,0.7),nlSteel)).position.set(CX,0.72,-4.0);
+  for(let i=0;i<4;i++)aAdd(new M(new THREE.CylinderGeometry(0.05,0.05,0.72,8),nlDark))
+    .position.set(CX+(i%2?0.95:-0.95),0.36,-4.0+(i<2?0.26:-0.26));
+  aAdd(new M(new THREE.BoxGeometry(0.8,0.40,1.4),nlSteel)).position.set(CX+1.2,0.20,-8.0);
+  for(let i=0;i<4;i++){
+    const b=aAdd(new M(ballGeo,new THREE.MeshStandardMaterial({color:[0xc0392b,0x2980b9,0x8e44ad,0xf2a81d][i],roughness:0.2,metalness:0.35})));
+    b.position.set(CX+1.2,0.50,-7.5-i*0.30);b.scale.setScalar(0.9);
+  }
+  for(let i=0;i<3;i++){
+    const sx=CX-0.9+i*0.9;
+    aAdd(new M(new THREE.CylinderGeometry(0.16,0.16,0.06,10),nlSteel)).position.set(sx,0.76,-3.1);
+    aAdd(new M(new THREE.CylinderGeometry(0.045,0.045,0.76,8),nlDark)).position.set(sx,0.38,-3.1);
+    const body=aAdd(new M(new THREE.CapsuleGeometry(0.15,0.34,4,8),new THREE.MeshStandardMaterial({color:[0x4a3550,0x2f4a4a,0x50432a][i],roughness:0.85,emissive:0x0a0a0c})));
+    body.position.set(sx,1.12,-3.1);
+    const head=aAdd(new M(new THREE.SphereGeometry(0.105,10,8),new THREE.MeshStandardMaterial({color:0x5a3b2c,roughness:0.8})));
+    head.position.set(sx,1.43,-3.1);
+    nlSitters.push({b:body,h:head,ph:Math.random()*6.28});
+  }
+  for(let i=0;i<3;i++){
+    aAdd(new M(new THREE.BoxGeometry(0.58,1.5,0.5),nlDark)).position.set(CX-1.1,0.75,-9.6-i*1.0);
+    const scr=aAdd(new M(new THREE.PlaneGeometry(0.42,0.34),nlGlow([0x39d0ff,0xff4fd8,0x8cff45][i],0.9)));
+    scr.position.set(CX-0.8,1.10,-9.6-i*1.0);scr.rotation.y=Math.PI/2;
+    nlScreens.push(scr);
+  }
+  const sign=aAdd(new M(new THREE.PlaneGeometry(2.1,0.40),nlGlow(0xf2a81d,0.9)));sign.position.set(CX,2.25,-5.0);
+  nlScreens.push(sign);
+}
+
+/* One pass is a throw: roll up, swing, release, the ball runs the boards, the pins go over or they do
+   not, everything resets. Outcomes are random and he misses often -- a machine that struck every time
+   would be wallpaper. */
+function nlOutcome(){const r=Math.random();
+  if(r<0.30)return 10;
+  if(r<0.54)return 7+Math.floor(Math.random()*3);
+  if(r<0.86)return 3+Math.floor(Math.random()*4);
+  return Math.floor(Math.random()*3);}
+function nlResetLane(L){
+  for(const p of L.pins){p.down=0;p.ax=0;p.az=0;
+    p.m.position.set(p.m.userData.hx,0,p.m.userData.hz);p.m.rotation.set(0,0,0);}
+  L.ball.visible=false;L.hit=-1;}
+function nlStep(dt,nw){
+  if(!arena.visible)return;
+  for(const L of nlLanes){
+    L.t+=dt;if(L.t>NL_T.done){L.t=0;nlResetLane(L);}
+    const t=L.t;
+    const inZ=Math.min(1,t/NL_T.swing),outZ=Math.max(0,Math.min(1,(t-NL_T.land)/1.5));
+    L.bot.position.z=-1.2-1.15*(inZ*inZ*(3-2*inZ))+1.15*(outZ*outZ*(3-2*outZ));
+    let sw;
+    if(t<NL_T.swing)sw=-1.6*Math.sin(Math.min(1,t/NL_T.swing)*Math.PI*0.5);
+    else if(t<NL_T.rel)sw=-1.6+2.0*((t-NL_T.swing)/(NL_T.rel-NL_T.swing));
+    else sw=Math.max(0,0.4-(t-NL_T.rel)*0.5);
+    L.shoulder.rotation.x=sw;
+    L.held.visible=t<NL_T.rel;
+    L.visor.material.opacity=0.55+0.45*Math.abs(Math.sin(nw*2.2+L.cx));
+    if(t>=NL_T.rel&&t<NL_T.land+0.8){
+      const u=Math.min(1,(t-NL_T.rel)/(NL_T.land-NL_T.rel));
+      L.ball.visible=true;
+      L.ball.position.set(L.cx+Math.sin(u*2.2)*0.12,BR*0.85,-2.3-u*13.7);
+      L.ball.rotation.x-=dt*11;
+    }else if(t>=NL_T.land+0.8)L.ball.visible=false;
+    if(L.hit<0&&t>=NL_T.land){
+      const n=nlOutcome();L.hit=n;
+      const order=[0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-0.5);
+      for(let i=0;i<n;i++){const p=L.pins[order[i]];
+        p.down=0.001;p.ax=(Math.random()-0.5)*2.4;p.az=-0.8-Math.random()*1.6;}
+    }
+    const rise=t>NL_T.rise?Math.min(1,(t-NL_T.rise)/0.9):0,k=1-rise;
+    for(const p of L.pins){
+      if(p.down<=0)continue;
+      if(rise<=0)p.down=Math.min(1,p.down+dt*3.4);
+      const e=p.down*p.down*k;
+      p.m.rotation.x=p.ax*e;p.m.rotation.z=p.az*e;
+      p.m.position.y=-0.02*e;
+      p.m.position.x=p.m.userData.hx+p.az*0.09*e;
+      p.m.position.z=p.m.userData.hz+p.ax*0.09*e;
+    }
+  }
+  for(const s of nlSitters){const a=Math.sin(nw*0.9+s.ph);
+    s.b.rotation.z=a*0.045;s.h.position.y=1.43+Math.sin(nw*1.7+s.ph)*0.012;s.h.rotation.y=a*0.35;}
+  for(let i=0;i<nlScreens.length;i++)
+    nlScreens[i].material.opacity=0.5+0.5*Math.abs(Math.sin(nw*(1.3+i*0.5)+i));
+}
+for(const L of nlLanes)nlResetLane(L);
+
 /* ---- camera + render ---- */
 const camP=new THREE.Vector3(0,1.32,3.5),camL=new THREE.Vector3(0,0.15,-10);
 let lastR=0;
@@ -4603,6 +4764,7 @@ function rplFrame(dt,nw){
 }
 
 function render(gs){
+  {const _nt=performance.now()/1000;nlStep(Math.min(0.05,lastR?_nt-lastR:0.016),_nt);}   /* the place next door keeps working whatever he is doing */
   showPath(gs.x,gs.spin||0,gs.power,gs.phase==='angle'||gs.phase==='spin'||gs.phase==='power',gs.aim||0);
   const swayN=performance.now()/1000;
   const swayX=Math.sin(swayN*0.52)*0.05,swayY=Math.sin(swayN*0.83)*0.022;
@@ -4713,7 +4875,7 @@ window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__
   if(real&&real.bones.anL&&real.bones.anR){const v=new THREE.Vector3();
     real.bones.anL.getWorldPosition(v);o.aL=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
     real.bones.anR.getWorldPosition(v);o.aR=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
-  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>({x:L.cx,t:+L.t.toFixed(2),hit:L.hit,botZ:+L.bot.position.z.toFixed(2),ball:L.ball.visible,down:L.pins.filter(p=>p.down>0.5).length}))};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
