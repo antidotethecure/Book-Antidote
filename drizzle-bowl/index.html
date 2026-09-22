@@ -548,8 +548,40 @@ function padRumble(strong,weak,ms){try{var gps=navigator.getGamepads?navigator.g
 /* ---------- sfx ---------- */
 var AC=null;
 function ac(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();setTimeout(preloadClips,0);}if(AC.state==='suspended')AC.resume();return AC;}catch(e){return null;}}
-function tone(f,d,type,g,slide){var a=ac();if(!a)return;try{var o=a.createOscillator(),v=a.createGain();o.type=type||'square';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),a.currentTime+d);v.gain.value=g||0.07;v.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.connect(v);v.connect(a.destination);o.start();o.stop(a.currentTime+d);}catch(e){}}
-function noise(d,g,fq){var a=ac();if(!a)return;try{var b=a.createBuffer(1,a.sampleRate*d,a.sampleRate),x=b.getChannelData(0);for(var i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*(1-i/x.length);var s=a.createBufferSource(),v=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=fq||1200;s.buffer=b;v.gain.value=g;s.connect(f);f.connect(v);v.connect(a.destination);s.start();}catch(e){}}
+/* Two buses. Everything the alley makes goes through SFXB, which gets pulled down when the call
+   lands; the "CLAMP!" itself goes through SFXDRY, which does not. Before this they were all the same
+   level into the same output, and the call arrived 120 ms in, straight on top of the peak of two
+   crowd swells -- turning it up alone would just have made the whole pile louder. */
+var SFXB=null,SFXDRY=null,_duckMT=0,_duckRan=0;
+function sfxBus(a){
+  if(!SFXB||SFXB.context!==a){
+    SFXDRY=a.createGain();SFXDRY.gain.value=1;SFXDRY.connect(a.destination);
+    SFXB=a.createGain();SFXB.gain.value=1;SFXB.connect(a.destination);
+  }
+  return SFXB;
+}
+function sfxDry(a){sfxBus(a);return SFXDRY;}
+/* hold the room down for a beat, then let it back up */
+function duckFor(ms,amt){
+  var a=ac();if(!a)return;sfxBus(a);_duckRan++;
+  var t=a.currentTime,lo=(amt==null?0.30:amt),hold=t+ms/1000;
+  try{
+    SFXB.gain.cancelScheduledValues(t);
+    SFXB.gain.setValueAtTime(SFXB.gain.value,t);
+    SFXB.gain.linearRampToValueAtTime(lo,t+0.045);
+    SFXB.gain.setValueAtTime(lo,hold);
+    SFXB.gain.linearRampToValueAtTime(1,hold+0.6);
+  }catch(e){}
+  try{                                   /* the music is a plain audio element, so it ducks by hand */
+    if(typeof music!=='undefined'&&music&&music.el){
+      music.el.volume=MUSIC_VOLUME*0.30;
+      clearTimeout(_duckMT);
+      _duckMT=setTimeout(function(){try{music.el.volume=MUSIC_VOLUME;}catch(e){}},ms+600);
+    }
+  }catch(e){}
+}
+function tone(f,d,type,g,slide){var a=ac();if(!a)return;try{var o=a.createOscillator(),v=a.createGain();o.type=type||'square';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),a.currentTime+d);v.gain.value=g||0.07;v.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.connect(v);v.connect(sfxBus(a));o.start();o.stop(a.currentTime+d);}catch(e){}}
+function noise(d,g,fq){var a=ac();if(!a)return;try{var b=a.createBuffer(1,a.sampleRate*d,a.sampleRate),x=b.getChannelData(0);for(var i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*(1-i/x.length);var s=a.createBufferSource(),v=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=fq||1200;s.buffer=b;v.gain.value=g;s.connect(f);f.connect(v);v.connect(sfxBus(a));s.start();}catch(e){}}
 function rebound(bull){ /* the kickback plate rung like a gong, then the ball back on the boards */
   tone(540,0.15,'square',0.055,-190);tone(810,0.12,'triangle',0.04,-280);noise(0.09,0.07,2900);
   setTimeout(function(){tone(340,0.24,'sawtooth',0.045,-130);noise(0.07,0.04,1400);},70);
@@ -584,8 +616,8 @@ function loadClip(k){var a=ac();if(!a||BUF[k]||BUF_LOADING[k]||!SND_B64[k])retur
   try{var bin=atob(SND_B64[k]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
     a.decodeAudioData(arr.buffer,function(b){BUF[k]=b;},function(){BUF_LOADING[k]=false;});}catch(e){BUF_LOADING[k]=false;}}
 function preloadClips(){for(var k in SND_B64)loadClip(k);loadCrash();}
-function playClip(k,vol,rate,off,dur){var a=ac();if(!a)return null;var b=BUF[k];if(!b){loadClip(k);return null;}
-  try{var s=a.createBufferSource(),v=a.createGain();s.buffer=b;s.playbackRate.value=rate||1;v.gain.value=vol==null?1:vol;s.connect(v);v.connect(a.destination);
+function playClip(k,vol,rate,off,dur,dry){var a=ac();if(!a)return null;var b=BUF[k];if(!b){loadClip(k);return null;}
+  try{var s=a.createBufferSource(),v=a.createGain();s.buffer=b;s.playbackRate.value=rate||1;v.gain.value=vol==null?1:vol;s.connect(v);v.connect(dry?sfxDry(a):sfxBus(a));
     if(off!=null)s.start(0,off,dur);else s.start();return {s:s,g:v};}catch(e){return null;}}
 var KNOCK_N=6,KNOCK_LEN=0.34; /* six real single-pin knocks laid end to end in one clip */
 function knock(vol,rate){return playClip('knocks',vol,rate,Math.floor(Math.random()*KNOCK_N)*KNOCK_LEN,KNOCK_LEN-0.02);}
@@ -595,9 +627,9 @@ function loadCrash(){var a=ac();if(!a||crashBuf||crashLoading)return;crashLoadin
     a.decodeAudioData(arr.buffer,function(b){crashBuf=b;},function(){crashBuf=null;});}catch(e){}}
 function playCrash(vol,rate){var a=ac();if(!a)return false;loadCrash();if(!crashBuf)return false;
   var t=performance.now();if(t-lastCrash<90)return true;lastCrash=t;padRumble(Math.min(1,(vol||0.5)+0.2),0.5,260);
-  try{var s=a.createBufferSource(),v=a.createGain();s.buffer=crashBuf;s.playbackRate.value=rate||1;v.gain.value=vol||0.5;s.connect(v);v.connect(a.destination);s.start();return true;}catch(e){return false;}}
+  try{var s=a.createBufferSource(),v=a.createGain();s.buffer=crashBuf;s.playbackRate.value=rate||1;v.gain.value=vol||0.5;s.connect(v);v.connect(sfxBus(a));s.start();return true;}catch(e){return false;}}
 /* ---- pin impact synth: maple-pin body resonances under a sharp transient, sized by impact speed ---- */
-var hitComp=null;function hitBus(){var a=ac();if(!a)return null;if(!hitComp){hitComp=a.createDynamicsCompressor();hitComp.threshold.value=-14;hitComp.knee.value=12;hitComp.ratio.value=5;hitComp.attack.value=0.002;hitComp.release.value=0.12;hitComp.connect(a.destination);}return hitComp;}
+var hitComp=null;function hitBus(){var a=ac();if(!a)return null;if(!hitComp){hitComp=a.createDynamicsCompressor();hitComp.threshold.value=-14;hitComp.knee.value=12;hitComp.ratio.value=5;hitComp.attack.value=0.002;hitComp.release.value=0.12;hitComp.connect(sfxBus(a));}return hitComp;}
 var lastPinHit=0;
 function pinHit(iv,kind){ /* kind: 'ball' (ball into a pin) or 'pin' (pin into pin / deck) */
   var a=ac(),bus=hitBus();if(!a||!bus)return;var tnow=performance.now();if(tnow-lastPinHit<28)return;lastPinHit=tnow;
@@ -620,7 +652,7 @@ var rum=null;
 function rumble(level){var a=ac();if(!a)return;
   if(!rum){var b=BUF.roll,real=!!b;
     if(!b){var len=a.sampleRate*2;b=a.createBuffer(1,len,a.sampleRate);var d=b.getChannelData(0),lp=0;for(var i=0;i<len;i++){lp+=((Math.random()*2-1)-lp)*0.08;d[i]=lp*2.2;}}
-    var src=a.createBufferSource();src.buffer=b;src.loop=true;if(real){src.loopStart=0.25;src.loopEnd=Math.max(0.5,b.duration-0.25);}var f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=real?1600:420;var gn=a.createGain();gn.gain.value=0;src.connect(f);f.connect(gn);gn.connect(a.destination);src.start();rum={g:gn,f:f,s:src,real:real};}
+    var src=a.createBufferSource();src.buffer=b;src.loop=true;if(real){src.loopStart=0.25;src.loopEnd=Math.max(0.5,b.duration-0.25);}var f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=real?1600:420;var gn=a.createGain();gn.gain.value=0;src.connect(f);f.connect(gn);gn.connect(sfxBus(a));src.start();rum={g:gn,f:f,s:src,real:real};}
   var L=Math.max(0,Math.min(1,level||0)),t=a.currentTime;
   if(rum.real){rum.g.gain.setTargetAtTime(L*0.8,t,0.07);rum.f.frequency.setTargetAtTime(700+L*2200,t,0.1);rum.s.playbackRate.setTargetAtTime(0.86+L*0.28,t,0.12);}
   else{rum.g.gain.setTargetAtTime(L*0.09,t,0.08);rum.f.frequency.setTargetAtTime(300+L*260,t,0.1);}}
@@ -642,7 +674,7 @@ var sfx={
     var a=ac();if(!a)return;try{var o=a.createOscillator(),v=a.createGain(),f=a.createBiquadFilter(),t0=a.currentTime;o.type='sawtooth';f.type='lowpass';f.frequency.value=1800;
       o.frequency.setValueAtTime(620,t0);for(var i=0;i<7;i++){o.frequency.exponentialRampToValueAtTime(980,t0+i*0.9+0.45);o.frequency.exponentialRampToValueAtTime(620,t0+i*0.9+0.9);}
       v.gain.setValueAtTime(0.0001,t0);v.gain.exponentialRampToValueAtTime(0.055,t0+0.35);v.gain.setValueAtTime(0.055,t0+5.4);v.gain.exponentialRampToValueAtTime(0.0001,t0+6.8);
-      o.connect(f);f.connect(v);v.connect(a.destination);o.start(t0);o.stop(t0+6.9);}catch(e){}
+      o.connect(f);f.connect(v);v.connect(sfxBus(a));o.start(t0);o.stop(t0+6.9);}catch(e){}
     setTimeout(function(){tone(175,0.55,'sawtooth',0.10,-25);tone(233,0.55,'square',0.05,-25);},700);padRumble(0.5,0.3,400);},
   spray:function(){noise(3.4,0.24,2600);},
   fireStart:function(lvl){ /* the ball is on fire: a roaring, crackling loop that follows it down the lane */
@@ -651,15 +683,17 @@ var sfx={
       var src=a.createBufferSource();src.buffer=b;src.loop=true;var f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=lvl>=2?1100:650;f.Q.value=0.5;
       var v=a.createGain();v.gain.setValueAtTime(0.0001,a.currentTime);v.gain.exponentialRampToValueAtTime(lvl>=2?0.55:0.38,a.currentTime+0.4);
       var lfo=a.createOscillator(),lg=a.createGain();lfo.type='sine';lfo.frequency.value=6.5;lg.gain.value=0.10;lfo.connect(lg);lg.connect(v.gain);lfo.start();
-      src.connect(f);f.connect(v);v.connect(a.destination);src.start();
+      src.connect(f);f.connect(v);v.connect(sfxBus(a));src.start();
       sfx._fire={s:src,v:v,lfo:lfo,pop:setInterval(function(){if(Math.random()<(lvl>=2?0.8:0.55))noise(0.025+Math.random()*0.04,0.22,2500+Math.random()*3500);},85)};}catch(e){}},
   fireStop:function(){var f=sfx._fire;if(!f)return;sfx._fire=null;clearInterval(f.pop);try{var a=ac();f.v.gain.cancelScheduledValues(a.currentTime);f.v.gain.setValueAtTime(Math.max(0.0001,f.v.gain.value),a.currentTime);f.v.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.6);setTimeout(function(){try{f.s.stop();f.lfo.stop();}catch(e){}},700);}catch(e){}},
   boom:function(){padRumble(1,1,750);noise(1.3,0.9,450);noise(0.35,0.6,140);tone(52,1.0,'sine',0.32,-28);tone(88,0.55,'sawtooth',0.12,-60);setTimeout(function(){noise(0.8,0.3,1800);},120);},
   steam:function(){noise(1.6,0.14,5200);},
   splash:function(){noise(0.5,0.4,900);noise(1.8,0.22,3200);tone(150,0.3,'sine',0.07,-90);padRumble(0.8,0.5,300);},
-  strike:function(){ /* you: "CLAMP!" then the kid: "Yeah! Antidote!" */
-    padRumble(1,1,520);
-    setTimeout(function(){if(!playClip('clamp',1.0)){try{var v=new Audio(VOICE_CLAMP);v.volume=1;var pp=v.play();if(pp&&pp.catch)pp.catch(function(){});}catch(e){}}},120);
+  strike:function(){ /* you: "CLAMP!" then the kid: "Yeah! Antidote!" */ padRumble(1,1,520);
+  /* Pull the room down first, then put the call through the dry bus on top of it. The crowd comes
+     back up 0.6 s later, so it still sounds like a full house -- it just stops shouting over you. */
+  duckFor(760,0.26);
+  setTimeout(function(){if(!playClip('clamp',1.45,1,null,null,true)){try{var v=new Audio(VOICE_CLAMP);v.volume=1;var pp=v.play();if(pp&&pp.catch)pp.catch(function(){});}catch(e){}}},110);
     if(Math.random()<0.6){var ky=Math.random()<0.5?'kidyeah':'kidclamp';setTimeout(function(){playClip(ky,0.85,0.98+Math.random()*0.05);},1050);}},
   spare:function(){ /* you: "ANTIDOTE DRIZZLE!" (jingle only if the clip is not decoded yet) */
     padRumble(0.7,0.9,380);
@@ -673,22 +707,22 @@ var sfx={
   chant:function(){[0,180,360].forEach(function(d,i){setTimeout(function(){noise(0.12,0.07,520);tone(i===2?150:196,0.17,'sawtooth',0.07,-15);tone(i===2?225:294,0.17,'sawtooth',0.05,-15);},d);});},
   roar:function(){ /* a full house going up: a long swell with voices riding over it, for a strike */
     var a=ac();if(!a)return;
-    playClip('kids',0.95,0.93+Math.random()*0.12);
+    playClip('kids',0.68,0.93+Math.random()*0.12);
     try{
       var d=3.6,b=a.createBuffer(1,Math.floor(a.sampleRate*d),a.sampleRate),x=b.getChannelData(0);
       for(var i=0;i<x.length;i++){var t=i/x.length,env=t<0.12?t/0.12:Math.pow(1-(t-0.12)/0.88,1.05);x[i]=(Math.random()*2-1)*env;}
       var sN=a.createBufferSource(),v=a.createGain(),f=a.createBiquadFilter();
       f.type='bandpass';f.frequency.value=760;f.Q.value=0.4;
-      v.gain.value=0.95;sN.buffer=b;sN.connect(f);f.connect(v);v.connect(a.destination);sN.start();
+      v.gain.value=0.58;sN.buffer=b;sN.connect(f);f.connect(v);v.connect(sfxBus(a));sN.start();
       for(var k=0;k<16;k++)(function(k){setTimeout(function(){var f0=290+Math.random()*340;tone(f0,0.55+Math.random()*0.55,'triangle',0.07,f0*0.72);},50+k*105+Math.floor(Math.random()*150));})(k);
       for(var w=0;w<3;w++)(function(w){setTimeout(function(){noise(0.5,0.16,1500);},260+w*520);})(w);
     }catch(e){}},
-  crowd:function(){var a=ac();if(!a)return;if(Math.random()<0.7)playClip('kids',0.7,0.96+Math.random()*0.08);try{
+  crowd:function(){var a=ac();if(!a)return;if(Math.random()<0.7)playClip('kids',0.46,0.96+Math.random()*0.08);try{
     var d=2.2,b=a.createBuffer(1,Math.floor(a.sampleRate*d),a.sampleRate),x=b.getChannelData(0);
     for(var i=0;i<x.length;i++){var t=i/x.length,env=t<0.07?t/0.07:Math.pow(1-(t-0.07)/0.93,1.35);x[i]=(Math.random()*2-1)*env;}
     var s=a.createBufferSource(),v=a.createGain(),f=a.createBiquadFilter();
     f.type='bandpass';f.frequency.value=950;f.Q.value=0.55;
-    v.gain.value=0.5;s.buffer=b;s.connect(f);f.connect(v);v.connect(a.destination);s.start();
+    v.gain.value=0.32;s.buffer=b;s.connect(f);f.connect(v);v.connect(sfxBus(a));s.start();
     for(var k=0;k<6;k++)(function(k){setTimeout(function(){var f0=330+Math.random()*220;tone(f0,0.5+Math.random()*0.4,'triangle',0.045,f0*0.8);},80+k*140+Math.floor(Math.random()*120));})(k);
   }catch(e){}},
   boo:function(){[150,138,126].forEach(function(f,i){setTimeout(function(){tone(f,0.55,'sawtooth',0.06,-25);tone(f*1.04,0.55,'sawtooth',0.045,-25);noise(0.5,0.05,420);},i*170);});}
@@ -1466,7 +1500,7 @@ function finishRoll(){
      which is the throw that most deserves the hose. */
   var dept=wasFire&&!strike;
   var spare=!strike&&fr.length>=2&&fr[fr.length-2]!==10&&fr[fr.length-2]+n===10;
-  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;g.fx={type:'clamp',t:0};if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});setTimeout(sfx.chomp,280);setTimeout(sfx.laugh,700);if(g.streak>=2){setTimeout(sfx.chant,900);setTimeout(sfx.chant,1650);}}
+  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;g.fx={type:'clamp',t:0};if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});setTimeout(sfx.chomp,980);setTimeout(sfx.laugh,1320);if(g.streak>=2){setTimeout(sfx.chant,1500);setTimeout(sfx.chant,2150);}}
   else if(spare){m='DRIZZLE!';sfx.spare();g.cheer=1.6;g.fx={type:'drizzle',t:0};g.crowd.forEach(function(c){if(c.phone&&Math.random()<0.6)c.flashT=0.3+Math.random()*0.5;});setTimeout(sfx.pour,150);setTimeout(sfx.laugh,900);}
   else if(dept){m='\ud83d\ude92 FIRE DEPARTMENT!';g.face='mad';g.faceT=7;sfx.siren();setTimeout(sfx.groan,900);setTimeout(sfx.spray,1750);setTimeout(sfx.steam,2400);setTimeout(sfx.spray,4400);setTimeout(sfx.laugh,5600);setTimeout(sfx.giggle,6100);
     if(USE3D&&B3D.fireDept)B3D.fireDept();else setTimeout(soakLens,5300);}
@@ -2271,7 +2305,7 @@ window.__showHalf=showHalftime;
   },110);
 })();
 setTimeout(function(){try{loadBoard();}catch(e){}},1400);   /* the ticker wants the week's board early, not just at the end of a game */
-window.ADB={get g(){return g;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
+window.ADB={get g(){return g;},__bus:function(){var o={};try{o.duck=SFXB?+SFXB.gain.value.toFixed(3):null;o.now=AC?+AC.currentTime.toFixed(3):null;o.ducked=(typeof _duckRan!=='undefined')?_duckRan:null;o.dry=SFXDRY?+SFXDRY.gain.value.toFixed(3):null;o.ctx=AC?AC.state:null;o.music=(typeof music!=='undefined'&&music&&music.el)?+music.el.volume.toFixed(3):null;}catch(e){o.err=String(e);}return o;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
   throw3d:function(x,spin,power,aim){g.x=x;g.spin=spin;g.power=power;g.aim=aim||0;g.phase='throw';g.throwT=1.01;}};
 window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,woodCrack:woodCrack,woodSnap:woodSnap,rebound:rebound,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
   hover:HOVER_REVIEWS,hoverBase:HOVER_BASE,shuffle:shuffleArr};  /* the review catalogue, so the big screen can run the previews */
@@ -4316,6 +4350,91 @@ function findBone(root,pats){const all=[];root.traverse(o=>{if(o.isBone)all.push
   for(const p of pats){for(const [o,n] of all)if(n===p)return o;}
   for(const p of pats){for(const [o,n] of all)if(n.endsWith(p))return o;}
   return null;}
+/* ---------- CLOTH ON THE SHIRT ----------
+   The scan is one mesh with one material: 47,638 vertices with his body and his clothes fused into
+   the same surface. There is no jersey to simulate, so this does what sports games do instead --
+   work out how much of each vertex is shirt, then move those vertices in the vertex shader.
+
+   "How much is shirt" is baked once at load from the skin weights: a vertex owned by the torso bones
+   is cloth, one owned by the head or the legs is not, and the weight is strongest at the hem and
+   fades out at the collar and the shoulders, which is where a tee is actually loose.
+
+   Two things move it. The lag is the shirt failing to keep up when he changes direction -- it is his
+   own acceleration, one frame behind, pushed the other way. The ripple is a wave travelling across
+   the fabric, and it tilts the normals as well as the surface, so the folds catch the light instead
+   of the silhouette just wobbling. */
+function makeCloth(root,bones){
+  let mesh=null;
+  root.traverse(o=>{if(!mesh&&o.isSkinnedMesh&&o.skeleton)mesh=o;});
+  if(!mesh)return null;
+  const geo=mesh.geometry,skel=mesh.skeleton;
+  const si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,pos=geo.attributes.position;
+  if(!si||!sw||!pos)return null;
+  const idxOf=n=>bones[n]?skel.bones.indexOf(bones[n]):-1;
+  const TOR={},ARM={};
+  for(const n of ['hips','spine','spine1','spine2'])  {const i=idxOf(n);if(i>=0)TOR[i]=1;}
+  for(const n of ['shL','shR'])                        {const i=idxOf(n);if(i>=0)ARM[i]=0.45;}
+  if(!Object.keys(TOR).length)return null;
+  const N=pos.count,raw=new Float32Array(N);
+  let loY=Infinity,hiY=-Infinity;
+  for(let v=0;v<N;v++){
+    let w=0;
+    for(let k=0;k<4;k++){
+      const b=si.getComponent(v,k),ww=sw.getComponent(v,k);
+      if(ww<=0)continue;
+      if(TOR[b])w+=ww;else if(ARM[b])w+=ww*ARM[b];
+    }
+    raw[v]=w;
+    if(w>0.55){const y=pos.getY(v);if(y<loY)loY=y;if(y>hiY)hiY=y;}
+  }
+  if(!isFinite(loY)||hiY<=loY)return null;
+  /* loose at the hem, tight at the collar, and nothing at all on the very bottom edge where the
+     shirt meets the jeans -- a hem that flaps free of the body reads as a bug, not as cloth */
+  const span=hiY-loY,out=new Float32Array(N);
+  for(let v=0;v<N;v++){
+    if(raw[v]<=0.02){out[v]=0;continue;}
+    const t=(pos.getY(v)-loY)/span;                 /* 0 at the waist, 1 at the collar */
+    const drape=Math.max(0,1-Math.pow(Math.max(0,t),1.35));
+    const seam=Math.min(1,Math.max(0,(t-0.02)/0.10));
+    out[v]=Math.min(1,raw[v])*drape*seam;
+  }
+  geo.setAttribute('aCloth',new THREE.BufferAttribute(out,1));
+  const U={uClothT:{value:0},uClothLag:{value:new THREE.Vector3()},uClothFlap:{value:0},uClothAmt:{value:0.016}};
+  const mats=Array.isArray(mesh.material)?mesh.material:[mesh.material];
+  for(const m of mats){
+    if(!m)continue;
+    m.onBeforeCompile=sh=>{
+      sh.uniforms.uClothT=U.uClothT;sh.uniforms.uClothLag=U.uClothLag;
+      sh.uniforms.uClothFlap=U.uClothFlap;sh.uniforms.uClothAmt=U.uClothAmt;
+      /* a silent replace that matches nothing leaves the shirt stone still and looks like success,
+         so record whether each hook was actually there */
+      U.hooks={common:sh.vertexShader.indexOf('#include <common>')>=0,
+               skin:sh.vertexShader.indexOf('#include <skinning_vertex>')>=0,
+               norm:sh.vertexShader.indexOf('#include <skinnormal_vertex>')>=0};
+      sh.vertexShader=sh.vertexShader
+        .replace('#include <common>',`#include <common>
+attribute float aCloth;
+uniform float uClothT,uClothFlap,uClothAmt;
+uniform vec3 uClothLag;
+float clothPhase(vec3 p){return p.y*13.0+p.x*6.0+p.z*3.5+uClothT*7.0;}`)
+        .replace('#include <skinnormal_vertex>',`#include <skinnormal_vertex>
+  if(aCloth>0.002){
+    float ph=clothPhase(position);
+    objectNormal=normalize(objectNormal+vec3(cos(ph),0.0,sin(ph*0.7))*(uClothFlap*aCloth*0.6));
+  }`)
+        .replace('#include <skinning_vertex>',`#include <skinning_vertex>
+  if(aCloth>0.002){
+    float ph=clothPhase(position);
+    transformed+=uClothLag*aCloth+normalize(objectNormal)*(sin(ph)*uClothFlap*aCloth*uClothAmt);
+  }`);
+      U.injected=sh.vertexShader.indexOf('aCloth>0.002')>=0&&sh.vertexShader.indexOf('clothPhase')>=0;
+    };
+    m.customProgramCacheKey=()=>'adb-cloth';
+    m.needsUpdate=true;
+  }
+  let n=0;for(let v=0;v<N;v++)if(out[v]>0.05)n++;
+  return {U,mesh,verts:n,total:N,loY,hiY};
+}
 function installReal(root,keepProc){
   const bones={};for(const k in BONE_NAMES)bones[k]=findBone(root,BONE_NAMES[k]);
   const need=['spine','head','shL','elL','wrL','shR','elR','wrR','hpL','knL','hpR','knR'].filter(k=>!bones[k]);
@@ -4345,7 +4464,8 @@ function installReal(root,keepProc){
      still skated. Measure the scan: segment lengths and how high the ankle joint rides above the
      sole, in the bowler's units, and solve against those instead. */
   const legLen={};
-  real={root,bones,restQ,restD,mats,ball:hb,sc,ws,legLen,ankY:null,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
+  const cloth=makeCloth(root,bones);
+  real={root,bones,restQ,restD,mats,ball:hb,sc,ws,legLen,ankY:null,cloth,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
   bowler.add(root);bowler.children.forEach(c=>{if(c!==root&&c!==bowler.userData.shadow)c.visible=!!keepProc;});
   return real;
 }
@@ -4668,6 +4788,38 @@ function poseBowler(gs,dt,nw){
   U.shadow.scale.setScalar(1-0.35*Math.max(0,bowler.position.y));
   if(real)driveReal();
 }
+/* His own motion drives the shirt: the lag is last frame's acceleration pushed the other way, and
+   the ripple rises with how fast he is moving and with the swing itself. */
+const _clv=new THREE.Vector3(),_cla=new THREE.Vector3(),_clp=new THREE.Vector3(),_clq=new THREE.Quaternion();
+let _clHave=false,_clT=0;
+function stepCloth(dt,gs){
+  if(!real||!real.cloth||dt<=0)return;
+  const U=real.cloth.U;
+  _clT+=dt;U.uClothT.value=_clT;
+  const p=bowler.position;
+  if(!_clHave){_clp.copy(p);_clHave=true;}
+  _cla.set((p.x-_clp.x)/dt,(p.y-_clp.y)/dt,(p.z-_clp.z)/dt);    /* velocity this frame */
+  _clp.copy(p);
+  const k=1-Math.exp(-dt*18);
+  _clv.lerp(_cla,k);                                            /* smoothed, so one long frame cannot snap it */
+  /* the shirt lags the body: push it against the direction of travel, and cap it so a teleporting
+     aim flick cannot tear it off him */
+  /* A soft knee rather than a hard cap. His aim spring can move him at 22 m/s, so a linear lag with a
+     ceiling sits pinned at the ceiling through every move, and a shirt that is always at full stretch
+     reads as yanked rather than draped. This is proportional when he is ambling and eases into the
+     limit when he is not. */
+  const mx=0.038,sp0=_clv.length();
+  _cla.copy(_clv);
+  if(sp0>1e-5)_cla.setLength(-mx*(1-Math.exp(-sp0/1.8)));else _cla.set(0,0,0);
+  real.root.getWorldQuaternion(_clq).invert();
+  _cla.applyQuaternion(_clq);                                   /* into the scan's own frame */
+  U.uClothLag.value.lerp(_cla,1-Math.exp(-dt*12));
+  const ph=gs&&gs.phase,sp=Math.min(1,_clv.length()/2.4);
+  let flap=0.25+0.75*sp;
+  if(ph==='throw'||ph==='roll')flap=Math.max(flap,0.85);
+  if(gs&&gs.cheer>0)flap=Math.max(flap,1.0);
+  U.uClothFlap.value+=(flap-U.uClothFlap.value)*(1-Math.exp(-dt*9));
+}
 function renderBowler(gs,dt,nw){
   updateSoak(dt);
   const ph=gs.phase;
@@ -4679,7 +4831,8 @@ function renderBowler(gs,dt,nw){
   const BXMAX=(HALF-0.28)/BSCALE;   /* his shoulders stop at the rail: he can stand on the edge of the lane, never over it */
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=Math.max(-BXMAX,Math.min(BXMAX,px/(bPxPerM*BSCALE)));
   if(!bVis){bowler.position.x=tx;bPrevTx=tx;_fpx=null;_fpz=null;feetHome(tx,bowler.position.z);if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
-  const dxw=(tx-bowler.position.x)*(1-Math.exp(-dt*34));bowler.position.x+=dxw;   /* the spring upstream already shaped the move; this only takes the last edge off */
+  const dxw=(tx-bowler.position.x)*(1-Math.exp(-dt*34));bowler.position.x+=dxw;
+  stepCloth(dt,gs);   /* the spring upstream already shaped the move; this only takes the last edge off */
   /* Speed and facing come off the mark he is walking to, not off his own trailing position: an un-lagged
      signal, so his legs start with his body instead of catching up to it. And walk.dir is a blend now --
      as a hard sign() it flipped on the last millimetre of a move and snapped his whole body 0.64 rad. */
@@ -4891,7 +5044,11 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},__reach:function(){const o={};const v=new THREE.Vector3(),h=new THREE.Vector3();
+window.B3D={bowlerPx:bowlerScreenX,ok:true,proj:projHud,unprojHome:unprojHome,__food:function(){return foodReady;},__puddles:function(){return puddles.length;},puddle:function(x,z,fi,big){spawnPuddle(x,z,fi||0,!!big);},__walk:function(){return [+walk.amt.toFixed(4),+walk.phase.toFixed(3),+bowler.position.x.toFixed(5),+walk.dir.toFixed(4)];},__bowlerX:function(){return bowler.position.x*BSCALE;},__clothSet:function(f,a2){if(!real||!real.cloth)return false;const U=real.cloth.U;if(f!=null)U.uClothFlap.value=f;if(a2!=null)U.uClothAmt.value=a2;return true;},__cloth:function(){if(!real||!real.cloth)return null;const c=real.cloth,U=c.U;return {verts:c.verts,total:c.total,hooks:U.hooks||null,injected:!!U.injected,hem:+c.loY.toFixed(3),collar:+c.hiY.toFixed(3),t:+U.uClothT.value.toFixed(2),flap:+U.uClothFlap.value.toFixed(3),lag:[+U.uClothLag.value.x.toFixed(4),+U.uClothLag.value.y.toFixed(4),+U.uClothLag.value.z.toFixed(4)]};},__realInfo:function(){if(!real)return null;const out={meshes:[],keys:Object.keys(real),mats:(real.mats&&real.mats.length)||0};
+  real.root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){const g=o.geometry;const ms=Array.isArray(o.material)?o.material:[o.material];
+    out.meshes.push({name:o.name||'(unnamed)',skinned:!!o.isSkinnedMesh,verts:g&&g.attributes.position?g.attributes.position.count:0,
+      groups:g&&g.groups?g.groups.length:0,mats:ms.map(m=>({name:m&&m.name||'(unnamed)',type:m&&m.type,hasMap:!!(m&&m.map)}))});}});
+  return out;},__reach:function(){const o={};const v=new THREE.Vector3(),h=new THREE.Vector3();
   const ah=(real&&real.ankY!=null)?real.ankY:0.07;
   for(const k of ['L','R']){const f=feet[k],gm=(real&&real.legLen&&real.legLen[k])||null;
     if(!gm||!real.bones['hp'+k]){o[k]=null;continue;}
