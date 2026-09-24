@@ -1719,10 +1719,85 @@ function drawTop(){
     ctx.restore();
   }
   if(g.msgT>0&&g.msg&&!(g.fx&&g.fx.type==='clamp'&&g.fx.t<0.45)){
-    var big=g.msg==='CLAMP!'||g.msg==='DRIZZLE!'||g.msg.indexOf('ON FIRE')===0||g.msg.indexOf('ULTIMATE')===0;
-    ctx.save();ctx.translate(W/2,(g.fx&&g.fx.type==='drizzle')?150:210);var pul=big?1+Math.sin(g.t*14)*0.06:1;ctx.scale(pul,pul);
-    ctx.font=(big?'bold 60px':'bold 20px')+' Impact,"Arial Black",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=big?9:5;ctx.strokeStyle='#0a0607';ctx.strokeText(g.msg,0,0);ctx.fillStyle=big?'#f2a81d':'#fbe9c4';ctx.fillText(g.msg,0,0);ctx.restore();
+    var fire=g.msg.indexOf('ON FIRE')===0||g.msg.indexOf('ULTIMATE')===0;
+    var ult=g.msg.indexOf('ULTIMATE')===0;
+    var big=fire||g.msg==='CLAMP!'||g.msg==='DRIZZLE!';
+    ctx.save();ctx.translate(W/2,(g.fx&&g.fx.type==='drizzle')?150:210);
+    var pul=big?1+Math.sin(g.t*14)*0.06:1,base=big?60:20;
+    ctx.font='bold '+base+'px Impact,"Arial Black",sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    /* measure first, then squeeze: the long streak lines are about twice the canvas wide at 60px */
+    var tw=ctx.measureText(g.msg).width||1,fit=Math.min(1,(W-34)/(tw*pul));
+    ctx.scale(pul*fit,pul*fit);
+    if(fire)drawFlameText(g.msg,base,ult,pul*fit);
+    else{ctx.lineWidth=big?9:5;ctx.strokeStyle='#0a0607';ctx.strokeText(g.msg,0,0);ctx.fillStyle=big?'#f2a81d':'#fbe9c4';ctx.fillText(g.msg,0,0);}
+    ctx.restore();
   }
+}
+/* ON FIRE / ULTIMATE FLAME, drawn as fire and squeezed to fit.
+   "ULTIMATE FLAME! 9 IN A ROW!" at 60px Impact is about twice the width of the canvas, so the ends
+   simply ran off both sides. Everything is measured and scaled down to the screen now, and the fire
+   messages are filled with a gradient that climbs the letters, with tongues coming off the top and a
+   hot lick drifting across, rather than being flat gold. */
+function gstop(gr,o,c){var v=o<0?0:(o>1?1:o);try{gr.addColorStop(v,c);}catch(e){}}
+function flameTongue(x,y,w,h,sw,col){
+  ctx.beginPath();ctx.moveTo(x-w,y);
+  ctx.quadraticCurveTo(x-w*0.78+sw*w*0.5,y-h*0.50,x+sw*w*0.85,y-h);
+  ctx.quadraticCurveTo(x+w*0.92+sw*w*0.3,y-h*0.44,x+w,y);
+  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+}
+/* base/scl: the long streak lines get squeezed to ~45%, so the flames are sized in
+   screen pixels rather than text pixels -- otherwise they shrink with the word and
+   read as a smudge instead of fire. */
+function drawFlameText(msg,base,ult,scl){
+  var t=g.t,inv=Math.min(2.4,1/(scl>0.05?scl:1));
+  var top=-base*0.40,bot=base*0.38,wid=ctx.measureText(msg).width;
+  var gr=ctx.createLinearGradient(0,bot,0,top-base*0.06);
+  if(ult){
+    gstop(gr,0,'#04102f');gstop(gr,0.26,'#12539f');gstop(gr,0.52,'#3aa0ff');
+    gstop(gr,0.76,'#a9dcff');gstop(gr,1,'#ffffff');
+  }else{
+    gstop(gr,0,'#3d0602');gstop(gr,0.26,'#b81f06');gstop(gr,0.52,'#ff6a10');
+    gstop(gr,0.78,'#ffc62c');gstop(gr,1,'#fff8d6');
+  }
+  /* embers hanging under the word */
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(var e=0;e<7;e++){
+    var ex=(-0.42+e/6*0.84)*wid,ey=bot+base*0.10*inv+Math.sin(t*2.2+e)*base*0.05*inv,
+        er=base*(0.035+0.02*Math.abs(Math.sin(t*3.7+e*2.1)))*inv;
+    ctx.beginPath();ctx.arc(ex,ey,er,0,6.2832);
+    ctx.fillStyle=ult?'rgba(90,170,255,0.34)':'rgba(255,140,30,0.36)';ctx.fill();
+  }
+  ctx.restore();
+  /* tongues licking off the tops of the letters */
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  var n=Math.max(9,Math.min(22,Math.round(wid/(base*0.5))));
+  for(var i=0;i<n;i++){
+    var fx=(-0.5+i/(n-1))*wid*0.97,
+        sw=Math.sin(t*6.1+i*1.7)*0.9,
+        fh=base*(0.52+0.48*Math.abs(Math.sin(t*5.3+i*0.9)))*inv,
+        fw=base*0.15*inv;
+    flameTongue(fx,top+base*0.10,fw,fh,sw,ult?'rgba(60,140,255,0.30)':'rgba(255,96,8,0.32)');
+    flameTongue(fx,top+base*0.10,fw*0.52,fh*0.60,sw*1.2,ult?'rgba(200,232,255,0.40)':'rgba(255,214,104,0.44)');
+    flameTongue(fx,top+base*0.10,fw*0.22,fh*0.30,sw*1.4,ult?'rgba(245,252,255,0.50)':'rgba(255,248,206,0.52)');
+  }
+  ctx.restore();
+  ctx.lineJoin='round';
+  ctx.lineWidth=base*0.17;ctx.strokeStyle='#120603';ctx.strokeText(msg,0,0);
+  ctx.save();
+  var flick=0.82+0.18*Math.sin(t*17.3)+0.08*Math.sin(t*29.7);
+  ctx.shadowColor=ult?'#4aa3ff':'#ff7a1a';ctx.shadowBlur=base*0.60*flick;
+  ctx.fillStyle=gr;ctx.fillText(msg,0,0);
+  ctx.shadowBlur=base*0.28*flick;ctx.fillText(msg,0,0);
+  ctx.restore();
+  /* a bright lick drifting across the word */
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  var p=((t*0.5)%1.6)-0.3,lg=ctx.createLinearGradient(-wid*0.5,0,wid*0.5,0);
+  gstop(lg,p-0.20,'rgba(255,255,255,0)');
+  gstop(lg,p,ult?'rgba(225,242,255,0.46)':'rgba(255,238,185,0.46)');
+  gstop(lg,p+0.20,'rgba(255,255,255,0)');
+  ctx.fillStyle=lg;ctx.fillText(msg,0,0);
+  ctx.restore();
 }
 function pinPath(w,h){
   var b=w*0.37;
@@ -2305,7 +2380,7 @@ window.__showHalf=showHalftime;
   },110);
 })();
 setTimeout(function(){try{loadBoard();}catch(e){}},1400);   /* the ticker wants the week's board early, not just at the end of a game */
-window.ADB={get g(){return g;},__bus:function(){var o={};try{o.duck=SFXB?+SFXB.gain.value.toFixed(3):null;o.now=AC?+AC.currentTime.toFixed(3):null;o.ducked=(typeof _duckRan!=='undefined')?_duckRan:null;o.dry=SFXDRY?+SFXDRY.gain.value.toFixed(3):null;o.ctx=AC?AC.state:null;o.music=(typeof music!=='undefined'&&music&&music.el)?+music.el.volume.toFixed(3):null;}catch(e){o.err=String(e);}return o;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
+window.ADB={get g(){return g;},__msgFit:function(m){ctx.save();ctx.font='bold 60px Impact,"Arial Black",sans-serif';var tw=ctx.measureText(m).width||1;ctx.restore();var pul=1.06,fit=Math.min(1,(W-34)/(tw*pul));return {msg:m,raw:+tw.toFixed(1),fit:+fit.toFixed(3),drawn:+(tw*pul*fit).toFixed(1),room:W-34,W:W};},__bus:function(){var o={};try{o.duck=SFXB?+SFXB.gain.value.toFixed(3):null;o.now=AC?+AC.currentTime.toFixed(3):null;o.ducked=(typeof _duckRan!=='undefined')?_duckRan:null;o.dry=SFXDRY?+SFXDRY.gain.value.toFixed(3):null;o.ctx=AC?AC.state:null;o.music=(typeof music!=='undefined'&&music&&music.el)?+music.el.volume.toFixed(3):null;}catch(e){o.err=String(e);}return o;},showHalftime:showHalftime,lens:function(){return lensFX.length;},newGame:newGame,phys:function(h){physStep(h);},use3d:function(){return USE3D;},
   throw3d:function(x,spin,power,aim){g.x=x;g.spin=spin;g.power=power;g.aim=aim||0;g.phase='throw';g.throwT=1.01;}};
 window.ADB3={foods:FOODS,logo:LANE_LOGO,sfx:sfx,lensSplat:lensSplat,noise:noise,playCrash:playCrash,woodCrack:woodCrack,woodSnap:woodSnap,rebound:rebound,pinHit:pinHit,rumble:rumble,covers:coverImgs,ballHue:BALL_HUE,
   hover:HOVER_REVIEWS,hoverBase:HOVER_BASE,shuffle:shuffleArr};  /* the review catalogue, so the big screen can run the previews */
@@ -3003,6 +3078,18 @@ function pinShapes(){const CY=PHYS.pinCY,N=12;return [
 const shadowGeo=new THREE.CircleGeometry(0.16,20);shadowGeo.rotateX(-Math.PI/2);
 const shadowMat=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.34,depthWrite:false});
 let pins=[];/* {body,grp,mesh,shadow,alive} */
+/* Take one pin off the deck without touching the others. The re-rack used to tear every pin down
+   and build it again from the layout, which put a pin that was leaning -- or merely nudged off its
+   spot -- back perfectly upright on its original mark. A pin that survived the first ball now keeps
+   the exact position and attitude the physics left it in. */
+function sweepPin(i){
+  const p=pins[i];if(!p||!p.alive)return;
+  if(p.body)world.removeBody(p.body);
+  if(p.grp)scene.remove(p.grp);
+  if(p.shadow)scene.remove(p.shadow);
+  if(p.led){const k=pinLeds.indexOf(p.led);if(k>=0)pinLeds.splice(k,1);}
+  pins[i]={alive:false};
+}
 function clearPins(){pins.forEach(p=>{if(p.body)world.removeBody(p.body);if(p.grp)scene.remove(p.grp);if(p.shadow)scene.remove(p.shadow);});pins=[];}
 let lastPinC=0;
 function makePin(i,fi){
@@ -3017,9 +3104,10 @@ function makePin(i,fi){
     if(iv>0.9&&nw-lastPinC>0.03){lastPinC=nw;if(A3.pinHit)A3.pinHit(iv,'pin');else if(A3.sfx)A3.sfx.crash();}});
   const grp=new THREE.Group();const mesh=new M(pinGeo,pinMat(fi));mesh.position.y=-PHYS.pinCY;grp.add(mesh);scene.add(grp);
   const sh=new M(shadowGeo,shadowMat.clone());scene.add(sh);
+  let rg=null;
   { /* soft light haze around the engraved channel, no solid ring */
-    const rg=new M(new THREE.TorusGeometry(0.0205,0.011,6,28),new THREE.MeshBasicMaterial({color:LEDCOLS[ledCol],transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));rg.rotation.x=Math.PI/2;rg.position.y=0.258-PHYS.pinCY;grp.add(rg);pinLeds.push(rg); }
-  return {body,grp,mesh,shadow:sh,alive:true,fi:fi,wasUp:true};
+    rg=new M(new THREE.TorusGeometry(0.0205,0.011,6,28),new THREE.MeshBasicMaterial({color:LEDCOLS[ledCol],transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));rg.rotation.x=Math.PI/2;rg.position.y=0.258-PHYS.pinCY;grp.add(rg);pinLeds.push(rg); }
+  return {body,grp,mesh,shadow:sh,alive:true,fi:fi,wasUp:true,led:rg};
 }
 const SAUCEC=[0xc0392b,0xf2c037,0xf5efd8,0x6b2a1a,0xe05a1e,0x5a3a1c,0xf2a81d,0x7cb342];
 const blobT=bake(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#fff';g.beginPath();
@@ -3049,13 +3137,19 @@ function tickPuddles(dt){
 }
 function clearPuddles(){puddles.forEach(p=>{scene.remove(p.m);if(p.hl!==p.m)scene.remove(p.hl);});puddles.length=0;drops.forEach(d=>scene.remove(d));drops.length=0;}
 function rack(keep,foodIdx){
+  if(keep&&pins.length===10){
+    /* second ball: sweep the deadwood, and do not lay a finger on anything still standing */
+    for(let i=0;i<10;i++)if(keep.indexOf(i)<0)sweepPin(i);
+    removeBall();_leanSince=0;
+    return;
+  }
   clearPins();pinLeds.length=0;
   if(!keep){buildBonus();clearPuddles();}
   for(let i=0;i<10;i++){
     if(keep&&keep.indexOf(i)<0){pins.push({alive:false});continue;}
     pins.push(makePin(i,(foodIdx&&foodIdx[i]!=null&&foodIdx[i]>=0)?foodIdx[i]:i%8));
   }
-  removeBall();
+  removeBall();_leanSince=0;
 }
 /* ---------- bonus food tables: smash them Angry-Birds style for points ---------- */
 /* [emoji for the HUD and the sauce, points, atlas cell, half-thickness, size in metres] */
@@ -3782,10 +3876,25 @@ function mirror(){
   }
   return out;
 }
+const _upS=new CANNON.Vec3();let _leanSince=0;
 function settled(){
-  if(ballBody&&!S.rest)return false;
+  if(ballBody&&!S.rest){_leanSince=0;return false;}
+  let leaning=false;
   for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;
-    if(b.sleepState!==CANNON.Body.SLEEPING&&(b.velocity.length()>0.08||b.angularVelocity.length()>0.3))return false;}
+    if(b.sleepState===CANNON.Body.SLEEPING)continue;
+    if(b.velocity.length()>0.045||b.angularVelocity.length()>0.12)return false;
+    /* A pin past its own base is going over whether it is moving quickly or not: the contact ring is
+       2.7 cm and the centre of mass rides at 14.6 cm, so anything tilted more than about ten degrees
+       has already lost. Calling the roll here is what scored a toppling pin as standing -- and the
+       re-rack then stood it back up. Wait for it to finish. */
+    b.quaternion.vmult(UPV,_upS);
+    if(_upS.y<0.985&&_upS.y>0.34)leaning=true;
+  }
+  if(leaning){
+    const nw=performance.now();
+    if(!_leanSince)_leanSince=nw;
+    if(nw-_leanSince<2600)return false;   /* but a pin propped on another can lean for ever */
+  }else _leanSince=0;
   return true;
 }
 /* ---- aiming preview (dashed 3D line) ---- */
