@@ -4954,10 +4954,14 @@ function placeFeet(gs,dt,slide,tp){
     return;
   }
   if(slide>0.02){
+    /* The slide leg glides to the line with the knee deeply flexed, and the trail leg swings
+       behind it and ACROSS to the far side -- knee tucked in behind the slide knee, foot out on
+       the opposite side to the swing, where it counterweights the ball. It used to go out to
+       +x, the same side as the swinging arm, which is the one shape a bowler never makes. */
     const lead=feet.L,trail=feet.R;lead.sw=-1;trail.sw=-1;lead.lock=false;trail.lock=false;
-    const kl=1-Math.exp(-dt*9*slide),kt=1-Math.exp(-dt*6*slide),R=LEG.reach;
-    lead.x+=(bx-R*0.07-lead.x)*kl;lead.z+=(bz-R*0.20-lead.z)*kl;lead.y=0;
-    trail.x+=(bx+R*0.38-trail.x)*kt;trail.z+=(bz+R*0.58-trail.z)*kt;trail.y=R*0.13*slide;
+    const kl=1-Math.exp(-dt*9*slide),kt=1-Math.exp(-dt*7*slide),R=LEG.reach;
+    lead.x+=(bx-R*0.09-lead.x)*kl;lead.z+=(bz-R*0.24-lead.z)*kl;lead.y=0;
+    trail.x+=((bx-R*0.28)-trail.x)*kt;trail.z+=(bz+R*0.52-trail.z)*kt;trail.y=R*0.20*slide;
     return;
   }
   stepGait(dt,bx,bz,_fvx,_fvz);
@@ -5068,9 +5072,14 @@ function keyed(K,u){
 }
 /* u runs 0..1 over the 1.15 s approach. The ball launches at u=0.87, so 0.87 is where the hand
    reaches the bottom of the arc and where the swing is quickest -- the two used to be 0.07 apart. */
-const SW_ARM=[[0,0.55,0.3],[0.15,0.98,0],[0.50,-1.85,0],[0.87,0,7.5]];
-const SW_ELB=[[0,1.15,0],[0.15,0.32,0],[0.50,0.06,0],[0.87,0.04,0.3]];
-const SW_WRI=[[0,-0.30,0],[0.15,-0.55,0],[0.50,-0.62,0],[0.87,0.10,2.0]];
+/* The peak used to sit at u=0.50, which left the ball hanging at the top for a third of the
+   approach. A real backswing tops out as the power-step foot plants and then the downswing is
+   the quick part -- so the peak moves to 0.62 and the drop to the ankle happens in 0.25 instead
+   of 0.37. The release tangent stays at 7.5: it is what the follow-through's opening tangent is
+   scaled from, and changing it would put a corner back in the swing. */
+const SW_ARM=[[0,0.55,0.3],[0.18,0.98,0],[0.62,-1.85,0],[0.87,0,7.5]];
+const SW_ELB=[[0,1.15,0],[0.18,0.32,0],[0.62,0.06,0],[0.87,0.04,0.3]];
+const SW_WRI=[[0,-0.30,0],[0.18,-0.55,0],[0.62,-0.62,0],[0.87,0.10,2.0]];
 /* The throw hands over to the roll the instant the ball leaves, at u=0.87 -- u never reaches 1 --
    so the whole follow-through hangs off the roll clock instead. Each opening tangent is the
    u-curve's closing one times 0.35/1.15, the ratio of the two clocks, which is what makes the arm
@@ -5090,28 +5099,44 @@ function poseBowler(gs,dt,nw){
     shL:[0.62,0,0.34],elL:1.55,shR:[0.55,0,0.28],elR:1.15,curl:0.75,
     hpL:-0.08,knL:-0.16,hpR:-0.08,knR:-0.16,headX:0.10,headY:0,wr:-0.3,yaw:0};
   if(ph==='throw'||ph==='roll'){
-    /* THE APPROACH: steps into a slide while the ball pushes away, swings back high and comes back
-       through. Every quantity below is continuous in speed as well as in value -- across each key,
-       and across the throw/roll hand-off -- so nothing in the motion stops and restarts. */
-    const u=tp,fol=Math.min(1,rl/0.35),L2=THREE.MathUtils.lerp;
+    /* THE APPROACH, to the four-step shape a real bowler uses:
+         step 1  pushaway      the ball goes out and down, soft; that starts the pendulum
+         step 2  downswing     it falls on its own
+         step 3  power step    the knees load and the ball tops out at the back, about shoulder
+                               height, exactly as that foot plants
+         step 4  slide+release the slide foot reaches the line as the ball reaches the ankle,
+                               and that is where it leaves his hand
+       Two things separate this from a man swinging his arm. The spine angle is SET by the power
+       step and then held -- through the slide, the stop and the release the torso barely moves.
+       And the shoulders counter-rotate against the swing while the hips stay closer to square,
+       so the two are never turning as one piece. The balance arm goes out early and stays out;
+       it is what the ball is weighed against. */
+    const u=tp,fol=Math.min(1,rl/0.35);
     const swR=keyed(SW_ARM,u)+keyed(SW_AFOL,fol),
           elR=keyed(SW_ELB,u)+keyed(SW_EFOL,fol),
           wr =keyed(SW_WRI,u)+keyed(SW_WFOL,fol);
-    /* The step clock used to be min(u,0.66), which froze his legs mid-stride in one frame. It now
-       eases its own rate to nothing by u=0.72, arriving at the slide with the stride already spent. */
+    /* the step clock eases its own rate to nothing by u=0.72, arriving at the slide with the
+       stride already spent rather than freezing mid-stride in one frame */
     const d=Math.max(0,u-0.50),pu=u<=0.50?u:Math.min(0.61,0.50+d-d*d/0.44),P=pu/0.61*3*Math.PI;
-    const lg=sstep(0.58,0.88,u);
-    const ea=sstep(0,1,u);                       /* short first step, quickening, sliding to a stop */
-    t={lean:-0.10-0.30*ea-0.05*fol,spine:-0.05-0.08*u,bob:-Math.abs(Math.sin(P))*0.025*(1-lg)-0.12*lg,hz:-0.72*ea-0.08*fol,
-       shL:[0.25+0.62*ea,0,-(0.7+0.75*sstep(0.3,1,u))],elL:0.9-0.5*ea,shR:[swR,0,0.16],elR:elR,
+    const lg=sstep(0.62,0.87,u);      /* the slide, finishing exactly on the release */
+    const lf=sstep(0.04,0.62,u);      /* forward lean: set by the power step, then held */
+    const pw=sstep(0.36,0.64,u);      /* knees loading through the power step */
+    const bal=sstep(0.22,0.68,u);     /* the balance arm out, and staying out */
+    t={lean:-0.10-0.34*lf-0.03*fol,spine:-0.05-0.09*lf,
+       /* he finishes DEEP: 0.27 of a 0.71m leg, which is the chin-over-the-knee the coaching
+          books ask for. At 0.185 he was barely crouching. */
+       bob:-Math.abs(Math.sin(P))*0.022*(1-lg)-0.055*pw*(1-lg)-0.27*lg,
+       hz:-0.74*sstep(0.02,0.80,u)-0.05*fol,
+       shL:[0.25+0.66*bal,0,-(0.7+0.95*bal)],elL:0.88-0.66*bal,
+       shR:[swR,0,0.16],elR:elR,
        curl:0.8-0.6*sstep(0.82,0.88,u),
        slide:lg,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0,
-       /* the hips lag the shoulders through the swing: the separation between the two is what a
-          throw looks like from behind, and a body that turns in one piece never does */
-       pelvY:-swR*0.022,pelvZ:0,
-       /* shoulders counter-rotate against the swing and drop toward the ball through the downswing,
-          which is most of what separates a thrown ball from an arm waved on a hinge */
-       spineY:-swR*0.055,spineZ:-0.07*sstep(0.45,0.90,u)*(1-0.5*fol)};
+       /* the hips lag the shoulders through the swing and square up again by the release */
+       pelvY:-swR*0.030,pelvZ:0,
+       /* shoulders counter-rotate against the swing, and the spine tilts away from the ball
+          into the slide and holds there */
+       spineY:-swR*0.075,
+       spineZ:-0.17*sstep(0.40,0.72,u)};
   }
   else if(soakT>0){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
     const sv=Math.min(1,soakT/2);t={lean:0.02,spine:0.14*sv,bob:Math.sin(nw*27)*0.007*sv,hz:Math.sin(nw*31)*0.004*sv,shL:[1.05,0,0.55],elL:2.25,shR:[0.55,0,0.28],elR:1.15,curl:0.75,hpL:-0.14,knL:-0.26,hpR:-0.14,knR:-0.26,headX:0.32,headY:Math.sin(nw*23)*0.035*sv};}
@@ -5420,7 +5445,12 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&blimpBanners.length&&blimpBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__arms:function(){const A=bowler.userData.arms;return {shL:[+A.L.sh.rotation.x.toFixed(3),+A.L.sh.rotation.z.toFixed(3)],elL:+A.L.el.rotation.x.toFixed(3),shR:[+A.R.sh.rotation.x.toFixed(3),+A.R.sh.rotation.z.toFixed(3)],elR:+A.R.el.rotation.x.toFixed(3)};},
+window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&blimpBanners.length&&blimpBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
+  L:[+(feet.L.x-b.x).toFixed(3),+feet.L.y.toFixed(3),+(feet.L.z-b.z).toFixed(3)],
+  R:[+(feet.R.x-b.x).toFixed(3),+feet.R.y.toFixed(3),+(feet.R.z-b.z).toFixed(3)],
+  hipY:+b.y.toFixed(3),reach:+LEG.reach.toFixed(3),crouch:+(LEG.crouch||0).toFixed(3),
+  lean:+bowler.rotation.x.toFixed(3),spineZ:+bowler.userData.B.spine.rotation.z.toFixed(3)};},
+__arms:function(){const A=bowler.userData.arms;return {shL:[+A.L.sh.rotation.x.toFixed(3),+A.L.sh.rotation.z.toFixed(3)],elL:+A.L.el.rotation.x.toFixed(3),shR:[+A.R.sh.rotation.x.toFixed(3),+A.R.sh.rotation.z.toFixed(3)],elR:+A.R.el.rotation.x.toFixed(3)};},
 __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3),step:+L.step.toFixed(2),
   hipL:+L.legs.L.hp.rotation.x.toFixed(3),hipR:+L.legs.R.hp.rotation.x.toFixed(3),
   knL:+L.legs.L.kn.rotation.x.toFixed(3),knR:+L.legs.R.kn.rotation.x.toFixed(3),
