@@ -23,9 +23,10 @@
   #halfSkip:focus-visible{outline:2px solid #f2a81d}
   #ui{position:absolute;left:50%;top:50%;width:480px;height:800px;transform:translate(-50%,-50%);z-index:25;pointer-events:none}
   #ui>*{pointer-events:auto}
-  /* Just above his head: the jumbotron bottom is at 535 and the AIM bubble starts at 572,
-     so this sits in the gap between them without covering either. */
-  #lbBtn{position:absolute;left:50%;top:538px;transform:translateX(-50%);height:22px;padding:0 10px;border-radius:11px;border:1px solid rgba(242,168,29,.6);background:rgba(26,18,20,.86);color:#f2a81d;font:bold 9px Verdana,sans-serif;letter-spacing:1px;cursor:pointer;white-space:nowrap}
+  /* Bottom left, on the same row as LEGAL and out of the way of your thumb: the aim tap zone
+     ends at y=668 and this sits at 716, so it is nowhere near where you steer. The YOU card owns
+     x 8..70, so it starts at 76. */
+  #lbBtn{position:absolute;left:76px;top:716px;height:19px;padding:0 8px;border-radius:10px;border:1px solid rgba(242,168,29,.6);background:rgba(26,18,20,.86);color:#f2a81d;font:bold 8px Verdana,sans-serif;letter-spacing:1px;cursor:pointer;white-space:nowrap}
   #lbBtn:hover,#lbBtn:focus-visible{border-color:#f2a81d;background:rgba(40,26,20,.95)}
   #lbBtn[hidden]{display:none!important}
   #champBtn{position:absolute;left:50%;top:534px;transform:translateX(-50%);height:30px;display:flex;align-items:center;padding:0 16px;border-radius:15px;border:2px solid #f2a81d;background:#f2a81d;color:#1a1214;font:bold 12px Impact,'Arial Black',sans-serif;letter-spacing:1px;cursor:pointer;white-space:nowrap}
