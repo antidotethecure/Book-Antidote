@@ -3210,7 +3210,7 @@ function ambient(dt,gs){
    friction are computed by hand as proper mu*N Coulomb friction: the ball skids on the oil, then
    rolls and hooks on the dry back end, and pins slide across the deck instead of stopping dead.
    Nothing about the pins is scripted: no kicks, no random spin, no forced topples. */
-const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,oilTaper:2.6,deckMu:0.34,spinDrag:0.3,hookK:22,skid:0.45}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
+const PHYS={ballM:6.8,pinM:1.53,pinCY:0.146,hz:120,oilMu:0.03,dryMu:0.24,oilEnd:-9.5,oilTaper:2.6,deckMu:0.34,spinDrag:0.3,hookK:22,skid:0.45,crownW:1.10,crown:0.78}; /* deck friction above 0.36 is what lets a sliding pin trip over its own 5.2 cm base */
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
 world.allowSleep=true;world.solver.iterations=20;
 world.defaultContactMaterial.contactEquationStiffness=1e8;world.defaultContactMaterial.contactEquationRelaxation=3;
@@ -3238,9 +3238,21 @@ function ballFriction(b,dt,mu){
 /* A buffed lane does not end its oil at a line. Stepping straight from 0.03 to 0.24 made the ball bite all at
    once; this eases across 2.6 m centred on the same spot, so the hook comes on as a curve instead of a corner
    and the total friction over the transition is unchanged. */
-function laneMu(z){
+/* THE HOUSE SHOT -- the thing the lane was missing. A lane is not oiled evenly across its width.
+   The machine lays a crown of oil down the middle and leaves the outside boards dry, and that one
+   fact is most of how a lane plays: it is why bowlers go out to the dry, why the ball comes back off
+   it, and why two different lines can both find the pocket. This function only ever looked at how
+   far DOWN the lane the ball was, so every board played exactly the same -- the aim arrow moved the
+   line and nothing else, which is why picking a line felt like steering rather than reading a lane.
+   Down the middle the numbers are unchanged, so everything already tuned on the centre line still
+   plays exactly as it did; the further out he goes, the earlier it grips. */
+function laneMu(z,x){
   const t=Math.max(0,Math.min(1,(PHYS.oilEnd+PHYS.oilTaper*0.5-z)/PHYS.oilTaper));
-  return PHYS.oilMu+(PHYS.dryMu-PHYS.oilMu)*t*t*(3-2*t);
+  const down=t*t*(3-2*t);                             /* 0 out in the oil .. 1 on the dry back end */
+  const f=Math.min(1,Math.abs(x||0)/PHYS.crownW);
+  const out=f*f*PHYS.crown;                           /* squared: the crown is flat in the middle and falls away outside */
+  const dry=down+out*(1-down);                        /* the outside is drier everywhere, and the back end is dry on every board */
+  return PHYS.oilMu+(PHYS.dryMu-PHYS.oilMu)*(dry>1?1:dry);
 }
 /* Coulomb friction for a pin touching the deck: slows its slide, bleeds its spin, nothing more */
 const fImp=new CANNON.Vec3(),fPt=new CANNON.Vec3();
@@ -4037,7 +4049,7 @@ function preStep(){
   if(!ballBody||S.done)return;
   const p=ballBody.position;
   if(!S.gutter&&Math.abs(p.x)>HALF-0.02&&p.y<0.09){S.gutter=true;}
-  if(!S.gutter)ballFriction(ballBody,1/PHYS.hz,laneMu(p.z));
+  if(!S.gutter)ballFriction(ballBody,1/PHYS.hz,laneMu(p.z,p.x));
 }
 function steerStep(){}
 /* Whatever goes over the back keeps falling. Park it once it is well out of shot so the solver is not
@@ -4476,7 +4488,7 @@ function showPath(ox,spin,power,on,aim){
     let gut=false;
     for(let i=0;i<PHYS.hz*8;i++){
       if(!gut&&Math.abs(gBall.position.x)>HALF-0.02&&gBall.position.y<0.09)gut=true;
-      if(!gut)ballFriction(gBall,1/PHYS.hz,laneMu(gBall.position.z));
+      if(!gut)ballFriction(gBall,1/PHYS.hz,laneMu(gBall.position.z,gBall.position.x));
       gWorld.step(1/PHYS.hz);
       if(i%6===0)gPts.push([gBall.position.x,gBall.position.z]);
       if(gBall.position.z<-16.5||Math.abs(gBall.position.x)>HALF+0.01)break;
@@ -5636,6 +5648,42 @@ __unproj:function(px,py){const r=unprojHome(px,py);return r?[+r[0].toFixed(3),+r
 __hand:function(){if(!real)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();
   real.bones.wrR.getWorldPosition(p);real.ball.getWorldPosition(q);
   return {wrist:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)],ball:[+q.x.toFixed(3),+q.y.toFixed(3),+q.z.toFixed(3)],vis:real.ball.visible};},
+__shot:function(ox,spin,pw,aim){   /* runs the ghost sim headlessly and reports what the shot actually did */
+  if(!gWorld)ghostInit();
+  const charged=Math.abs(pw-0.775)<0.075;
+  const base=pw<=0.10?(1.6+(pw/0.10)*3.2):(4.8+Math.pow((pw-0.10)/0.90,1.12)*5.3);
+  const v=(base+(charged?0.6:0));
+  const th=(aim||0)*AIM_M;
+  gWorld.removeBody(gBall);gWorld.addBody(gBall);
+  gBall.position.set(ox*1.30,BR+0.002,2.30);gBall.quaternion.set(0,0,0,1);
+  gBall.velocity.set(Math.sin(th)*v,0,-Math.cos(th)*v);
+  gBall.angularVelocity.set(-v/BR*PHYS.skid,0,-spin*PHYS.hookK);
+  const x0=gBall.position.x;let gut=false,t=0,prev=null,headX=null,headT=null,ang=null;
+  const STN=[0,-2,-4,-6,-8,-10,-12,-14,-15.4],prof=[];let st=0,mark=null;
+  for(let i=0;i<PHYS.hz*8;i++){
+    if(!gut&&Math.abs(gBall.position.x)>HALF-0.02&&gBall.position.y<0.09)gut=true;
+    if(!gut)ballFriction(gBall,1/PHYS.hz,laneMu(gBall.position.z,gBall.position.x));
+    const pz=gBall.position.z,px=gBall.position.x;
+    gWorld.step(1/PHYS.hz);t+=1/PHYS.hz;
+    /* where the sideways movement actually accumulates, station by station down the lane */
+    while(st<STN.length&&gBall.position.z<=STN[st]){prof.push([STN[st],+((gBall.position.x-x0)*100).toFixed(2)]);st++;}
+    if(mark===null&&gBall.position.z<=-14.40){mark=[gBall.position.x,gBall.position.z];}
+    if(headX===null&&gBall.position.z<=-15.40){   /* the head pin's row */
+      headX=gBall.position.x;headT=t;
+      /* the angle it ARRIVES on, measured over the last metre -- one 1/120 s step is too short a
+         baseline to say anything, and entry angle is what actually carries the rack */
+      if(mark){const dx=gBall.position.x-mark[0],dz=gBall.position.z-mark[1];
+        ang=Math.atan2(Math.abs(dx),Math.abs(dz))*180/Math.PI;}
+      break;
+    }
+    if(Math.abs(gBall.position.x)>HALF+0.01){gut=true;break;}
+  }
+  return {launchV:+v.toFixed(2),startX:+x0.toFixed(4),
+    atHeadX:headX===null?null:+headX.toFixed(4),
+    hookCm:headX===null?null:+((headX-x0)*100).toFixed(1),
+    hookBoards:headX===null?null:+((headX-x0)/0.0254).toFixed(1),
+    travelS:headT===null?null:+headT.toFixed(2),profile:prof,
+    entryDeg:ang===null?null:+ang.toFixed(2),gutter:gut};},
 __chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
   L:[+(feet.L.x-b.x).toFixed(3),+feet.L.y.toFixed(3),+(feet.L.z-b.z).toFixed(3)],
   R:[+(feet.R.x-b.x).toFixed(3),+feet.R.y.toFixed(3),+(feet.R.z-b.z).toFixed(3)],
