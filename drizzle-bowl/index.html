@@ -3873,34 +3873,105 @@ function spawnWet(x,z){if(puddles.length>90||Math.abs(x)>0.75||z<-18||z>-3)retur
   const m=new M(new THREE.CircleGeometry(1,14),new THREE.MeshStandardMaterial({color:0x9fd0ff,map:blobT,alphaMap:blobT,transparent:true,opacity:0.32,roughness:0.03,metalness:0.1,depthWrite:false}));
   m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.scale.set(r,r,1);m.position.set(x,0.0032,z);scene.add(m);puddles.push({m,hl:m,t:1,r});}
 /* ---------- the Antidote Fire Department: a toy pumper that rolls onto the lane on a miss and hoses everything down, you included ---------- */
-const truckSideT=bake(512,256,(g,w,h)=>{g.fillStyle='#c81e1e';g.fillRect(0,0,w,h);g.fillStyle='#f4f4f4';g.fillRect(0,h*0.56,w,h*0.10);g.fillStyle='#ffd23f';g.fillRect(0,h*0.66,w,h*0.045);
-  g.font='bold 64px Impact,"Arial Black",sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='#5a0a0a';g.strokeText('ANTIDOTE F.D.',w/2,h*0.30);g.fillStyle='#fff';g.fillText('ANTIDOTE F.D.',w/2,h*0.30);
-  g.fillStyle='#7a0e0e';g.fillRect(0,h*0.86,w,h*0.14);});
+/* The livery, baked once. It was a red field with two stripes across it; a real pumper's flank is
+   mostly compartment doors, so this draws them -- roller shutters with seams and handles -- plus the
+   reflective chevron band along the bottom that every appliance carries, and the unit number. */
+const truckSideT=bake(512,256,(g,w,h)=>{
+  const grd=g.createLinearGradient(0,0,0,h);grd.addColorStop(0,'#e02a2a');grd.addColorStop(0.5,'#c81e1e');grd.addColorStop(1,'#8d1212');
+  g.fillStyle=grd;g.fillRect(0,0,w,h);
+  /* three roller-shutter compartments */
+  for(const[dx,dw]of[[0.06,0.26],[0.36,0.26],[0.66,0.28]]){
+    const x=w*dx,dwp=w*dw,y=h*0.42,dh=h*0.40;
+    g.fillStyle='#a81818';g.fillRect(x,y,dwp,dh);
+    g.strokeStyle='#6d0f0f';g.lineWidth=2;g.strokeRect(x,y,dwp,dh);
+    g.strokeStyle='rgba(0,0,0,.28)';g.lineWidth=1;
+    for(let k=y+5;k<y+dh-2;k+=6){g.beginPath();g.moveTo(x+2,k);g.lineTo(x+dwp-2,k);g.stroke();}   /* shutter slats */
+    g.fillStyle='#d8d8dc';g.fillRect(x+dwp*0.42,y+dh-9,dwp*0.16,4);                                /* handle */
+  }
+  g.fillStyle='#f4f4f4';g.fillRect(0,h*0.355,w,h*0.055);      /* the white band */
+  g.font='bold 58px Impact,"Arial Black",sans-serif';g.textAlign='center';g.textBaseline='middle';
+  g.lineWidth=6;g.strokeStyle='#5a0a0a';g.strokeText('ANTIDOTE F.D.',w/2,h*0.20);
+  g.fillStyle='#fff';g.fillText('ANTIDOTE F.D.',w/2,h*0.20);
+  g.font='bold 30px Impact,"Arial Black",sans-serif';g.fillStyle='#ffd23f';g.fillText('ENGINE 3',w*0.86,h*0.30);
+  /* the reflective chevron band along the bottom */
+  const by=h*0.84,bh=h*0.16;
+  g.save();g.beginPath();g.rect(0,by,w,bh);g.clip();
+  g.fillStyle='#ffd23f';g.fillRect(0,by,w,bh);
+  g.fillStyle='#d01414';
+  for(let x=-bh;x<w+bh;x+=bh*1.5){g.beginPath();g.moveTo(x,by+bh);g.lineTo(x+bh*0.75,by);g.lineTo(x+bh*1.5,by);g.lineTo(x+bh*0.75,by+bh);g.closePath();g.fill();}
+  g.restore();});
+/* the tail: the same chevron band, full height, which is what you actually see as it drives away */
+const truckRearT=bake(128,128,(g,w,h)=>{
+  g.fillStyle='#ffd23f';g.fillRect(0,0,w,h);g.fillStyle='#d01414';
+  for(let x=-h;x<w+h;x+=h*0.5){g.beginPath();g.moveTo(x,h);g.lineTo(x+h*0.25,0);g.lineTo(x+h*0.5,0);g.lineTo(x+h*0.25,h);g.closePath();g.fill();}});
 function makeTruck(){const g2=new THREE.Group();
-  const red=new THREE.MeshStandardMaterial({color:0xc81e1e,roughness:0.35,metalness:0.2}),dark=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.8}),chrome=new THREE.MeshStandardMaterial({color:0xd8d8dc,roughness:0.25,metalness:0.8}),glass=new THREE.MeshStandardMaterial({color:0x5f8bb0,roughness:0.1,metalness:0.3});
-  const side=new THREE.MeshStandardMaterial({map:truckSideT,roughness:0.35,metalness:0.2});
-  const body=new M(new THREE.BoxGeometry(0.86,0.40,0.50),[red,red,red,dark,side,side]);body.position.set(0.16,0.37,0);g2.add(body);
+  const red=new THREE.MeshStandardMaterial({color:0xc81e1e,roughness:0.28,metalness:0.28}),
+        dark=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.8}),
+        rubber=new THREE.MeshStandardMaterial({color:0x121212,roughness:0.95}),
+        chrome=new THREE.MeshStandardMaterial({color:0xd8d8dc,roughness:0.18,metalness:0.9}),
+        glass=new THREE.MeshStandardMaterial({color:0x5f8bb0,roughness:0.08,metalness:0.4}),
+        lamp=new THREE.MeshBasicMaterial({color:0xfff6d8});
+  const side=new THREE.MeshStandardMaterial({map:truckSideT,roughness:0.3,metalness:0.25});
+  const rear=new THREE.MeshStandardMaterial({map:truckRearT,roughness:0.4,metalness:0.1});
+  const add=(geo,mat,x,y,z)=>{const m=new M(geo,mat);m.position.set(x,y,z);g2.add(m);return m;};
+  /* body: the tail face now carries the chevron board */
+  const body=new M(new THREE.BoxGeometry(0.86,0.40,0.50),[red,rear,red,dark,side,side]);body.position.set(0.16,0.37,0);g2.add(body);
   const cab=new M(new THREE.BoxGeometry(0.34,0.40,0.48),red);cab.position.set(-0.45,0.37,0);g2.add(cab);
   const wind=new M(new THREE.BoxGeometry(0.02,0.16,0.40),glass);wind.position.set(-0.625,0.45,0);g2.add(wind);
   [-1,1].forEach(sd=>{const sw=new M(new THREE.BoxGeometry(0.20,0.14,0.02),glass);sw.position.set(-0.45,0.45,sd*0.245);g2.add(sw);});
-  const bumper=new M(new THREE.BoxGeometry(0.04,0.06,0.50),chrome);bumper.position.set(-0.64,0.19,0);g2.add(bumper);
+  const bumper=add(new THREE.BoxGeometry(0.04,0.06,0.50),chrome,-0.64,0.19,0);
+  /* THE FACE. A box with a windscreen read as a van; a grille, headlights, a beacon and mirrors are
+     what make it read as an appliance at the size it appears on screen. */
+  add(new THREE.BoxGeometry(0.012,0.10,0.34),dark,-0.644,0.28,0);                      /* grille recess */
+  for(let i=0;i<4;i++)add(new THREE.BoxGeometry(0.016,0.012,0.32),chrome,-0.647,0.245+i*0.026,0);  /* grille bars */
+  const heads=[];[-1,1].forEach(sd=>{
+    heads.push(add(new THREE.BoxGeometry(0.014,0.05,0.07),lamp,-0.648,0.30,sd*0.175));  /* headlight */
+    add(new THREE.BoxGeometry(0.010,0.030,0.040),new THREE.MeshBasicMaterial({color:0xffa11e}),-0.648,0.235,sd*0.175); /* indicator */
+    const arm=add(new THREE.BoxGeometry(0.06,0.012,0.012),chrome,-0.585,0.50,sd*0.275);  /* mirror arm */
+    add(new THREE.BoxGeometry(0.014,0.07,0.035),dark,-0.556,0.485,sd*0.283);             /* mirror head */
+  });
+  const headL=new THREE.PointLight(0xfff0cc,0,3.4,1.8);headL.position.set(-0.78,0.30,0);g2.add(headL);
+  /* wheel arches, an exhaust stack, a rear step and a hose reel: all silhouette, which is what
+     survives at this distance */
+  [[-0.42],[0.34]].forEach(p=>{[-1,1].forEach(sd=>{
+    add(new THREE.BoxGeometry(0.24,0.022,0.105),red,p[0],0.185,sd*0.27);});});
+  add(new THREE.CylinderGeometry(0.020,0.020,0.30,10),chrome,-0.255,0.52,0.215);        /* exhaust stack */
+  add(new THREE.BoxGeometry(0.06,0.028,0.46),chrome,0.615,0.14,0);                      /* tailboard step */
+  [-1,1].forEach(sd=>add(new THREE.BoxGeometry(0.012,0.09,0.11),rubber,0.55,0.075,sd*0.25));  /* mud flaps */
+  {const reel=new THREE.CylinderGeometry(0.072,0.072,0.19,14);reel.rotateX(Math.PI/2);
+   add(reel,new THREE.MeshStandardMaterial({color:0xf4f4f4,roughness:0.5}),0.44,0.66,0);
+   add(new THREE.CylinderGeometry(0.082,0.082,0.012,14).rotateX(Math.PI/2),chrome,0.44,0.66,0.098);
+   add(new THREE.CylinderGeometry(0.082,0.082,0.012,14).rotateX(Math.PI/2),chrome,0.44,0.66,-0.098);}
   const rail=new THREE.BoxGeometry(0.90,0.02,0.02);[-0.08,0.08].forEach(z=>{const r=new M(rail,chrome);r.position.set(0.12,0.60,z);g2.add(r);});
   for(let i=0;i<7;i++){const rung=new M(new THREE.BoxGeometry(0.02,0.02,0.16),chrome);rung.position.set(-0.28+i*0.13,0.60,0);g2.add(rung);}
-  const wg=new THREE.CylinderGeometry(0.085,0.085,0.07,18);wg.rotateX(Math.PI/2);const hub=new THREE.CylinderGeometry(0.04,0.04,0.074,12);hub.rotateX(Math.PI/2);
-  const wheels=[];[[-0.42,0.27],[-0.42,-0.27],[0.34,0.27],[0.34,-0.27]].forEach(p=>{const w=new THREE.Group();w.position.set(p[0],0.085,p[1]);w.add(new M(wg,dark));w.add(new M(hub,chrome));g2.add(w);wheels.push(w);});
+  /* wheels: a tyre with a visible rim and a hub, not a plain disc */
+  const wg=new THREE.CylinderGeometry(0.088,0.088,0.075,20);wg.rotateX(Math.PI/2);
+  const rim=new THREE.CylinderGeometry(0.052,0.052,0.079,14);rim.rotateX(Math.PI/2);
+  const hub=new THREE.CylinderGeometry(0.022,0.022,0.086,10);hub.rotateX(Math.PI/2);
+  const wheels=[];[[-0.42,0.27],[-0.42,-0.27],[0.34,0.27],[0.34,-0.27]].forEach(p=>{const w=new THREE.Group();
+    w.position.set(p[0],0.088,p[1]);w.add(new M(wg,rubber));w.add(new M(rim,chrome));w.add(new M(hub,dark));
+    for(let i=0;i<5;i++){const sp=new M(new THREE.BoxGeometry(0.012,0.072,0.088),chrome);sp.rotation.z=i*Math.PI/2.5;w.add(sp);} /* spokes, so the roll reads */
+    g2.add(w);wheels.push(w);});
   const bar=new M(new THREE.BoxGeometry(0.10,0.05,0.36),dark);bar.position.set(-0.45,0.60,0);g2.add(bar);
   const lRed=new M(new THREE.BoxGeometry(0.11,0.055,0.15),new THREE.MeshBasicMaterial({color:0xff2222}));lRed.position.set(-0.45,0.60,-0.1);g2.add(lRed);
   const lBlue=new M(new THREE.BoxGeometry(0.11,0.055,0.15),new THREE.MeshBasicMaterial({color:0x2255ff}));lBlue.position.set(-0.45,0.60,0.1);g2.add(lBlue);
+  /* the beacons bloom, so they carry across a dark room */
+  const glowMat=(c)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+  const gR=add(new THREE.SphereGeometry(0.075,10,8),glowMat(0xff2222),-0.45,0.615,-0.1);
+  const gB=add(new THREE.SphereGeometry(0.075,10,8),glowMat(0x3366ff),-0.45,0.615,0.1);
+  add(new THREE.BoxGeometry(0.05,0.045,0.05),chrome,-0.30,0.585,0);                     /* siren speaker */
   const lightR=new THREE.PointLight(0xff2020,0,5,1.6);lightR.position.set(-0.45,0.8,0);g2.add(lightR);
   const lightB=new THREE.PointLight(0x2050ff,0,5,1.6);lightB.position.set(-0.45,0.8,0);g2.add(lightB);
   const turret=new THREE.Group();turret.position.set(-0.08,0.60,0);g2.add(turret);
   turret.add(new M(new THREE.CylinderGeometry(0.05,0.06,0.06,14),chrome));
   const gun=new THREE.Group();gun.position.y=0.05;turret.add(gun);
   const barrel=new M(new THREE.CylinderGeometry(0.018,0.026,0.22,12),chrome);barrel.rotation.x=Math.PI/2;barrel.position.z=0.09;gun.add(barrel);
+  {const collar=new M(new THREE.CylinderGeometry(0.030,0.030,0.020,12).rotateX(Math.PI/2),chrome);
+   collar.position.z=0.19;gun.add(collar);}   /* nozzle collar -- note add() returns the PARENT, so this cannot be chained */
   const tip=new THREE.Object3D();tip.position.z=0.21;gun.add(tip);
-  const shadow=new M(new THREE.PlaneGeometry(1.35,0.62),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:0.35,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=0.004;g2.add(shadow);
+  const shadow=new M(new THREE.PlaneGeometry(1.42,0.66),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:0.35,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=0.004;g2.add(shadow);
   g2.visible=false;scene.add(g2);
-  return {grp:g2,wheels,lRed,lBlue,lightR,lightB,gun,tip};}
+  return {grp:g2,wheels,lRed,lBlue,lightR,lightB,gun,tip,gR,gB,headL};}
 let truck=null,dept=null,hoseCamOn=false;
 const D_IN=1.7,D_FIRE=5.3,D_BOWL=6.7,D_OUT=8.6,P0=[3.3,-10.0],P1=[0.42,-14.05];
 function fireDept(){if(!truck)truck=makeTruck();dept={t:0,tgt:null,tT:0,ballT:0,soaked:false};truck.grp.visible=true;hoseCamOn=false;}
@@ -3913,6 +3984,8 @@ function updateDept(dt,nw){if(!dept)return;const d=dept;d.t+=dt;const t=d.t,T=tr
   const turn=Math.min(1,Math.max(0,(u-0.55)/0.45));T.rotation.y=-0.918+(-1.5708+0.918)*turn;
   if(drive)truck.wheels.forEach(w=>{w.rotation.z-=drive*dt*30;});
   const fl=Math.floor(nw*6)%2;truck.lRed.material.color.set(fl?0xff2222:0x551010);truck.lBlue.material.color.set(fl?0x224499:0x3366ff);truck.lightR.intensity=fl?7:0;truck.lightB.intensity=fl?0:7;
+  truck.gR.material.opacity=fl?0.62:0.05;truck.gB.material.opacity=fl?0.05:0.62;   /* the bloom alternates with the beacons */
+  truck.headL.intensity=3.2;
   if(t>=D_OUT){truck.grp.visible=false;truck.lightR.intensity=truck.lightB.intensity=0;dept=null;hoseCamOn=false;return;}
   let target=null;
   if(t>=D_IN&&t<D_FIRE){d.tT-=dt;if(!d.tgt||d.tT<=0||(d.tgt.rec&&d.tgt.rec.burn<=0)){d.tT=0.55;d.tgt=pickHoseTarget(t);}target=d.tgt;}
@@ -4520,11 +4593,74 @@ const BCAM_D=7.6,BCAM_FOV=30,BSCALE=0.9;
 const bCam=new THREE.PerspectiveCamera(BCAM_FOV,LW/VH,0.05,40);
 bCam.position.set(0,2.05,BCAM_D);bCam.lookAt(0,1.98,0);
 const bPxPerM=VH/(2*BCAM_D*Math.tan(BCAM_FOV*Math.PI/360));
-bScene.add(new THREE.HemisphereLight(0xfff1e2,0x2a1c18,0.7));
+const bHemi=new THREE.HemisphereLight(0xfff1e2,0x2a1c18,0.7);bScene.add(bHemi);
 const bKey=new THREE.DirectionalLight(0xfff3e4,1.9);bKey.position.set(-3.2,5.6,5.5);bScene.add(bKey);      /* key: high left, behind the camera */
 const bFill=new THREE.DirectionalLight(0xffd9b8,0.35);bFill.position.set(3.5,1.8,4);bScene.add(bFill);
 const bRim=new THREE.DirectionalLight(LEDCOLS[0],3.6);bRim.position.set(0.8,2.4,-6);bScene.add(bRim);      /* lane neon on the shoulders and scalp */
 const bUnder=new THREE.DirectionalLight(0xf2a81d,0.45);bUnder.position.set(-1.5,-0.5,-3);bScene.add(bUnder); /* the lane wood bounces warm light up */
+
+/* ---------- COSMIC BOWLING: three strikes running and the house lights go out ----------
+   The alley already had neon in it -- LED strips down both channels, lit arrows, glowing pin decals,
+   a blue point light over the lane -- but it was only ever decoration on top of a brightly lit room.
+   This turns the room off and lets that neon be the only thing lighting the place: the key light and
+   the overheads drop to a tenth, the hemisphere goes from warm tungsten to ultraviolet, the strips
+   and the pin glow come up, the floor lights up underfoot, and he stops being lit from the front and
+   becomes a neon edge instead. It rides on the streak that was already there, so it needs no new
+   plumbing: the same g.streak=0 that ends the fire on a missed strike brings the lights back up, in
+   the same frame the fire department rolls out. Going dark is quicker than coming back (8 per second
+   against 4), because a room's lights snap off and warm up. */
+const COS_SKY=new THREE.Color(0x3a1d6e),COS_GND=new THREE.Color(0x07030d);
+/* the floor: the LED pattern that already runs down the channels, thrown across the whole lane */
+const cosFloorMat=new THREE.MeshBasicMaterial({color:0x6a3cff,map:ledPatT,transparent:true,opacity:0,
+  blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+const cosFloor=new M(new THREE.PlaneGeometry(2.58,22.2),cosFloorMat);
+cosFloor.rotation.x=-Math.PI/2;cosFloor.position.set(0,0.0008,-8.1);cosFloor.visible=false;scene.add(cosFloor);
+const HEMI_SKY=hemi?hemi.color.clone():null,HEMI_GND=hemi?hemi.groundColor.clone():null;
+const MID0=midL.intensity,PIN0=pinLight.intensity,PIT0=pitGlow.intensity;
+const BH0=bHemi.intensity,BK0=bKey.intensity,BF0=bFill.intensity,BR0=bRim.intensity,BU0=bUnder.intensity;
+let cosT=0,cosPrev=-1;
+function cosmicApply(dt,gs){
+  const want=(gs&&(gs.streak||0)>=3)?1:0;
+  cosT+=(want-cosT)*(1-Math.exp(-dt*(want>cosT?8:4)));
+  /* once it is fully back up there is nothing to do -- but the frame it lands on still has to run,
+     or the lights stay wherever the fade left them */
+  if(cosT<0.0015&&cosPrev<0.0015)return;
+  cosPrev=cosT;const c=cosT;
+  /* the house lights. hemi and dl are rewritten every frame by the day cycle, so these scale
+     whatever it just set; the rest are ours alone, so they come off their stored values. */
+  if(hemi){hemi.intensity*=1-0.88*c;
+    hemi.color.copy(HEMI_SKY).lerp(COS_SKY,c);hemi.groundColor.copy(HEMI_GND).lerp(COS_GND,c);}
+  dl.intensity*=1-0.92*c;
+  midL.intensity=MID0*(1-0.93*c);
+  pinLight.intensity=PIN0*(1-0.82*c);
+  pitGlow.intensity=PIT0*(1-0.55*c);   /* the pit keeps a little warmth or the back of the room vanishes */
+  /* and the neon takes the room over */
+  ledLight.intensity=ledLight.intensity*(1+2.4*c)+7*c;
+  /* the numbers are applied whatever c is, so at c=0 they land exactly back on the lit-room values
+     rather than a hair above them; only the forcing-on is gated, because the stutter-flicker
+     belongs to a lit room and should come back with it */
+  for(const m of ledGlows)m.material.opacity=0.55+0.45*c;
+  const ei=2.2+3.4*c;
+  for(const k in pinMats)pinMats[k].emissiveIntensity=ei;
+  ballMat.emissiveIntensity=ei;
+  if(c>0.25){
+    for(const m of ledStrips)m.visible=true;
+    for(const m of ledArrows)m.visible=true;
+    for(const m of pinLeds)m.visible=true;
+    for(const m of ledGlows)m.visible=true;
+  }
+  starMat.opacity=Math.max(starMat.opacity,0.85*c);
+  cosFloor.visible=c>0.01;
+  if(cosFloor.visible)cosFloorMat.opacity=0.44*c;
+  /* him. Lit from the front he would still look like a man in a lit room, so the key and the fill go
+     and the lane's own neon becomes his rim -- matched to whatever colour the strips are on now. */
+  bHemi.intensity=BH0*(1-0.86*c);
+  bKey.intensity=BK0*(1-0.88*c);
+  bFill.intensity=BF0*(1-0.86*c);
+  bRim.intensity=BR0*(1+1.15*c);
+  bUnder.intensity=BU0*(1+1.8*c);
+  if(c>0.25)bRim.color.copy(ledLight.color);else bRim.color.set(LEDCOLS[0]);
+}
 /* materials */
 const skinMat=new THREE.MeshStandardMaterial({color:0xa66d4a,roughness:0.58,metalness:0.0});
 const shirtT=bake(512,512,(g,w,h)=>{
@@ -5605,7 +5741,7 @@ function render(gs){
     ballMesh.visible=ballBody.position.y>-0.25;
     if(ballShadow){ballShadow.visible=ballMesh.visible&&ballBody.position.y<0.5;ballShadow.position.set(bI.x,0.003,bI.z);}}
   if(!RPL.on)rplSnap(nw);
-  ambient(dt,gs);tickPuddles(dt);
+  ambient(dt,gs);cosmicApply(dt,gs);tickPuddles(dt);
   renderer.setViewport(0,0,LW,VH);renderer.setScissor(0,0,LW,VH);
   renderer.render(scene,cam);
   if(!RPL.on)renderBowler(gs,dt,nw);   /* his overlay would paste itself over the replay */
@@ -5684,7 +5820,7 @@ __shot:function(ox,spin,pw,aim){   /* runs the ghost sim headlessly and reports 
     hookBoards:headX===null?null:+((headX-x0)/0.0254).toFixed(1),
     travelS:headT===null?null:+headT.toFixed(2),profile:prof,
     entryDeg:ang===null?null:+ang.toFixed(2),gutter:gut};},
-__chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
+__lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFixed(3):null,dl:+dl.intensity.toFixed(3),mid:+midL.intensity.toFixed(2),pin:+pinLight.intensity.toFixed(2),pit:+pitGlow.intensity.toFixed(2),led:+ledLight.intensity.toFixed(2),floor:+cosFloorMat.opacity.toFixed(3),floorVis:cosFloor.visible,bKey:+bKey.intensity.toFixed(3),bFill:+bFill.intensity.toFixed(3),bRim:+bRim.intensity.toFixed(2),bUnder:+bUnder.intensity.toFixed(3),bHemi:+bHemi.intensity.toFixed(3),skyCol:hemi?hemi.color.getHexString():null,rimCol:bRim.color.getHexString(),pinEmis:+(pinMats[Object.keys(pinMats)[0]]?pinMats[Object.keys(pinMats)[0]].emissiveIntensity:0).toFixed(2)};},__truck:function(){if(!truck)return null;let mesh=0,tri=0,lights=0;truck.grp.traverse(o=>{if(o.isMesh){mesh++;const g=o.geometry;if(g&&g.index)tri+=g.index.count/3;else if(g&&g.attributes.position)tri+=g.attributes.position.count/3;}if(o.isLight)lights++;});return {meshes:mesh,triangles:Math.round(tri),lights:lights,gunPos:[+truck.gun.position.x.toFixed(3),+truck.gun.position.y.toFixed(3),+truck.gun.position.z.toFixed(3)]};},__deptPose:function(){if(!dept||!truck)return null;const T=truck.grp;return {t:+dept.t.toFixed(2),x:+T.position.x.toFixed(2),z:+T.position.z.toFixed(2),ry:+T.rotation.y.toFixed(2),wr:+truck.wheels[0].rotation.z.toFixed(1),gz:+truck.gun.position.z.toFixed(3),vis:T.visible};},__parkTruck:function(x,y,z,ry){if(!truck)truck=makeTruck();truck.grp.visible=true;truck.grp.position.set(x,y,z);truck.grp.rotation.y=ry||0;truck.lightR.intensity=6;truck.lightB.intensity=6;truck.headL.intensity=3.2;return true;},__chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
   L:[+(feet.L.x-b.x).toFixed(3),+feet.L.y.toFixed(3),+(feet.L.z-b.z).toFixed(3)],
   R:[+(feet.R.x-b.x).toFixed(3),+feet.R.y.toFixed(3),+(feet.R.z-b.z).toFixed(3)],
   hipY:+b.y.toFixed(3),reach:+LEG.reach.toFixed(3),crouch:+(LEG.crouch||0).toFixed(3),
