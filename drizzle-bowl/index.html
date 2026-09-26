@@ -4878,7 +4878,7 @@ function installReal(root,keepProc){
   const mats=[];root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.color&&!m.__base){if(!m.map){if(m.emissive)m.emissive.set(0x000000);m.emissiveMap=null;m.color.set(0x5a3b2c);} /* no skin texture came through: a plain dark tone, never a white glow */
     if(m.roughness!=null)m.roughness=Math.max(m.roughness,0.78);if(m.metalness!=null)m.metalness=0;m.flatShading=false;if(m.emissiveIntensity!=null)m.emissiveIntensity=0.3;if(m.specularIntensity!=null)m.specularIntensity=0.3;if(m.specularColor)m.specularColor.setScalar(1);if(m.map){m.map.anisotropy=8;m.map.needsUpdate=true;}m.needsUpdate=true;m.__base=m.color.clone();m.__rough=m.roughness!=null?m.roughness:0.78;mats.push(m);}});}});
   const ws=bones.wrR.getWorldScale(new THREE.Vector3()).x||1;
-  const hb=new THREE.Mesh(ballGeo,ballMat);bones.wrR.add(hb);hb.scale.setScalar(1/ws);
+  const hb=new THREE.Mesh(ballGeo,ballMat.clone());hb.material.transparent=true;bones.wrR.add(hb);hb.scale.setScalar(1/ws);
   hb.position.copy(bones.wrR.worldToLocal(wp(bones.wrR).add(restD.wrR.clone().multiplyScalar(0.16))));   /* the ball hangs a hand's length past the wrist */
   /* His legs are not our legs. Solving against our own bone lengths aimed the scan's thigh and shin
      correctly but put its foot wherever its own proportions happened to land, which is why the foot
@@ -4886,6 +4886,7 @@ function installReal(root,keepProc){
      sole, in the bowler's units, and solve against those instead. */
   const legLen={};
   const cloth=makeCloth(root,bones);
+  relB.home={parent:bones.wrR,pos:hb.position.clone(),quat:hb.quaternion.clone(),scale:hb.scale.clone()};
   real={root,bones,restQ,restD,mats,ball:hb,sc,ws,legLen,ankY:null,cloth,box:{h:+(box.max.y-box.min.y).toFixed(3),w:+(box.max.x-box.min.x).toFixed(3)}};
   bowler.add(root);bowler.children.forEach(c=>{if(c!==root&&c!==bowler.userData.shadow)c.visible=!!keepProc;});
   return real;
@@ -4911,7 +4912,39 @@ function setBone(k,delta){const b=real.bones[k];if(!b||!real.restQ[k])return;
   b.parent.updateWorldMatrix(true,false);b.parent.getWorldQuaternion(_rq2).premultiply(_bq);  /* the parent, bowler frame */
   b.quaternion.copy(_rq2.invert().multiply(_rq));}
 function aimBone(k,dir){const rd=real.restD[k];if(!rd)return;setBone(k,_rq3.setFromUnitVectors(rd,_rv.copy(dir).normalize()));}
+/* The same, plus a twist about the direction it is aimed along. aimBone alone can only point a
+   bone; it cannot turn the hand over, and turning the hand over IS the release: the hand is held
+   behind the ball until the thumb comes out, then it rotates from about four o'clock round to
+   about eight, which is what lifts the ball rather than pushing it. */
+const _rqR=new THREE.Quaternion();
+function aimBoneRoll(k,dir,roll){const rd=real.restD[k];if(!rd)return;
+  _rv.copy(dir).normalize();
+  _rq3.setFromUnitVectors(rd,_rv);
+  if(roll)_rq3.premultiply(_rqR.setFromAxisAngle(_rv,roll));
+  setBone(k,_rq3);}
 const qx=a=>new THREE.Quaternion().setFromAxisAngle(XA,a),qy=a=>new THREE.Quaternion().setFromAxisAngle(YA,a),qz=a=>new THREE.Quaternion().setFromAxisAngle(ZA,a);
+/* THE BALL LEAVING HIS HAND. It used to switch off the instant the pose passed the release, so
+   the ball simply disappeared from his fingers. The lane ball is created away at the foul line,
+   which sits 228px below the bottom of the frame, so the throw had no visible moment of letting
+   go at all. Now the ball leaves the hand: it keeps the speed the hand had, carries on under
+   gravity in his own scene, and fades as the lane ball takes over down the lane. */
+const relB={on:false,t:0,v:new THREE.Vector3(),vel:new THREE.Vector3(),lastP:new THREE.Vector3(),lastT:0,home:null};
+const _relP=new THREE.Vector3();
+function relRestore(){
+  if(!real||!relB.home)return;
+  const h=relB.home;h.parent.add(real.ball);
+  real.ball.position.copy(h.pos);real.ball.quaternion.copy(h.quat);real.ball.scale.copy(h.scale);
+  real.ball.material.opacity=1;real.ball.visible=false;relB.on=false;relB.t=0;
+}
+function relStep(dt){
+  if(!relB.on||!real)return;
+  relB.t+=dt;
+  relB.v.y-=7.4*dt;                                   /* it falls the way it would */
+  real.ball.position.addScaledVector(relB.v,dt);
+  real.ball.rotation.x-=dt*9;
+  real.ball.material.opacity=Math.max(0,1-relB.t/0.30);
+  if(relB.t>=0.30)relRestore();
+}
 function driveReal(){ /* read the control rig's joint angles (already smoothed) and pose the scan's skeleton to match */
   const U=bowler.userData,A=U.arms,L=U.legs,B=U.B;
   bowler.getWorldQuaternion(_bq).invert();
@@ -4923,7 +4956,8 @@ function driveReal(){ /* read the control rig's joint angles (already smoothed) 
     const qs=qx(sp).multiply(qx(sh.x)).multiply(qz(sh.z));                    /* chest, then the shoulder joint */
     aimBone('sh'+s,_rv2.copy(DOWN).applyQuaternion(qs));
     const qe=qs.clone().multiply(qx(el));aimBone('el'+s,_rv2.copy(DOWN).applyQuaternion(qe));
-    aimBone('wr'+s,_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))));
+    if(s==='R')aimBoneRoll('wrR',_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))),U.relRoll||0);
+    else aimBone('wr'+s,_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))));
     /* The legs were qx(hp) and qx(hp+kn): one plane, no roll, so they could only ever swing like a
        pendulum. Aim them along the solved thigh and shin instead, the way the arms already work. */
     const ld=U.legDir&&U.legDir[s];
@@ -4931,7 +4965,22 @@ function driveReal(){ /* read the control rig's joint angles (already smoothed) 
     else{const hp=L[s].hp.rotation.x,kn=L[s].kn.rotation.x;setBone('hp'+s,qx(hp));setBone('kn'+s,qx(hp+kn));}
     setBone('an'+s,qx(-lean));});
   setBone('hips',qy(B.pelvis.rotation.y).multiply(qz(B.pelvis.rotation.z)));
-  real.ball.visible=A.R.ball.visible;
+  /* measure how fast the hand is actually moving, so the ball leaves with the swing's speed
+     rather than a number I picked */
+  const nw2=performance.now()/1000;
+  real.ball.getWorldPosition(_relP);
+  if(relB.lastT&&!relB.on){const dt2=nw2-relB.lastT;
+    if(dt2>0.004&&dt2<0.5){relB.vel.subVectors(_relP,relB.lastP).divideScalar(dt2);
+      if(relB.vel.length()>9)relB.vel.setLength(9);}}
+  relB.lastP.copy(_relP);relB.lastT=nw2;
+  const want=A.R.ball.visible;
+  if(!relB.on){
+    if(real.ball.visible&&!want&&relB.home){      /* the pose just passed the release */
+      bScene.attach(real.ball);                   /* keep it exactly where the hand left it */
+      relB.on=true;relB.t=0;relB.v.copy(relB.vel);
+      real.ball.visible=true;real.ball.material.opacity=1;
+    }else real.ball.visible=want;
+  }else if(want)relRestore();                     /* a new ball is in his hand: stop the old flight */
 }
 loadRealBowler();
 let bVis=false,bRollT=0,bLastPhase='';let bCamOv=null,bPrevTx=null;const walk={amt:0,dir:1,phase:0};
@@ -5180,21 +5229,64 @@ function poseBowler(gs,dt,nw){
     const lf=sstep(0.04,0.62,u);      /* forward lean: set by the power step, then held */
     const pw=sstep(0.36,0.64,u);      /* knees loading through the power step */
     const bal=sstep(0.22,0.68,u);     /* the balance arm out, and staying out */
-    t={lean:-0.10-0.34*lf-0.03*fol,spine:-0.05-0.09*lf,
+    /* The thumb clearing the ball: nothing turns before this. Both this window and the finger
+       curl below used to run PAST the release -- to 0.888 and 0.90 -- but the throw hands over to
+       the roll at 0.87, and the roll clock reports u=1 on its very first frame. So these two curves
+       were being yanked from part-way to finished in a single frame, a 23-degree snap of the
+       fingers and 19 of the wrist at the one moment the whole animation is about. They finish
+       exactly ON the release now, which is also what really happens: the thumb is out of the ball
+       before it leaves, not after. Everything past that point belongs to the follow-through
+       curves, which are tangent-matched and carry on smoothly. */
+    const thumbOut=sstep(0.842,0.870,u);
+    /* THE KINETIC CHAIN. The hips used to be slaved to the arm -- pelvY was literally the swing
+       angle times a constant -- so the arm led and the body followed it, which is backwards. A
+       throw runs the other way, from the ground up: the foot plants, the hips fire and then BRAKE,
+       and it is the braking that whips the torso; the torso brakes and whips the shoulder; the arm
+       is the last link to arrive. So each link gets its own clock, peaking about six hundredths
+       after the one below it, and each one is mostly braked out by the time the ball goes -- the
+       arm reaches the line with everything behind it already slowing down, which is where the speed
+       comes from. Rise, then give it up: that is the whole shape. */
+    const link=(a,b,c)=>sstep(a,b,u)-0.85*sstep(b,c,u);
+    const kHip=link(0.40,0.64,0.84),   /* hips first, off the plant */
+          kTor=link(0.46,0.70,0.88),   /* torso, a beat behind them */
+          kSho=link(0.52,0.76,0.92);   /* shoulder last, still going as the ball leaves */
+    /* the pushaway is the one part where the arm really does lead -- he is pushing the ball out
+       and the shoulders react to it -- so the old arm coupling is kept there and handed over to
+       the chain as the downswing starts */
+    const early=1-sstep(0.30,0.52,u);
+    /* WHAT THE BALL WEIGHS. Sixteen pounds on the end of a straight arm is a real load, and it is
+       biggest at the bottom of the swing where the arm is moving fastest: it drags the arm out away
+       from the body and it compresses the leg he is standing on. Differencing the swing curve gives
+       the angular speed, and the load goes as its square, which is just centripetal force. */
+    const swV=(keyed(SW_ARM,Math.min(1,u+0.012))-keyed(SW_ARM,Math.max(0,u-0.012)))/0.024;
+    const load=Math.min(1,swV*swV/97);   /* 97 is the curve's own peak, so this is a smooth arch and not a clipped plateau */
+    /* A body does not arrive at a pose and stop dead on it. After the ball is gone the torso
+       carries a little past where it is going and rocks back onto the slide leg -- a settle that
+       dies out in about half a second. It is small on purpose: the finish is supposed to look
+       held, not wobbly. */
+    const settle=rl>0?Math.exp(-rl*6.5)*Math.sin(rl*15.5)*0.030:0;
+    t={lean:-0.10-0.34*lf-0.03*fol+settle,spine:-0.05-0.09*lf-settle*0.6-0.045*kSho,
        /* he finishes DEEP: 0.27 of a 0.71m leg, which is the chin-over-the-knee the coaching
           books ask for. At 0.185 he was barely crouching. */
-       bob:-Math.abs(Math.sin(P))*0.022*(1-lg)-0.055*pw*(1-lg)-0.27*lg,
+       bob:-Math.abs(Math.sin(P))*0.022*(1-lg)-0.055*pw*(1-lg)-0.27*lg-0.013*load,
        hz:-0.74*sstep(0.02,0.80,u)-0.05*fol,
        shL:[0.25+0.66*bal,0,-(0.7+0.95*bal)],elL:0.88-0.66*bal,
-       shR:[swR,0,0.16],elR:elR,
-       curl:0.8-0.6*sstep(0.82,0.88,u),
-       slide:lg,headX:0.22+0.1*u,headY:0,wr:wr,yaw:0,
-       /* the hips lag the shoulders through the swing and square up again by the release */
-       pelvY:-swR*0.030,pelvZ:0,
+       shR:[swR,0,0.16+0.065*load],elR:elR,   /* the ball's own weight pulling the arm off his side */
+       /* THE RELEASE, in the order it really happens. The hand stays behind the ball the whole way
+          down -- turning early is the classic fault and it kills the lift. The thumb comes out
+          first, and only then does the hand turn over, from about four o'clock round to about
+          eight, which is what lifts the ball instead of pushing it. The wrist opens on the same
+          beat: that is the fingers coming out. */
+       relRoll:-0.55+1.30*Math.min(1,thumbOut*0.45+fol*0.55),
+       curl:0.82-0.72*sstep(0.842,0.870,u)-0.10*fol,
+       slide:lg,headX:0.22+0.1*u,headY:0,wr:wr+0.30*thumbOut+0.22*fol,yaw:0,
+       /* hips: open off the plant, then square up into the release, and drop onto the slide
+          leg as they do -- the weight going across is what he is throwing with */
+       pelvY:-swR*0.030*early+0.062*kHip,pelvZ:0.055*kHip,
        /* shoulders counter-rotate against the swing, and the spine tilts away from the ball
           into the slide and holds there */
-       spineY:-swR*0.075,
-       spineZ:-0.17*sstep(0.40,0.72,u)};
+       spineY:-swR*0.075*early+0.115*kTor,
+       spineZ:-0.17*sstep(0.40,0.72,u)+settle*0.45};
   }
   else if(soakT>0){ /* soaked: hunched, hugging himself with the free arm, shivering; this outranks cheering */
     const sv=Math.min(1,soakT/2);t={lean:0.02,spine:0.14*sv,bob:Math.sin(nw*27)*0.007*sv,hz:Math.sin(nw*31)*0.004*sv,shL:[1.05,0,0.55],elL:2.25,shR:[0.55,0,0.28],elR:1.15,curl:0.75,hpL:-0.14,knL:-0.26,hpR:-0.14,knR:-0.26,headX:0.32,headY:Math.sin(nw*23)*0.035*sv};}
@@ -5236,6 +5328,7 @@ function poseBowler(gs,dt,nw){
   ['L','R'].forEach(s=>{const sh=A[s].sh,tt=t['sh'+s];lp(sh.rotation,'x',tt[0]);lp(sh.rotation,'z',tt[2]);lp(A[s].el.rotation,'x',t['el'+s]);});
   placeFeet(gs,dt,t.slide||0,tp);solveLegs();
   lp(A.R.wr.rotation,'x',t.wr!=null?t.wr:-0.3);A.L.wr.rotation.x=-0.2;
+  U.relRoll=(U.relRoll||0)+((t.relRoll||0)-(U.relRoll||0))*k;   /* the hand turning over through the release */
   curlHand(A.R.hand,t.curl);curlHand(A.L.hand,0.35);
   /* a person keeps their head level and their eyes on the target; a rig that does not looks like a
      mannequin being carried. Whatever the torso does, the head takes most of it back. */
@@ -5251,6 +5344,22 @@ function poseBowler(gs,dt,nw){
    the ripple rises with how fast he is moving and with the swing itself. */
 const _clv=new THREE.Vector3(),_cla=new THREE.Vector3(),_clp=new THREE.Vector3(),_clq=new THREE.Quaternion();
 let _clHave=false,_clT=0;
+/* THE SHIRT, as a damped spring rather than a follower.
+   It used to be driven straight off his velocity: the offset was just "how fast is he going,
+   pushed the other way". That can lag, but it can never overshoot and it can never settle --
+   stop moving and it eases to zero in a straight line, which is why it read as attached rather
+   than worn. Fabric responds to ACCELERATION, not speed: it gets left behind when he starts,
+   thrown forward when he stops, and then swings a couple of times and comes to rest. So the
+   offset is a mass on a spring now, driven by his acceleration, with enough damping to settle in
+   about half a second. Three floats of state; no solver, no cost. */
+/* K sets how stiff the cloth is held, C how fast it gives up its wobble (C/2sqrt(K) = 0.69, just
+   under critical, so it overshoots once and is at rest in about six tenths), M is how heavy the
+   fabric is and MX how far it is allowed to trail. M is the number that matters: the steady offset
+   is M*a/K, so at the fastest he can actually accelerate -- BW_A, 4.6 m/s^2 -- M=0.63 trails the
+   shirt about 3 cm, which reads. At the 0.06 I first wrote it was 3 mm, invisible, and the only
+   thing that ever moved the shirt was frame-rate noise hitting the clamp. */
+const CL={K:96,C:13.5,M:0.63,MX:0.052,SAG:0.010,VMAX:6,AMAX:9};
+const _clAcc=new THREE.Vector3(),_clAcR=new THREE.Vector3(),_clOff=new THREE.Vector3(),_clOv=new THREE.Vector3(),_clPrevV=new THREE.Vector3();
 function stepCloth(dt,gs){
   if(!real||!real.cloth||dt<=0)return;
   const U=real.cloth.U;
@@ -5259,26 +5368,38 @@ function stepCloth(dt,gs){
   if(!_clHave){_clp.copy(p);_clHave=true;}
   _cla.set((p.x-_clp.x)/dt,(p.y-_clp.y)/dt,(p.z-_clp.z)/dt);    /* velocity this frame */
   _clp.copy(p);
-  const k=1-Math.exp(-dt*18);
-  _clv.lerp(_cla,k);                                            /* smoothed, so one long frame cannot snap it */
-  /* the shirt lags the body: push it against the direction of travel, and cap it so a teleporting
-     aim flick cannot tear it off him */
-  /* A soft knee rather than a hard cap. His aim spring can move him at 22 m/s, so a linear lag with a
-     ceiling sits pinned at the ceiling through every move, and a shirt that is always at full stretch
-     reads as yanked rather than draped. This is proportional when he is ambling and eases into the
-     limit when he is not. */
-  const mx=0.038,sp0=_clv.length();
-  _cla.copy(_clv);
-  if(sp0>1e-5)_cla.setLength(-mx*(1-Math.exp(-sp0/1.8)));else _cla.set(0,0,0);
+  if(_cla.length()>CL.VMAX)_cla.setLength(CL.VMAX);             /* a long frame cannot invent a speed he cannot reach */
+  _clv.lerp(_cla,1-Math.exp(-dt*18));                           /* smoothed, so one long frame cannot snap it */
+  /* His acceleration is what the fabric actually feels. Differencing per frame divides by dt, so on
+     a stuttering phone the noise comes out twenty times bigger than the signal -- which is exactly
+     what was driving the shirt before. So it is low-passed at a fixed ten per second and capped a
+     little above the 4.6 he can really manage: frame rate now changes how smooth this is, not how
+     big it is. */
+  _clAcR.subVectors(_clv,_clPrevV).divideScalar(Math.max(dt,1e-3));
+  _clPrevV.copy(_clv);
+  if(_clAcR.length()>CL.AMAX)_clAcR.setLength(CL.AMAX);
+  _clAcc.lerp(_clAcR,1-Math.exp(-dt*10));
+  /* mass on a spring: pulled by his acceleration, pulled back by the spring, bled off by damping */
+  _clOv.addScaledVector(_clOff,-CL.K*dt)
+       .addScaledVector(_clOv,-CL.C*dt)
+       .addScaledVector(_clAcc,-CL.M*dt);
+  _clOff.addScaledVector(_clOv,dt);
+  _clOff.y-=CL.SAG*dt*8;                                        /* and it hangs: the hem is always being pulled down */
+  if(_clOff.length()>CL.MX){_clOff.setLength(CL.MX);_clOv.multiplyScalar(0.55);}  /* it can stretch only so far */
+  _cla.copy(_clOff);
   real.root.getWorldQuaternion(_clq).invert();
   _cla.applyQuaternion(_clq);                                   /* into the scan's own frame */
-  U.uClothLag.value.lerp(_cla,1-Math.exp(-dt*12));
-  const ph=gs&&gs.phase,sp=Math.min(1,_clv.length()/2.4);
-  let flap=0.25+0.75*sp;
+  U.uClothLag.value.copy(_cla);
+  /* how much the surface itself ripples: driven by speed, and it keeps rippling briefly after he
+     stops rather than going flat the moment he does */
+  const ph=gs&&gs.phase,sp=Math.min(1,_clv.length()/2.4);   /* _clv is speed-capped above, so this cannot be pinned at 1 by a bad frame */
+  let flap=0.22+0.78*sp;
   if(ph==='throw'||ph==='roll')flap=Math.max(flap,0.85);
   if(gs&&gs.cheer>0)flap=Math.max(flap,1.0);
-  U.uClothFlap.value+=(flap-U.uClothFlap.value)*(1-Math.exp(-dt*9));
+  const rise=flap>U.uClothFlap.value;
+  U.uClothFlap.value+=(flap-U.uClothFlap.value)*(1-Math.exp(-dt*(rise?11:3.2)));  /* quick to lift, slow to fall */
 }
+
 function renderBowler(gs,dt,nw){
   updateSoak(dt);
   const ph=gs.phase;
@@ -5291,6 +5412,7 @@ function renderBowler(gs,dt,nw){
   const px=(gs.bowlerPx!=null?gs.bowlerPx:LW/2)-LW/2,tx=Math.max(-BXMAX,Math.min(BXMAX,px/(bPxPerM*BSCALE)));
   if(!bVis){bowler.position.x=tx;bPrevTx=tx;_fpx=null;_fpz=null;feetHome(tx,bowler.position.z);if(ph!=='roll'&&ph!=='throw')poseBowler(gs,1,nw);return;} /* while hidden he snaps straight to his mark and his stance: nothing to slide or settle when he reappears */
   const dxw=(tx-bowler.position.x)*(1-Math.exp(-dt*34));bowler.position.x+=dxw;
+  relStep(dt);
   stepCloth(dt,gs);   /* the spring upstream already shaped the move; this only takes the last edge off */
   /* Speed and facing come off the mark he is walking to, not off his own trailing position: an un-lagged
      signal, so his legs start with his body instead of catching up to it. And walk.dir is a blend now --
@@ -5503,7 +5625,18 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&blimpBanners.length&&blimpBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
+window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&blimpBanners.length&&blimpBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__cam:function(v){bCamOv=v||null;},__relRoll:function(){return +(bowler.userData.relRoll||0).toFixed(3);},__relFly:function(){return {on:relB.on,t:+relB.t.toFixed(2),op:real?+real.ball.material.opacity.toFixed(2):null,inHand:!!(real&&relB.home&&real.ball.parent===relB.home.parent),vis:!!(real&&real.ball.visible),pos:real?[+real.ball.position.x.toFixed(4),+real.ball.position.y.toFixed(4),+real.ball.position.z.toFixed(4)]:null,homePos:relB.home?[+relB.home.pos.x.toFixed(4),+relB.home.pos.y.toFixed(4),+relB.home.pos.z.toFixed(4)]:null};},__handPx:function(){ /* where the held ball actually is on screen, through the bowler's own camera */
+  if(!real)return null;const p=new THREE.Vector3();real.ball.getWorldPosition(p);
+  p.project(bCam);
+  return [+((p.x*0.5+0.5)*LW).toFixed(1),+(400+(1-(p.y*0.5+0.5))*VH).toFixed(1)];},
+__spawnPx:function(ox){ /* and where the physics ball is created, through the lane camera */
+  const r=projHud((ox||0)*1.30,BR+0.002,2.30);return [+r[0].toFixed(1),+r[1].toFixed(1)];},
+__unproj:function(px,py){const r=unprojHome(px,py);return r?[+r[0].toFixed(3),+r[1].toFixed(3),+r[2].toFixed(1)]:null;},
+
+__hand:function(){if(!real)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();
+  real.bones.wrR.getWorldPosition(p);real.ball.getWorldPosition(q);
+  return {wrist:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)],ball:[+q.x.toFixed(3),+q.y.toFixed(3),+q.z.toFixed(3)],vis:real.ball.visible};},
+__chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
   L:[+(feet.L.x-b.x).toFixed(3),+feet.L.y.toFixed(3),+(feet.L.z-b.z).toFixed(3)],
   R:[+(feet.R.x-b.x).toFixed(3),+feet.R.y.toFixed(3),+(feet.R.z-b.z).toFixed(3)],
   hipY:+b.y.toFixed(3),reach:+LEG.reach.toFixed(3),crouch:+(LEG.crouch||0).toFixed(3),
