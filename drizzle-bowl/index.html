@@ -1650,7 +1650,7 @@ function finishRoll(){
      which is the throw that most deserves the hose. */
   var dept=wasFire&&!strike;
   var spare=!strike&&fr.length>=2&&fr[fr.length-2]!==10&&fr[fr.length-2]+n===10;
-  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;g.fx={type:'clamp',t:0};if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});setTimeout(sfx.chomp,980);setTimeout(sfx.laugh,1320);if(g.streak>=2){setTimeout(sfx.chant,1500);setTimeout(sfx.chant,2150);}}
+  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;g.fx={type:'clamp',t:0};if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});setTimeout(sfx.chomp,980);setTimeout(function(){if(USE3D&&window.B3D&&B3D.clampPins)B3D.clampPins();},980);setTimeout(sfx.laugh,1320);if(g.streak>=2){setTimeout(sfx.chant,1500);setTimeout(sfx.chant,2150);}}
   else if(spare){m='DRIZZLE!';sfx.spare();g.cheer=1.6;g.fx={type:'drizzle',t:0};g.crowd.forEach(function(c){if(c.phone&&Math.random()<0.6)c.flashT=0.3+Math.random()*0.5;});setTimeout(sfx.pour,150);setTimeout(sfx.laugh,900);}
   else if(dept){m='\ud83d\ude92 FIRE DEPARTMENT!';g.face='mad';g.faceT=7;sfx.siren();setTimeout(sfx.groan,900);setTimeout(sfx.spray,1750);setTimeout(sfx.steam,2400);setTimeout(sfx.spray,4400);setTimeout(sfx.laugh,5600);setTimeout(sfx.giggle,6100);
     if(USE3D&&B3D.fireDept)B3D.fireDept();else setTimeout(soakLens,5300);}
@@ -1740,31 +1740,39 @@ function drawCover(i,x,y,w,h,tilt,alpha){
 
 /* ---------- strike / spare animations ---------- */
 function easeOut(t){return 1-Math.pow(1-t,3);}
-function drawTeeth(y,up,close){ /* one jaw: curved lip, gums, a row of teeth */
-  var L=72,R=W-72,cx=W/2,curve=up?26:-26;
-  /* lip + mouth interior behind it */
-  ctx.fillStyle='#5a0f14';ctx.beginPath();ctx.moveTo(L,up?y-140:y+140);ctx.lineTo(R,up?y-140:y+140);ctx.lineTo(R,y);ctx.quadraticCurveTo(cx,y+curve*1.4,L,y);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#b8322c';ctx.beginPath();ctx.moveTo(L,up?y-26:y+26);ctx.lineTo(R,up?y-26:y+26);ctx.lineTo(R,y-curve*0.2);ctx.quadraticCurveTo(cx,y+curve*1.3,L,y-curve*0.2);ctx.closePath();ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(L,up?y-26:y+26);ctx.lineTo(R,up?y-26:y+26);ctx.lineTo(R,up?y-18:y+18);ctx.lineTo(L,up?y-18:y+18);ctx.fill();
-  /* tongue in the lower jaw */
-  if(!up){ctx.fillStyle='#d8536a';ctx.beginPath();ctx.ellipse(cx,y+60,90,44,0,Math.PI,0);ctx.fill();ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.ellipse(cx-25,y+40,30,10,0,0,7);ctx.fill();}
-  /* teeth follow the lip curve */
-  var n=9,tw=(R-L)/n;
-  for(var k=0;k<n;k++){var x=L+k*tw+2,f=(k+0.5)/n,lipY=y+curve*1.3*(1-Math.pow((f-0.5)*2,2));var tall=(k===3||k===5)?30:(k===4?26:22);if(k===0||k===n-1)tall=16;
-    ctx.fillStyle='#fffbf0';if(up)rr(x,lipY-8,tw-4,tall,5);else rr(x,lipY-tall+8,tw-4,tall,5);ctx.fill();
-    ctx.fillStyle='rgba(0,0,0,.1)';ctx.fillRect(x+1,up?lipY+tall-14:lipY-tall+8,tw-6,4);}
-}
+/* THE CLAMP. No teeth anywhere any more -- drawing a convincing set in two dimensions was a losing
+   fight, and they were never what the moment is about. Something big passes over the deck, the room
+   goes dark under it, and when the light comes back the tops are off the pins. The eating happens
+   in 3D, on the pins themselves, where it can be watched; all this does is throw the shadow, so it
+   deliberately keeps the middle of the frame clear rather than covering the very thing you want to
+   see happen. */
 function drawClamp(t){
-  /* jaws close from above and below the pin deck, hold, then open */
-  var close=t<0.35?easeOut(t/0.35):t<0.8?1:1-easeOut((t-0.8)/0.7);
-  var gap=170*(1-close)+8;
-  var cy=250;
+  var CH=0.98;                                   /* the shadow lands on the beat of the chomp */
+  var close=t<CH?Math.pow(Math.min(1,t/CH),1.7):Math.max(0,1-(t-CH)/0.42);
+  if(close<=0.002)return;
   ctx.save();ctx.beginPath();ctx.rect(72,0,W-144,TOP.h);ctx.clip();
-  if(close>0.98){ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(72,0,W-144,TOP.h);}
-  drawTeeth(cy-gap/2,true,close);
-  drawTeeth(cy+gap/2,false,close);
-  /* crumbs flying at the bite */
-  if(t>0.3&&t<0.9){ctx.fillStyle='#fbe9c4';for(var i=0;i<14;i++){var a=i*0.45+t*3,r=(t-0.3)*260;ctx.beginPath();ctx.arc(W/2+Math.cos(a)*r,cy+Math.sin(a)*r*0.5,3,0,7);ctx.fill();}}
+  /* something crossing the lights: darkness rolling in from above and below, heaviest at the edges
+     so the deck in the middle stays readable */
+  var band=TOP.h*0.46*close;
+  var gTop=ctx.createLinearGradient(0,0,0,band);
+  gTop.addColorStop(0,'rgba(2,1,2,'+(0.94*close)+')');gTop.addColorStop(1,'rgba(2,1,2,0)');
+  ctx.fillStyle=gTop;ctx.fillRect(72,0,W-144,band);
+  var gBot=ctx.createLinearGradient(0,TOP.h,0,TOP.h-band);
+  gBot.addColorStop(0,'rgba(2,1,2,'+(0.94*close)+')');gBot.addColorStop(1,'rgba(2,1,2,0)');
+  ctx.fillStyle=gBot;ctx.fillRect(72,TOP.h-band,W-144,band);
+  /* and a squeeze from the sides, so it reads as something closing rather than a curtain dropping */
+  var side=(W-144)*0.30*close;
+  var gL=ctx.createLinearGradient(72,0,72+side,0);
+  gL.addColorStop(0,'rgba(2,1,2,'+(0.85*close)+')');gL.addColorStop(1,'rgba(2,1,2,0)');
+  ctx.fillStyle=gL;ctx.fillRect(72,0,side,TOP.h);
+  var gR=ctx.createLinearGradient(W-72,0,W-72-side,0);
+  gR.addColorStop(0,'rgba(2,1,2,'+(0.85*close)+')');gR.addColorStop(1,'rgba(2,1,2,0)');
+  ctx.fillStyle=gR;ctx.fillRect(W-72-side,0,side,TOP.h);
+  /* the snap of light as it takes them */
+  if(t>=CH-0.05&&t<CH+0.10){
+    var f=1-Math.abs(t-CH)/0.10;
+    ctx.fillStyle='rgba(255,246,226,'+(0.5*Math.max(0,f))+')';ctx.fillRect(72,0,W-144,TOP.h);
+  }
   ctx.restore();
 }
 function drawDrizzle(t){pourDrizzle(t,W/2,172,318,1);
@@ -2576,8 +2584,12 @@ window.__showHalf=showHalftime;
     var chow=flat||!lane||!B3D.__food||B3D.__food();   /* the plates are carved from the atlas on the way in */
     var n=(lane?1:0)+(real?1:0)+(crowd?1:0)+(chow?1:0),secs=(Date.now()-t0)/1000;
     bar.style.width=Math.max(10,Math.min(100,Math.round(n/4*100)))+'%';
-    if(secs>3.5)note.textContent='ALMOST THERE\u2026';
-    if((real&&crowd&&chow)||secs>10){clearInterval(iv);bar.style.width='100%';
+    var pct=window.__glbPct||0;
+    if(!real&&pct>0&&pct<100)note.textContent='LOADING ANTIDOTE\u2026 '+pct+'%';
+    else if(secs>3.5)note.textContent='ALMOST THERE\u2026';
+    /* 10 s was not long enough for a 3.8 MB scan on a phone, and when it ran out the card came down
+       on the stand-in. It waits 24 s now, and gives up early only if the fetch has actually failed. */
+    if((real&&crowd&&chow)||window.__glbFail||secs>24){clearInterval(iv);bar.style.width='100%';
       el.classList.add('off');setTimeout(function(){el.style.display='none';},420);}
   },110);
 })();
@@ -2648,17 +2660,39 @@ const pinE=bake(256,512,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);g.fillS
 const cityT=bake(512,128,(g,w,h)=>{g.fillStyle='#1a1016';g.fillRect(0,0,w,h);g.fillStyle='#120b0d';
   for(let x=0;x<w;){const bw=20+Math.random()*44,bh=30+Math.random()*80;g.fillRect(x,h-bh,bw,bh);x+=bw+6;}
   g.fillStyle='#f2a81d';for(let i=0;i<70;i++){g.globalAlpha=0.3+Math.random()*0.6;g.fillRect(Math.random()*w,h*0.35+Math.random()*h*0.6,2,2);}g.globalAlpha=1;});
-function pinTexture(food){const t=pinTexture0(food);const g=t.image.getContext('2d');
+/* REAL FOOD ON THE PINS. Each pin carried a 96-pixel emoji glyph, which is what made them read as
+   cartoon. assets/food.png is already in the build -- eight keyed photographs of real plates, used
+   for the props that scatter on the lane -- so the pins use those instead. The sheet is 4x2 and its
+   cell order is burger, pizza, taco, hot dog / fries, donut, shrimp, waffle, which is NOT the order
+   the FOODS list is in, so this maps them by hand rather than by index. Two of the ten -- the salad
+   and the drink -- have no photograph on the sheet, so they keep their emoji rather than wear
+   somebody else's dinner. */
+const FOOD_CELL=[4,1,0,7,-1,3,5,-1,6,2];
+/*              fries,pizza,burger,bread(waffle),salad:none,hotdog,donut,drink:none,sushi(shrimp),taco */
+function pinTexture(food,fi){const t=pinTexture0(food,fi);const g=t.image.getContext('2d');
   /* the LED channel cut into the neck: dark groove, lit floor */
   g.fillStyle='#14100f';g.fillRect(0,158,256,14);g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,156,256,3);g.fillRect(0,171,256,3);g.fillStyle='rgba(255,255,255,.14)';g.fillRect(0,174,256,1);
   t.needsUpdate=true;return t;}
-function pinTexture0(food){return bake(256,512,(g,w,h)=>{
+function pinTexture0(food,fi){return bake(256,512,(g,w,h)=>{
   const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#d9c39a');gr.addColorStop(0.35,'#fff6df');gr.addColorStop(0.6,'#fbe9c4');gr.addColorStop(1,'#c9ab7c');
   g.fillStyle=gr;g.fillRect(0,0,w,h);
   g.fillStyle='#b8322c';g.fillRect(0,h*0.325,w,h*0.030);g.fillRect(0,h*0.372,w,h*0.017);
   g.fillStyle='#1a1214';g.beginPath();g.arc(w*0.44,h*0.095,7,0,7);g.arc(w*0.56,h*0.095,7,0,7);g.fill();
   g.strokeStyle='#1a1214';g.lineWidth=5;g.beginPath();g.moveTo(w*0.43,h*0.150);g.quadraticCurveTo(w*0.5,h*0.175,w*0.57,h*0.150);g.stroke();
-  g.font='96px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(food&&food.e||'🍟',w*0.5,h*0.62);
+  const cell=(fi==null||FOOD_CELL[fi]==null)?-1:FOOD_CELL[fi];
+  let drew=false;
+  if(cell>=0&&foodImg){
+    /* the photograph, keyed, dropped onto the pin where the emoji used to sit */
+    const CW=foodImg.width/FOOD_COLS,CH=foodImg.height/FOOD_ROWS;
+    const sx=(cell%FOOD_COLS)*CW,sy=Math.floor(cell/FOOD_COLS)*CH;
+    const box=168,ar=CW/CH;let dw=box,dh=box/ar;
+    if(dh>box){dh=box;dw=box*ar;}
+    try{g.save();
+      g.shadowColor='rgba(0,0,0,.38)';g.shadowBlur=10;g.shadowOffsetY=4;   /* it sits ON the pin, not in it */
+      g.drawImage(foodImg,sx,sy,CW,CH,w*0.5-dw/2,h*0.62-dh/2,dw,dh);
+      g.restore();drew=true;}catch(e){}
+  }
+  if(!drew){g.font='96px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(food&&food.e||'🍟',w*0.5,h*0.62);}
 });}
 /* ---- static scenery ---- */
 const M=THREE.Mesh;
@@ -2982,6 +3016,44 @@ const btvT=new THREE.CanvasTexture(btvC);btvT.colorSpace=THREE.SRGBColorSpace;bt
 const btvFrame=new M(new THREE.BoxGeometry(7.5,4.3,0.16),new THREE.MeshBasicMaterial({color:0x0a0a0c}));btvFrame.position.set(4.6,4.95,-21.7);amb.add(btvFrame);
 const btvGlow=new M(new THREE.PlaneGeometry(9.4,6.0),new THREE.MeshBasicMaterial({color:0x7fb8ff,transparent:true,opacity:0.24,blending:THREE.AdditiveBlending,depthWrite:false}));btvGlow.position.set(4.6,4.95,-21.75);amb.add(btvGlow);
 const btv=new M(new THREE.PlaneGeometry(7.1,3.99),new THREE.MeshBasicMaterial({map:btvT,toneMapped:false}));btv.position.set(4.6,4.95,-21.6);amb.add(btv);
+/* ---------- CHASE LIGHTS around the big screen ----------
+   A marquee border of bulbs on the bezel, with colour running round the frame and a bright wave
+   chasing through it. They are one Points cloud rather than forty little spheres, so the whole
+   border costs a single draw call and the animation is just a colour buffer being rewritten. They
+   are unlit on purpose: bulbs are light sources, so they stay bright when the house goes cosmic. */
+const bulbT=bake(64,64,(g,w,h)=>{const r=g.createRadialGradient(32,32,0,32,32,30);
+  r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(0.35,'rgba(255,255,255,.85)');
+  r.addColorStop(0.7,'rgba(255,255,255,.22)');r.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r;g.fillRect(0,0,w,h);});
+const BULB_HX=3.64,BULB_HY=2.07,BULB_GAP=0.42;   /* on the bezel, just outside the 7.1 x 3.99 picture */
+const bulbPos=[];
+{const per=2*(2*BULB_HX+2*BULB_HY),n=Math.max(8,Math.round(per/BULB_GAP)),segW=2*BULB_HX,segH=2*BULB_HY;
+ for(let i=0;i<n;i++){
+   let d=(i/n)*per,x,y;
+   if(d<segW){x=-BULB_HX+d;y=BULB_HY;}                                  /* top, left to right */
+   else if(d<segW+segH){x=BULB_HX;y=BULB_HY-(d-segW);}                  /* right, down */
+   else if(d<2*segW+segH){x=BULB_HX-(d-segW-segH);y=-BULB_HY;}          /* bottom, right to left */
+   else{x=-BULB_HX;y=-BULB_HY+(d-2*segW-segH);}                         /* left, up */
+   bulbPos.push(x,y,0);}}
+const BULB_N=bulbPos.length/3;
+const bulbGeo=new THREE.BufferGeometry();
+bulbGeo.setAttribute('position',new THREE.Float32BufferAttribute(bulbPos,3));
+bulbGeo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(BULB_N*3),3));
+const btvBulbs=new THREE.Points(bulbGeo,new THREE.PointsMaterial({size:0.30,map:bulbT,vertexColors:true,
+  transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,toneMapped:false}));
+btvBulbs.position.set(4.6,4.95,-21.56);amb.add(btvBulbs);
+const _bulbC=new THREE.Color();
+function btvBulbTick(t){
+  const col=bulbGeo.attributes.color,a=col.array;
+  for(let i=0;i<BULB_N;i++){
+    const u=i/BULB_N;
+    /* one bright wave running round the frame, plus a slow hue drift so it never sits on one colour */
+    const chase=Math.pow(0.5+0.5*Math.sin((u*3-t*0.55)*Math.PI*2),3);
+    _bulbC.setHSL((u*0.55+t*0.06)%1,0.85,0.30+0.55*chase);
+    a[i*3]=_bulbC.r;a[i*3+1]=_bulbC.g;a[i*3+2]=_bulbC.b;
+  }
+  col.needsUpdate=true;
+}
 /* THE BIG SCREEN: food reviews and nothing else. A review preview plays up there when the clip will load,
    and the review artwork carries the screen when it will not. No follow-me promo on the jumbotron. */
 const btvHov=document.createElement('video');btvHov.muted=true;btvHov.playsInline=true;btvHov.setAttribute('playsinline','');btvHov.preload='auto';btvHov.crossOrigin='anonymous';
@@ -3024,9 +3096,22 @@ function drawBTV(t){
     try{btvG.save();btvG.globalAlpha=0.35;btvG.filter='blur(14px) brightness(0.6)';btvG.drawImage(btvHov,0,0,W2,H2);btvG.restore();btvG.drawImage(btvHov,bx,0,boxW,boxH);}catch(e){}
   }else if(covers.length){
     const per=6,idx=Math.floor(t/per)%covers.length,ph2=(t%per)/per,im=covers[idx];label=im.__name||'';
-    const zm=1.02+ph2*0.06,ar=im.naturalWidth/im.naturalHeight;
-    let tw,th;if(ar>W2/H2){th=H2*zm;tw=th*ar;}else{tw=W2*zm;th=tw/ar;}
-    btvG.drawImage(im,W2/2-tw/2-ph2*40,H2/2-th/2+ph2*18,tw,th);
+    const ar=im.naturalWidth/im.naturalHeight;
+    /* THE ARTWORK FITS THE SCREEN NOW. It used to be scaled to COVER the 16:9 frame and then zoomed
+       and panned on top of that. Every review cover is portrait -- 380x570, two by three -- so
+       covering a landscape screen threw away 62% of the picture and showed a zoomed middle band of
+       it, which is what read as stretched. It is CONTAINED instead: the whole cover is on screen,
+       nothing cropped, sitting on a blurred blow-up of itself so the frame is still filled edge to
+       edge. That is exactly the treatment the video already gets a few lines up, so the two match. */
+    const BH=H2-96;                       /* the label bar owns the bottom, same as the video */
+    let th=BH,tw=th*ar;
+    if(tw>W2){tw=W2;th=tw/ar;}
+    const ix=Math.round((W2-tw)/2),iy=Math.round((BH-th)/2);
+    try{btvG.save();btvG.globalAlpha=0.38;btvG.filter='blur(16px) brightness(0.55)';
+      /* the backdrop is the one that covers, so the sides are never dead black */
+      let bw,bh;if(ar>W2/H2){bh=H2;bw=bh*ar;}else{bw=W2;bh=bw/ar;}
+      btvG.drawImage(im,(W2-bw)/2,(H2-bh)/2,bw,bh);btvG.restore();}catch(e){}
+    btvG.drawImage(im,ix,iy,tw,th);
     /* broadcast punch: a touch of contrast + vignette so it reads crisp from the lane */
     btvG.globalCompositeOperation='overlay';btvG.fillStyle='rgba(255,255,255,.14)';btvG.fillRect(0,0,W2,H2);btvG.globalCompositeOperation='source-over';
     const vg=btvG.createRadialGradient(W2/2,H2/2,H2*0.45,W2/2,H2/2,H2*0.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.35)');btvG.fillStyle=vg;btvG.fillRect(0,0,W2,H2);
@@ -3053,19 +3138,28 @@ function drawBillboard(t){
   bbG.fillStyle='#0a0607';bbG.fillRect(0,0,1024,232);
   bbG.fillStyle='#b8322c';bbG.fillRect(0,0,1024,9);bbG.fillRect(0,223,1024,9);
   bbG.imageSmoothingEnabled=true;try{bbG.imageSmoothingQuality='high';}catch(e){}
-  const CW=214,step=CW+16,n=Math.max(1,covers.length),off=(t*26)%(step*n);
-  for(let k=-1;k<7;k++){
+  /* The tiles were 208 wide by 194 tall -- landscape -- and every cover is portrait two by three,
+     so a cover fit into one lost 38% of itself off the top and bottom. The frame is cut to the
+     artwork now rather than the artwork to the frame: 129 by 194 is two by three, so a cover drops
+     straight in. More of them fit across the board as a result, which is why the step shrank too. */
+  const BH2=194,BW2=Math.round(BH2*2/3),CW=BW2+6,step=CW+16,n=Math.max(1,covers.length),off=(t*26)%(step*n);
+  /* eight tiles no longer reach the right-hand edge at this narrower step: ten do, with room spare */
+  for(let k=-1;k<9;k++){
     const x=k*step-(off%step),idx=((Math.floor(off/step)+k)%n+n)%n,im=covers[idx];
     bbG.save();bbG.beginPath();
-    if(bbG.roundRect)bbG.roundRect(x+3,19,CW-6,194,10);else bbG.rect(x+3,19,CW-6,194);
+    if(bbG.roundRect)bbG.roundRect(x+3,19,CW-6,BH2,10);else bbG.rect(x+3,19,CW-6,BH2);
     bbG.clip();
-    if(im){const ar=im.naturalWidth/im.naturalHeight,BW=CW-6,BH=194;let tw,th;
-      if(ar>BW/BH){th=BH;tw=th*ar;}else{tw=BW;th=tw/ar;}
+    if(im){const ar=im.naturalWidth/im.naturalHeight,BW=CW-6,BH=BH2;
+      /* CONTAIN, not cover: with the frame cut to two by three this is a near-exact fit for every
+         cover, and the odd one that is not quite two by three gets a hairline bar instead of a crop */
+      bbG.fillStyle='#120c0e';bbG.fillRect(x+3,19,BW,BH);
+      let th=BH,tw=th*ar;
+      if(tw>BW){tw=BW;th=tw/ar;}
       bbG.drawImage(im,x+3+(BW-tw)/2,19+(BH-th)/2,tw,th);}
     else{bbG.fillStyle='#241a16';bbG.fillRect(x+3,19,CW-6,194);}
     bbG.restore();
     bbG.strokeStyle='#f2a81d';bbG.lineWidth=3;bbG.beginPath();
-    if(bbG.roundRect)bbG.roundRect(x+3,19,CW-6,194,10);else bbG.rect(x+3,19,CW-6,194);
+    if(bbG.roundRect)bbG.roundRect(x+3,19,CW-6,BH2,10);else bbG.rect(x+3,19,CW-6,BH2);
     bbG.stroke();
   }
   bbT.needsUpdate=true;
@@ -3112,9 +3206,9 @@ function ambient(dt,gs){
   ledPatT.offset.y-=ledPatSpeed*dt*(ledPat===3?0.5:1);   /* the light runs down the lane */
   if(ledT>8.5){ledT=0;ledCol=(ledCol+1)%LEDCOLS.length;const c2=LEDCOLS[ledCol];
     ledPat=(ledPat+1)%4;drawLedPattern(ledPat);ledPatSpeed=[0.9,0.35,1.4,0.6][ledPat];
-    ledStrips.forEach(m=>{m.material.color.set(c2);m.material.color.lerp(new THREE.Color(0xffffff),0.35);});ledArrows.forEach(m=>m.material.color.set(c2));ledGlows.forEach(m=>m.material.color.set(c2));pinLeds.forEach(m=>m.material.color.set(c2));Object.keys(pinMats).forEach(k=>pinMats[k].emissive.set(c2));ballMat.emissive.set(c2);ledLight.color.set(c2);}
+    ledStrips.forEach(m=>{m.material.color.set(c2);m.material.color.lerp(new THREE.Color(0xffffff),0.35);});ledArrows.forEach(m=>m.material.color.set(c2));ledGlows.forEach(m=>m.material.color.set(c2));pinLeds.forEach(m=>m.material.color.set(c2));Object.keys(pinMats).forEach(k=>pinMats[k].emissive.set(c2));ledColNow=c2;ballMat.emissive.set(c2);ledLight.color.set(c2);}
   const ledOn=ledT>0.55||Math.random()<0.55;
-  ledStrips.forEach(m=>m.visible=ledOn);ledArrows.forEach(m=>m.visible=ledOn);ledGlows.forEach(m=>m.visible=ledOn);pinLeds.forEach(m=>m.visible=ledOn);{const ei=ledOn?2.2:0.25;Object.keys(pinMats).forEach(k=>pinMats[k].emissiveIntensity=ei);ballMat.emissiveIntensity=ei;}ledLight.intensity=ledOn?8:0.8;
+  ledStrips.forEach(m=>m.visible=ledOn);ledArrows.forEach(m=>m.visible=ledOn);ledGlows.forEach(m=>m.visible=ledOn);pinLeds.forEach(m=>m.visible=ledOn);{const ei=ledOn?2.2:0.25;pinEiBase=ei;Object.keys(pinMats).forEach(k=>pinMats[k].emissiveIntensity=ei);ballMat.emissiveIntensity=ei;}ledLight.intensity=ledOn?8:0.8;
   if(hemi)hemi.intensity=0.62+day*0.55;dl.intensity=0.9+day*0.7;
   starMat.opacity=Math.max(0,1-day*2-dusk)*0.9;
   /* sun arcs through the day, moon through the night */
@@ -3200,7 +3294,7 @@ function ambient(dt,gs){
     cop2.position.set(Math.min(rx-1.9,11.5),1.42,-18.30);
     cop2.userData.rl.visible=Math.floor(ambT*9)%2===0;cop2.userData.bl.visible=!cop2.userData.rl.visible;
   }else{runner.visible=false;cop2.visible=false;}
-  drawBillboard(ambT);drawBTV(ambT);
+  drawBillboard(ambT);drawBTV(ambT);btvBulbTick(ambT);
 }
 /* ---- physics world ---- */
 /* ===== REAL BOWLING PHYSICS =====
@@ -3329,8 +3423,99 @@ const pinGeo=new THREE.LatheGeometry(pinProfile,24);
 { /* map the texture by height so the LED channel lands exactly on its lit strip */
   const pa=pinGeo.attributes.position,ua=pinGeo.attributes.uv;for(let i=0;i<ua.count;i++)ua.setY(i,pa.getY(i)/0.381);ua.needsUpdate=true;}
 pinGeo.rotateY(Math.PI/2);
+/* ---------- THE CLAMP: the tops get bitten off the pins ----------
+   No teeth anywhere. Something takes the head off every pin and the heads go with it. The pin is a
+   lathe turned from a 2D profile, so the profile can simply be cut in two: everything below the
+   bite line becomes the stub left standing, everything above becomes the piece that leaves. Both
+   halves keep the same texture mapping as the whole pin, so the food and the LED channel still line
+   up on whatever is left.
+   The cut is not a saw cut. The rim of the stub is pulled down by how far round the pin you are --
+   all the way on one side, not at all on the other -- so what is left is the crescent a bite takes
+   out, deepest where it went in. A few smaller ripples on top of that are the marks. */
+const BITE_Y=0.286;
+function biteAmount(th){ return (0.5+0.5*Math.cos(th))*(0.86+0.14*Math.cos(th*4)); }
+function splitPinProfile(cut){
+  var below=[],above=[],rc=0;
+  for(var i=0;i<pinProfile.length;i++){
+    var p=pinProfile[i];
+    if(p.y<cut)below.push(p.clone());
+    else{
+      if(!above.length&&i>0){
+        var q=pinProfile[i-1],t=(cut-q.y)/(p.y-q.y);
+        rc=q.x+(p.x-q.x)*t;
+      }
+      above.push(p.clone());
+    }
+  }
+  below.push(new THREE.Vector2(rc,cut));
+  below.push(new THREE.Vector2(0.0008,cut));            /* close the cut face */
+  above.unshift(new THREE.Vector2(rc,cut));
+  above.unshift(new THREE.Vector2(0.0008,cut));
+  return {below:below,above:above,rc:rc};
+}
+function makePinPiece(prof,scallop){
+  var g=new THREE.LatheGeometry(prof,24);
+  var pa=g.attributes.position,ua=g.attributes.uv;
+  for(var i=0;i<ua.count;i++)ua.setY(i,pa.getY(i)/0.381);   /* same mapping as the whole pin */
+  if(scallop){
+    for(var j=0;j<pa.count;j++){
+      var y=pa.getY(j);
+      if(y>=BITE_Y-0.0015){
+        var x=pa.getX(j),z=pa.getZ(j),r=Math.hypot(x,z);
+        var th=r<1e-4?0:Math.atan2(z,x);
+        var amt=r<1e-4?0.5:biteAmount(th);
+        pa.setY(j,y-0.034*amt);
+      }
+    }
+  }
+  pa.needsUpdate=true;ua.needsUpdate=true;
+  g.computeVertexNormals();
+  g.rotateY(Math.PI/2);
+  return g;
+}
+var _pinSplit=splitPinProfile(BITE_Y);
+const pinStubGeo=makePinPiece(_pinSplit.below,true);
+const pinTopGeo =makePinPiece(_pinSplit.above,false);
+/* the heads that came off, on their way out */
+const bitten=[];
+const _bitP=new THREE.Vector3(),_bitQ=new THREE.Quaternion();
+function clampPins(){
+  var any=false;
+  for(var i=0;i<pins.length;i++){
+    var pn=pins[i];
+    if(!pn||!pn.alive||pn.__bit||!pn.mesh)continue;
+    pn.__bit=true;any=true;
+    pn.mesh.updateWorldMatrix(true,false);
+    pn.mesh.getWorldPosition(_bitP);pn.mesh.getWorldQuaternion(_bitQ);
+    var mat=pn.mat?pn.mat.clone():pn.mesh.material;
+    mat.transparent=true;
+    var top=new M(pinTopGeo,mat);
+    top.position.copy(_bitP);top.quaternion.copy(_bitQ);
+    top.scale.copy(pn.mesh.getWorldScale(new THREE.Vector3()));
+    scene.add(top);
+    bitten.push({m:top,t:0,
+      v:new THREE.Vector3((Math.random()-0.5)*1.5,2.4+Math.random()*1.4,1.1+Math.random()*1.2),
+      w:new THREE.Vector3((Math.random()-0.5)*14,(Math.random()-0.5)*10,(Math.random()-0.5)*14)});
+    pn.mesh.geometry=pinStubGeo;                        /* what is left standing */
+  }
+  return any;
+}
+function biteTick(dt){
+  for(var i=bitten.length-1;i>=0;i--){
+    var b=bitten[i];b.t+=dt;
+    b.v.y-=7.2*dt;
+    b.m.position.addScaledVector(b.v,dt);
+    b.m.rotation.x+=b.w.x*dt;b.m.rotation.y+=b.w.y*dt;b.m.rotation.z+=b.w.z*dt;
+    if(b.t>0.55)b.m.material.opacity=Math.max(0,1-(b.t-0.55)/0.55);
+    if(b.t>1.15){scene.remove(b.m);if(b.m.material.dispose)b.m.material.dispose();bitten.splice(i,1);}
+  }
+}
+function clampReset(){
+  for(var i=0;i<bitten.length;i++){scene.remove(bitten[i].m);if(bitten[i].m.material.dispose)bitten[i].m.material.dispose();}
+  bitten.length=0;
+}
 const LAYOUT=[[0,0],[-1,1],[1,1],[-2,2],[0,2],[2,2],[-3,3],[-1,3],[1,3],[3,3]];
-const pinMats={};function pinMat(fi){if(!pinMats[fi]){const f=(A3.foods||[])[fi];pinMats[fi]=new THREE.MeshStandardMaterial({map:pinTexture(f),roughness:0.22,metalness:0.05,emissiveMap:pinE,emissive:new THREE.Color(LEDCOLS[ledCol]),emissiveIntensity:2.2});}return pinMats[fi];}
+const pinMats={};function pinMat(fi){if(!pinMats[fi]){const f=(A3.foods||[])[fi];pinMats[fi]=new THREE.MeshStandardMaterial({map:pinTexture(f,fi),roughness:0.22,metalness:0.05,emissiveMap:pinE,emissive:new THREE.Color(LEDCOLS[ledCol]),emissiveIntensity:2.2});}return pinMats[fi];}
 /* compound pin collider: wide base, belly, narrow neck, round head; offsets put the body origin at the real centre of mass */
 /* real USBC pin proportions: the base that touches the deck is only 5.2 cm across (2.6 cm radius) under a 14.6 cm centre of mass,
    so the pin tips over past ~10 degrees of lean; the belly is 11.4 cm at 10 cm up, the neck 4.6 cm, the head 7.4 cm */
@@ -3367,12 +3552,16 @@ function makePin(i,fi){
   body.__pin=true;world.addBody(body);
   body.addEventListener('collide',e=>{const nw=performance.now()/1000;const iv=Math.abs(e.contact.getImpactVelocityAlongNormal());
     if(iv>0.9&&nw-lastPinC>0.03){lastPinC=nw;if(A3.pinHit)A3.pinHit(iv,'pin');else if(A3.sfx)A3.sfx.crash();}});
-  const grp=new THREE.Group();const mesh=new M(pinGeo,pinMat(fi));mesh.position.y=-PHYS.pinCY;grp.add(mesh);scene.add(grp);
+  /* its OWN material, not the one shared by every pin carrying this food: a bulb has to be able to
+     go out on one pin without taking the other nine with it. applyPinLeds() below keeps the clones
+     in step with the lane's colour and brightness. */
+  const pmat=pinMat(fi).clone();
+  const grp=new THREE.Group();const mesh=new M(pinGeo,pmat);mesh.position.y=-PHYS.pinCY;grp.add(mesh);scene.add(grp);
   const sh=new M(shadowGeo,shadowMat.clone());scene.add(sh);
   let rg=null;
   { /* soft light haze around the engraved channel, no solid ring */
     rg=new M(new THREE.TorusGeometry(0.0205,0.011,6,28),new THREE.MeshBasicMaterial({color:LEDCOLS[ledCol],transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));rg.rotation.x=Math.PI/2;rg.position.y=0.258-PHYS.pinCY;grp.add(rg);pinLeds.push(rg); }
-  return {body,grp,mesh,shadow:sh,alive:true,fi:fi,wasUp:true,led:rg};
+  return {body,grp,mesh,shadow:sh,alive:true,fi:fi,wasUp:true,led:rg,mat:pmat,ledT:-1,restT:0};
 }
 const SAUCEC=[0xc0392b,0xf2c037,0xf5efd8,0x6b2a1a,0xe05a1e,0x5a3a1c,0xf2a81d,0x7cb342];
 const blobT=bake(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#fff';g.beginPath();
@@ -3402,6 +3591,7 @@ function tickPuddles(dt){
 }
 function clearPuddles(){puddles.forEach(p=>{scene.remove(p.m);if(p.hl!==p.m)scene.remove(p.hl);});puddles.length=0;drops.forEach(d=>scene.remove(d));drops.length=0;}
 function rack(keep,foodIdx){
+  clampReset();   /* nothing from the last bite is still flying */
   if(keep&&pins.length===10){
     /* second ball: sweep the deadwood, and do not lay a finger on anything still standing */
     for(let i=0;i<10;i++)if(keep.indexOf(i)<0)sweepPin(i);
@@ -3499,7 +3689,11 @@ function foodLoad(i){
   im.onload=function(){
     foodImg=im;foodTex=new THREE.Texture(im);foodTex.colorSpace=THREE.SRGBColorSpace;foodTex.anisotropy=8;foodTex.needsUpdate=true;
     foodMat=new THREE.MeshStandardMaterial({map:foodTex,alphaTest:0.5,roughness:0.52,metalness:0.03,side:THREE.DoubleSide});
-    foodReady=true;foods.forEach(f=>foodSkin(f.mesh));};
+    foodReady=true;foods.forEach(f=>foodSkin(f.mesh));
+    /* pins built before the photographs arrived are still wearing emoji: re-bake them now */
+    for(const k in pinMats){const fo=(A3.foods||[])[k];
+      const prev=pinMats[k].map;pinMats[k].map=pinTexture(fo,+k);pinMats[k].needsUpdate=true;
+      if(prev&&prev.dispose)prev.dispose();}};
   im.onerror=function(){foodLoad(i+1);};
   im.src=FOOD_SRCS[i];
 }
@@ -4163,6 +4357,33 @@ function postStep(){
   if(A3.rumble)A3.rumble((!S.done&&p.y<0.13&&!S.pit)?Math.min(1,v.length()/7):0);
   cullFallen();
 }
+/* How a dying bulb behaves: it does not dim smoothly, it stutters -- a few hard flickers getting
+   shorter and weaker, with the odd bright arc as the contact breaks, and then nothing. Full dark by
+   three quarters of a second. */
+function ledOutF(u){
+  if(u<0)return 1;
+  if(u>=0.78)return 0;
+  const fade=1-u/0.78;
+  const stut=u<0.46?(Math.sin(u*64)>0.05?1:0.10):0.0;
+  const arc=(u<0.30&&Math.sin(u*97)>0.93)?2.4:0;      /* the contact arcing over as it breaks */
+  return Math.max(0,fade*fade*(0.22+0.78*stut)+arc*fade);
+}
+let pinEiBase=2.2,ledColNow=LEDCOLS[0];
+function applyPinLeds(){
+  for(const pn of pins){
+    if(!pn||!pn.alive||!pn.mat)continue;
+    const f=ledOutF(pn.ledT);
+    pn.mat.emissive.set(ledColNow);
+    pn.mat.emissiveIntensity=pinEiBase*f;
+    if(pn.led){
+      pn.led.material.color.set(ledColNow);
+      pn.led.material.opacity=0.16*Math.min(1,f);
+      const pop=f>1.2?1+(f-1)*0.5:1;                   /* the arc flares the haze as it goes */
+      pn.led.scale.setScalar(pop);
+      pn.led.visible=f>0.002;
+    }
+  }
+}
 const upTmp=new CANNON.Vec3();
 function pinStep(){
   const dt=1/PHYS.hz;
@@ -4198,6 +4419,20 @@ function syncPos(b,o,al){ipos(b,al,o.position);}
 function syncQ(b,o,al){if(b.__pq&&al<1){_q1.set(b.__pq.x,b.__pq.y,b.__pq.z,b.__pq.w);_q2.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w);o.quaternion.copy(_q1.slerp(_q2,al));}else o.quaternion.copy(b.quaternion);}
 /* ---- mirrors for the legacy TV / scoring / crowd ---- */
 const UPV=new CANNON.Vec3(0,1,0);
+/* DEAD WOOD. A pin counts as standing only while it is still ON THE DECK. This test had a back
+   bound -- past -17.55 is in the pit -- but no FRONT bound at all, so a pin driven forward off the
+   deck and left upright anywhere down the lane still counted as standing, right out to the foul
+   line fourteen metres away. The scoreboard then marked that pin's old rack position as up, which
+   is how a pin sitting out on the boards showed up as the head pin still standing while the player
+   could plainly see it was not there. In bowling that pin is dead wood: once it is off the deck it
+   is down, whatever attitude it is lying in. One function now, used by the mirror and by the
+   diagnostics, so the two cannot drift apart again. */
+const DECK_FRONT=-15.70;   /* the head pin spots at -16.00, so this still allows 30 cm of jostle */
+function pinUp(b,a){
+  return b.position.y>-0.05 && a.y>0.90 &&
+         b.position.z>-17.55 && b.position.z<DECK_FRONT &&
+         Math.abs(b.position.x)<HALF+0.02;
+}
 function mirror(){
   const out={ball:null,pins:[],shake:S.shakeOut,settled:settled(),bonus:null,soak:!!S.soakHit};S.shakeOut=0;S.soakHit=false;
   if(bonusEvents.length)out.bonus=bonusEvents.splice(0);
@@ -4207,7 +4442,7 @@ function mirror(){
     if(!pn||!pn.alive){out.pins.push({up:false,gone:true,ox:0,oy:0.92,rot:0,loft:0});continue;}
     const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());
     const dsp=Math.hypot(b.position.x-(b.__spot?b.__spot.x:0),b.position.z-(b.__spot?b.__spot.z:0));
-    const up=b.position.y>-0.05&&Math.abs(b.position.x)<HALF+0.02&&b.position.z>-17.55&&a.y>0.90;
+    const up=pinUp(b,a);
     if(pn.wasUp&&!up){pn.wasUp=false;spawnPuddle(b.position.x,b.position.z,pn.fi,false);}
     out.pins.push({up,gone:b.position.y<-0.32||b.position.z<-19.1,ox:Math.max(-1.65,Math.min(1.65,b.position.x*OLDX)),oy:Math.min(1.22,zToOld(b.position.z)),
       rot:Math.atan2(a.x,Math.max(-0.4,a.y)),loft:Math.max(0,b.position.y-PHYS.pinCY)/0.35});
@@ -4641,7 +4876,7 @@ function cosmicApply(dt,gs){
      belongs to a lit room and should come back with it */
   for(const m of ledGlows)m.material.opacity=0.55+0.45*c;
   const ei=2.2+3.4*c;
-  for(const k in pinMats)pinMats[k].emissiveIntensity=ei;
+  pinEiBase=ei;for(const k in pinMats)pinMats[k].emissiveIntensity=ei;
   ballMat.emissiveIntensity=ei;
   if(c>0.25){
     for(const m of ledStrips)m.visible=true;
@@ -4902,7 +5137,18 @@ function makeBowler(){
   G.userData={B,arms,legs,shadow};
   return G;
 }
-const bowler=makeBowler();const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
+const bowler=makeBowler();
+/* THE STAND-IN STAYS OFF UNTIL IT IS NEEDED. The built-in bowler is a few boxes and cylinders --
+   fine as a last resort, but it has visible gaps at the joints and it is not him. It used to be on
+   screen from the first frame and was only swapped out when the scan finished downloading, and the
+   scan is 3.8 MB: on a phone that is easily longer than the loading card waits, so the first thing
+   the player saw was the cartoon with the disconnected limbs. It is hidden from the start now and
+   only ever revealed if the scan genuinely cannot be fetched. */
+bowler.children.forEach(function(c){if(c!==bowler.userData.shadow)c.visible=false;});
+let procShown=false;
+function showProcBowler(){if(procShown||real)return;procShown=true;
+  bowler.children.forEach(function(c){if(c!==bowler.userData.shadow)c.visible=true;});}
+const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.20;bRoot.add(bowler);bScene.add(bRoot);
 /* ---------- THE REAL ANTIDOTE: a rigged, textured 3D scan of him built from his photos (front and back). It loads in the
    background; the procedural bowler stands in until it arrives and then becomes the hidden control rig: every pose,
    walk cycle and swing still runs on the old joints, and each frame the scan's skeleton is aimed to match them. ---------- */
@@ -5043,10 +5289,15 @@ async function loadRealBowler(){
   try{
     const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
     let gltf=null,err=null;
-    for(const u of BOWLER_GLBS){try{gltf=await new GLTFLoader().loadAsync(u);break;}catch(e){err=e;}}
+    /* the loading card would rather say "68%" than sit on a bar that never moves */
+    const onProg=function(ev){if(ev&&ev.lengthComputable&&ev.total)window.__glbPct=Math.round(ev.loaded/ev.total*100);};
+    for(const u of BOWLER_GLBS){try{gltf=await new GLTFLoader().loadAsync(u,onProg);break;}catch(e){err=e;}}
     if(!gltf)throw err||new Error('no source');
-    installReal(gltf.scene,false);console.log('real bowler loaded');
-  }catch(e){console.warn('real bowler unavailable, keeping the built one:',e&&e.message);}
+    installReal(gltf.scene,false);window.__glbPct=100;console.log('real bowler loaded');
+  }catch(e){
+    console.warn('real bowler unavailable, falling back to the built one:',e&&e.message);
+    window.__glbFail=true;showProcBowler();   /* only now: nothing else is coming */
+  }
 }
 function buildRigFromSpec(spec){ /* test rig: the scan's skeleton as sticks, no mesh */
   const root=new THREE.Group(),objs={},mat=new THREE.MeshStandardMaterial({color:0xff3366});
@@ -5418,7 +5669,14 @@ function poseBowler(gs,dt,nw){
           books ask for. At 0.185 he was barely crouching. */
        bob:-Math.abs(Math.sin(P))*0.022*(1-lg)-0.055*pw*(1-lg)-0.27*lg-0.013*load,
        hz:-0.74*sstep(0.02,0.80,u)-0.05*fol,
-       shL:[0.25+0.66*bal,0,-(0.7+0.95*bal)],elL:0.88-0.66*bal,
+       /* THE BALANCE ARM. It used to open to z=-1.65 -- ninety-four degrees, dead horizontal --
+          while the elbow straightened to 0.22, about twelve degrees. A limb held out at a right
+          angle with no bend in it is a pole, not an arm, and that is what made it read as broken.
+          A bowler's balance arm goes out to around sixty-five degrees and KEEPS a bend in it, more
+          like thirty-five, with the shoulder carried a little forward rather than square out to the
+          side. Measured on the rig: the upper arm was ending at [-1.00, 0.08, -0.01], straight out
+          and very slightly up, which is the pose a cricketer holds, not a bowler. */
+       shL:[0.30+0.32*bal,0,-(0.60+0.52*bal)],elL:0.86-0.26*bal,
        shR:[swR,0,0.16+0.065*load],elR:elR,   /* the ball's own weight pulling the arm off his side */
        /* THE RELEASE, in the order it really happens. The hand stays behind the ball the whole way
           down -- turning early is the classic fault and it kills the lift. The thumb comes out
@@ -5735,6 +5993,21 @@ function render(gs){
         const lift=Math.max(0,yv-0.06);f.shadow.scale.setScalar(1+lift*1.8);f.shadow.material.opacity=0.30/(1+lift*5.5);}}}
   for(const p2 of panels){syncPos(p2.body,p2.mesh,al);syncQ(p2.body,p2.mesh,al);p2.mesh.visible=p2.mesh.position.y>-0.5;}
   }
+  /* THE BULB LETS GO. A pin knocked over and come to rest has had its wiring yanked out of the
+     channel: about a second after it settles the light sputters and dies. This deliberately does
+     NOT live in pinStep -- that skips sleeping bodies, and a fallen pin is allowed to sleep after
+     0.9 s, which is the same moment this timer matures. Whichever won the race, the bulb would
+     sometimes never blow. Out here a sleeping pin simply counts as still, which it is. */
+  for(const pn of pins){
+    if(!pn||!pn.alive)continue;
+    if(pn.ledT<0&&pn.down){
+      const b2=pn.body;
+      const sp=(b2.sleepState===CANNON.Body.SLEEPING)?0:(b2.velocity.length()+b2.angularVelocity.length()*0.08);
+      if(sp<0.55){pn.restT+=dt;if(pn.restT>0.9)pn.ledT=0;}else pn.restT=0;
+    }
+    if(pn.ledT>=0&&pn.ledT<0.78)pn.ledT+=dt;
+  }
+  applyPinLeds();biteTick(dt);
   updateFire(dt,nw);rebTick(dt,nw);fallTick(dt);
   if(!RPL.on&&ballBody&&ballMesh){ballMesh.position.copy(bI);syncQ(ballBody,ballMesh,al);
     if(!S.rest){const wb=Math.sin(nw*11)*0.07*Math.min(1,ballBody.velocity.length()/4);ballMesh.rotateOnWorldAxis(new THREE.Vector3(0,0,1),wb);ballMesh.position.x+=Math.sin(nw*7.3)*0.006;}
@@ -5820,7 +6093,12 @@ __shot:function(ox,spin,pw,aim){   /* runs the ghost sim headlessly and reports 
     hookBoards:headX===null?null:+((headX-x0)/0.0254).toFixed(1),
     travelS:headT===null?null:+headT.toFixed(2),profile:prof,
     entryDeg:ang===null?null:+ang.toFixed(2),gutter:gut};},
-__lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFixed(3):null,dl:+dl.intensity.toFixed(3),mid:+midL.intensity.toFixed(2),pin:+pinLight.intensity.toFixed(2),pit:+pitGlow.intensity.toFixed(2),led:+ledLight.intensity.toFixed(2),floor:+cosFloorMat.opacity.toFixed(3),floorVis:cosFloor.visible,bKey:+bKey.intensity.toFixed(3),bFill:+bFill.intensity.toFixed(3),bRim:+bRim.intensity.toFixed(2),bUnder:+bUnder.intensity.toFixed(3),bHemi:+bHemi.intensity.toFixed(3),skyCol:hemi?hemi.color.getHexString():null,rimCol:bRim.color.getHexString(),pinEmis:+(pinMats[Object.keys(pinMats)[0]]?pinMats[Object.keys(pinMats)[0]].emissiveIntensity:0).toFixed(2)};},__truck:function(){if(!truck)return null;let mesh=0,tri=0,lights=0;truck.grp.traverse(o=>{if(o.isMesh){mesh++;const g=o.geometry;if(g&&g.index)tri+=g.index.count/3;else if(g&&g.attributes.position)tri+=g.attributes.position.count/3;}if(o.isLight)lights++;});return {meshes:mesh,triangles:Math.round(tri),lights:lights,gunPos:[+truck.gun.position.x.toFixed(3),+truck.gun.position.y.toFixed(3),+truck.gun.position.z.toFixed(3)]};},__deptPose:function(){if(!dept||!truck)return null;const T=truck.grp;return {t:+dept.t.toFixed(2),x:+T.position.x.toFixed(2),z:+T.position.z.toFixed(2),ry:+T.rotation.y.toFixed(2),wr:+truck.wheels[0].rotation.z.toFixed(1),gz:+truck.gun.position.z.toFixed(3),vis:T.visible};},__parkTruck:function(x,y,z,ry){if(!truck)truck=makeTruck();truck.grp.visible=true;truck.grp.position.set(x,y,z);truck.grp.rotation.y=ry||0;truck.lightR.intensity=6;truck.lightB.intensity=6;truck.headL.intensity=3.2;return true;},__chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
+__lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFixed(3):null,dl:+dl.intensity.toFixed(3),mid:+midL.intensity.toFixed(2),pin:+pinLight.intensity.toFixed(2),pit:+pitGlow.intensity.toFixed(2),led:+ledLight.intensity.toFixed(2),floor:+cosFloorMat.opacity.toFixed(3),floorVis:cosFloor.visible,bKey:+bKey.intensity.toFixed(3),bFill:+bFill.intensity.toFixed(3),bRim:+bRim.intensity.toFixed(2),bUnder:+bUnder.intensity.toFixed(3),bHemi:+bHemi.intensity.toFixed(3),skyCol:hemi?hemi.color.getHexString():null,rimCol:bRim.color.getHexString(),pinEmis:+(pinMats[Object.keys(pinMats)[0]]?pinMats[Object.keys(pinMats)[0]].emissiveIntensity:0).toFixed(2)};},__truck:function(){if(!truck)return null;let mesh=0,tri=0,lights=0;truck.grp.traverse(o=>{if(o.isMesh){mesh++;const g=o.geometry;if(g&&g.index)tri+=g.index.count/3;else if(g&&g.attributes.position)tri+=g.attributes.position.count/3;}if(o.isLight)lights++;});return {meshes:mesh,triangles:Math.round(tri),lights:lights,gunPos:[+truck.gun.position.x.toFixed(3),+truck.gun.position.y.toFixed(3),+truck.gun.position.z.toFixed(3)]};},__deptPose:function(){if(!dept||!truck)return null;const T=truck.grp;return {t:+dept.t.toFixed(2),x:+T.position.x.toFixed(2),z:+T.position.z.toFixed(2),ry:+T.rotation.y.toFixed(2),wr:+truck.wheels[0].rotation.z.toFixed(1),gz:+truck.gun.position.z.toFixed(3),vis:T.visible};},__parkTruck:function(x,y,z,ry){if(!truck)truck=makeTruck();truck.grp.visible=true;truck.grp.position.set(x,y,z);truck.grp.rotation.y=ry||0;truck.lightR.intensity=6;truck.lightB.intensity=6;truck.headL.intensity=3.2;return true;},__pinState:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,gone:1});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,ay:+a.y.toFixed(4),tilt:+(Math.acos(Math.max(-1,Math.min(1,a.y)))*180/Math.PI).toFixed(1),up:pinUp(b,a)?1:0,y:+b.position.y.toFixed(3),z:+b.position.z.toFixed(2),spd:+b.velocity.length().toFixed(3),asp:+b.angularVelocity.length().toFixed(3),slp:b.sleepState});}return o;},__settled:function(){return settled()?1:0;},__bbPng:function(){return bbC.toDataURL('image/png');},__btvPng:function(){return btvC.toDataURL('image/png');},__pinTexPng:function(fi){const f=(A3.foods||[])[fi];const t=pinTexture(f,fi);return {png:t.image.toDataURL('image/png'),cell:FOOD_CELL[fi],sheet:!!foodImg,emoji:f&&f.e};},__topple:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(2.6,0.4,-1.2);pn.body.angularVelocity.set(6,0,10);return true;},__deck:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,alive:0});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,alive:1,x:+b.position.x.toFixed(3),z:+b.position.z.toFixed(3),up:pinUp(b,a)?1:0,homeX:+(LAYOUT[i][0]*PDXm).toFixed(3),homeZ:+(Z_HEAD-LAYOUT[i][1]*PDZm).toFixed(3)});}return o;},__upTest:function(x,y,z,ay){return pinUp({position:{x:x,y:y,z:z}},{y:ay})?1:0;},__markDown:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;return true;},__pinLed:function(){return pins.map(function(pn,i){return (pn&&pn.alive&&pn.mat)?{i:i,ledT:+pn.ledT.toFixed(2),restT:+pn.restT.toFixed(2),down:!!pn.down,slp:pn.body.sleepState,emis:+pn.mat.emissiveIntensity.toFixed(3),halo:pn.led?+pn.led.material.opacity.toFixed(4):null,vis:pn.led?pn.led.visible:null}:null;});},__blowPin:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;pn.ledT=0;return true;},__armGeom:function(){const out={};const g=(k)=>{const b=real.bones[k];if(!b)return null;const c=b.children.find(x=>x.isBone);if(!c)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();c.getWorldPosition(p);b.getWorldPosition(q);return p.sub(q).normalize();};['L','R'].forEach(s=>{const u=g('sh'+s),f=g('el'+s);if(!u||!f){out[s]=null;return;}const bend=Math.acos(Math.max(-1,Math.min(1,u.dot(f))))*180/Math.PI;const bw=new THREE.Vector3().copy(bowler.worldToLocal(new THREE.Vector3())); out[s]={solvedLeg:!!(bowler.userData.legDir&&bowler.userData.legDir[s]),
+      thigh:(function(){const t=g('hp'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
+      shin:(function(){const t=g('kn'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
+      kneeDeg:(function(){const a=g('hp'+s),c=g('kn'+s);if(!a||!c)return null;
+        return +(Math.acos(Math.max(-1,Math.min(1,a.dot(c))))*180/Math.PI).toFixed(1);})(),
+      up:[+u.x.toFixed(2),+u.y.toFixed(2),+u.z.toFixed(2)],fore:[+f.x.toFixed(2),+f.y.toFixed(2),+f.z.toFixed(2)],bendDeg:+bend.toFixed(1),foreZ:+f.z.toFixed(3)};});return out;},__procShown:function(){let n=0;bowler.children.forEach(function(c){if(c!==bowler.userData.shadow&&c.visible)n++;});return n;},__chain:function(){const B=bowler.userData.B;return {pelvY:+B.pelvis.rotation.y.toFixed(4),pelvZ:+B.pelvis.rotation.z.toFixed(4),spineY:+B.spine.rotation.y.toFixed(4),spineX:+B.spine.rotation.x.toFixed(4),shR:+bowler.userData.arms.R.sh.rotation.x.toFixed(4),shRz:+bowler.userData.arms.R.sh.rotation.z.toFixed(4),clothLag:real&&real.cloth?[+real.cloth.U.uClothLag.value.x.toFixed(5),+real.cloth.U.uClothLag.value.y.toFixed(5),+real.cloth.U.uClothLag.value.z.toFixed(5)]:null,clothFlap:real&&real.cloth?+real.cloth.U.uClothFlap.value.toFixed(4):null};},__boneNames:function(){if(!real||!real.root)return null;const out=[];real.root.traverse(o=>{if(o.isBone)out.push(o.name);});return out;},__btv:function(){return {ok:btvHovOk,tag:btvHovTag,miss:btvHovMiss,paused:btvHov.paused,ready:btvHov.readyState,vw:btvHov.videoWidth,err:btvHov.error?btvHov.error.code:null,src:(btvHov.currentSrc||'').split('/').pop()};},__swing:function(u){return keyed(SW_ARM,u);},__swingFol:function(f){return keyed(SW_AFOL,f);},__form:function(){const b=bowler.position;return {
   L:[+(feet.L.x-b.x).toFixed(3),+feet.L.y.toFixed(3),+(feet.L.z-b.z).toFixed(3)],
   R:[+(feet.R.x-b.x).toFixed(3),+feet.R.y.toFixed(3),+(feet.R.z-b.z).toFixed(3)],
   hipY:+b.y.toFixed(3),reach:+LEG.reach.toFixed(3),crouch:+(LEG.crouch||0).toFixed(3),
@@ -5868,7 +6146,7 @@ __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3)
   if(real&&real.bones.anL&&real.bones.anR){const v=new THREE.Vector3();
     real.bones.anL.getWorldPosition(v);o.aL=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
     real.bones.anR.getWorldPosition(v);o.aR=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
-  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,clampPins:clampPins,__bitten:function(){return bitten.length;},soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
