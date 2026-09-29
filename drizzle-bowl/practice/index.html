@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Drizzle Bowl — Practice</title>
+<style>
+  :root{
+    --bg:#0c0a10; --panel:#16121c; --edge:#2b2233; --ink:#f3ece4; --dim:#9a8fa6;
+    --gold:#f2a81d; --good:#5ad07a; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;overscroll-behavior:none}
+  body{display:flex;flex-direction:column}
+  header{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+    padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;border-bottom:1px solid var(--edge)}
+  header h1{margin:0;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+  header .st{margin-left:auto;font-size:12px;color:var(--dim);text-align:right;max-width:52%}
+  #stage{flex:1 1 auto;position:relative;min-height:220px;background:#000}
+  #game{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  #veil{position:absolute;inset:0;display:grid;place-items:center;background:#0c0a10;
+    color:var(--dim);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  #veil.gone{display:none}
+  #panel{flex:0 0 auto;max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    background:var(--panel);border-top:1px solid var(--edge);
+    padding:10px 12px calc(env(safe-area-inset-bottom) + 12px)}
+  .grp{margin:0 0 12px}
+  .grp h2{margin:0 0 3px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+  .grp p{margin:0 0 7px;font-size:12px;color:var(--dim)}
+  .row{display:flex;flex-wrap:wrap;gap:7px}
+  button{flex:1 1 auto;min-width:126px;min-height:42px;padding:9px 12px;
+    background:#221a2b;color:var(--ink);border:1px solid var(--edge);border-radius:9px;
+    font:600 13px/1.2 inherit;cursor:pointer;touch-action:manipulation}
+  button:active{background:#31253d}
+  button:disabled{opacity:.42;cursor:default}
+  button.on{border-color:var(--gold);color:var(--gold)}
+  .log{margin-top:2px;font-size:12px;color:var(--dim);min-height:1.45em}
+  .log b{color:var(--ink);font-weight:600}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  @media (min-width:760px){ #panel{max-height:38vh} button{min-width:160px} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Drizzle Bowl · Practice</h1>
+  <div class="st" id="st">loading…</div>
+</header>
+
+<div id="stage">
+  <iframe id="game" src="../index.html" title="Antidote Drizzle Bowl"
+          allow="autoplay; fullscreen"></iframe>
+  <div id="veil">waiting for the lane…</div>
+</div>
+
+<div id="panel">
+  <div class="grp">
+    <h2>The Clamp</h2>
+    <p>Throw for the pocket. On a strike the replay runs in slow motion and the tops come off
+       <em>as the ball reaches the rack</em> — not before it gets there.</p>
+    <div class="row">
+      <button data-a="pocket">Throw for the pocket</button>
+      <button data-a="clampNow">Bite the rack now</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>The wave</h2>
+    <p>He raises his left hand. The ball stays in his right and does not drift off.</p>
+    <div class="row">
+      <button data-a="wave">Make him wave</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>The gutter call</h2>
+    <p>Only ever said on a clean zero. A ball that clips the rack on its way into the channel
+       stays quiet.</p>
+    <div class="row">
+      <button data-a="gutDirty">Hit pins, then gutter</button>
+      <button data-a="gutClean">Clean gutter</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Off the edge · 150</h2>
+    <p>Past the lip <em>and</em> dropped into the channel. One left balanced on the edge pays nothing.</p>
+    <div class="row">
+      <button data-a="edgeIn">Put a pin in the channel</button>
+      <button data-a="edgeLip">Leave one on the lip</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Food with weight</h2>
+    <p>A burger is 0.26&nbsp;kg against a 1.53&nbsp;kg pin. It shoves now instead of bouncing off.</p>
+    <div class="row">
+      <button data-a="food">Throw a dish at the head pin</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Shadows &amp; the lane</h2>
+    <p>High is the real shadow map. Low is the old black discs. The lane edges are clean in both.</p>
+    <div class="row">
+      <button data-a="qHigh" id="qHigh">Shadows: High</button>
+      <button data-a="qLow" id="qLow">Shadows: Low</button>
+      <button data-a="check">Check the lane edges</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Reset</h2>
+    <div class="row">
+      <button data-a="rack">Fresh rack</button>
+      <button data-a="newgame">New game</button>
+    </div>
+  </div>
+
+  <div class="log" id="log">Tap the lane once to let the sound in, then pick something above.</div>
+</div>
+
+<script>
+(function(){
+  var f=document.getElementById('game'), st=document.getElementById('st'),
+      logEl=document.getElementById('log'), veil=document.getElementById('veil');
+  var W=null,B=null,A=null,ready=false;
+
+  function say(html,cls){ logEl.innerHTML=cls?('<span class="'+cls+'">'+html+'</span>'):html; }
+  function note(s){ st.textContent=s; }
+
+  /* the game lives in the frame; same origin, so its own handles are reachable */
+  function grab(){
+    try{
+      W=f.contentWindow;
+      if(W&&W.B3D&&W.B3D.ok&&W.ADB&&W.ADB.g){B=W.B3D;A=W.ADB;return true;}
+    }catch(e){}
+    return false;
+  }
+  var t0=Date.now();
+  var poll=setInterval(function(){
+    if(grab()){
+      clearInterval(poll);ready=true;veil.className='gone';
+      note('ready');
+      say('Tap the lane once for sound, then pick something above.');
+      setInterval(tick,900);
+    }else if(Date.now()-t0>90000){
+      clearInterval(poll);note('could not reach the lane');
+      say('The lane did not come up. Reload the page.','no');
+    }
+  },400);
+
+  function tick(){
+    if(!ready)return;
+    try{
+      var g=A.g, sh=B.__shadow?B.__shadow():null;
+      note('frame '+(g.frame+1)+' · '+g.phase+(sh?(' · shadows '+(sh.on?'High':'Low')):''));
+      var h=document.getElementById('qHigh'),l=document.getElementById('qLow');
+      if(sh){h.className=sh.on?'on':'';l.className=sh.on?'':'on';}
+    }catch(e){}
+  }
+
+  /* the physics world only runs while a ball is in play, so anything placed by hand
+     needs the game held in a state where it is still stepping */
+  function running(on){
+    try{
+      if(on){A.g.phase='result';A.g.resT=9999;}
+      else{A.g.phase='aim';A.g.resT=0;}
+    }catch(e){}
+  }
+  function fullRack(){
+    try{A.g.cheer=0;A.g.over=false;B.rack([0,1,2,3,4,5,6,7,8,9],[0,1,2,3,4,5,6,7,8,9]);}catch(e){}
+  }
+  function waitAim(cb,tries){
+    tries=tries||60;
+    if(!ready)return;
+    if(A.g.phase==='aim')return cb();
+    if(tries<=0)return say('the lane is still busy — try again in a second','no');
+    setTimeout(function(){waitAim(cb,tries-1);},400);
+  }
+
+  var acts={
+    pocket:function(){
+      waitAim(function(){
+        A.g.cheer=0;A.throw3d(0.02,0.42,0.95,0);
+        say('Rolling. On a strike, watch the replay — the tops come off <b>as the ball arrives</b>.');
+      });
+    },
+    clampNow:function(){
+      running(true);fullRack();
+      setTimeout(function(){
+        var any=B.clampPins&&B.clampPins();
+        say(any?'Bitten. That is the bite itself — in a real strike it lands on the replayed impact.'
+               :'Nothing left to bite.',any?'ok':null);
+        setTimeout(function(){running(false);},1200);
+      },700);
+    },
+    wave:function(){
+      try{A.g.cheer=3.2;say('Left hand up. The ball stays in his right — it used to be thrown away here.');}
+      catch(e){say('could not start the wave','no');}
+    },
+    gutDirty:function(){
+      waitAim(function(){
+        A.g.cheer=0;A.throw3d(0.10,0.30,0.95,0);
+        say('Rolling. It will go through the rack, then into the channel — and stay quiet.');
+        var n=0,iv=setInterval(function(){
+          var b=B.__ballState&&B.__ballState();
+          if(b&&b.hit){clearInterval(iv);B.__nudgeBall(16);
+            say('Through the rack and into the channel. <b>No gutter call</b> — pins came down.');}
+          if(++n>400)clearInterval(iv);
+        },120);
+      });
+    },
+    gutClean:function(){
+      waitAim(function(){
+        A.g.cheer=0;A.throw3d(0.10,0.30,0.95,0);
+        say('Rolling. Into the channel well before the deck.');
+        var n=0,iv=setInterval(function(){
+          var b=B.__ballState&&B.__ballState();
+          if(b&&b.z<-4&&b.z>-12){clearInterval(iv);B.__nudgeBall(16);
+            say('Clean gutter, nothing touched. <b>Now</b> he calls it.');}
+          if(++n>400)clearInterval(iv);
+        },120);
+      });
+    },
+    edgeIn:function(){
+      running(true);fullRack();
+      setTimeout(function(){
+        var b0=A.g.bonus;
+        B.__place(6,[-1.31,-0.05,-16.6]);
+        say('Dropped a pin into the channel…');
+        var n=0,iv=setInterval(function(){
+          if(A.g.bonus>b0){clearInterval(iv);
+            say('<b>OFF THE EDGE +'+(A.g.bonus-b0)+'</b> — past the lip and below the boards.','ok');
+            setTimeout(function(){running(false);},1500);}
+          if(++n>40){clearInterval(iv);running(false);}
+        },250);
+      },700);
+    },
+    edgeLip:function(){
+      running(true);fullRack();
+      setTimeout(function(){
+        var b0=A.g.bonus;
+        B.__place(6,[-1.215,0.146,-16.6]);
+        say('Balanced on the lip, still at board height…');
+        setTimeout(function(){
+          say(A.g.bonus===b0
+            ? 'Nothing paid — it has not gone <em>off</em> the edge, it is sitting on it.'
+            : 'It paid — it must have toppled in.', A.g.bonus===b0?'ok':null);
+          running(false);
+        },4200);
+      },700);
+    },
+    food:function(){
+      running(true);fullRack();
+      setTimeout(function(){
+        var r=B.__foodAt&&B.__foodAt(0,7.5);
+        say(r?('Threw a '+r.mass+' kg dish at the head pin. Watch it shove.')
+             :'no dish to throw','ok');
+        setTimeout(function(){running(false);},5000);
+      },700);
+    },
+    qHigh:function(){B.quality('high');say('Real shadow map. Pins and the ball cast; the boards receive.');},
+    qLow:function(){B.quality('low');say('Back to the old black discs — this is what every shadow used to be.');},
+    check:function(){
+      var e=B.__laneEdges?B.__laneEdges():null;
+      if(!e)return say('no reading available','no');
+      var bad=(e.coplanar||[]).filter(function(c){return c.w<2&&!c.off;});
+      say('Channel floor at <b>'+e.troughX+'</b> (collider is at '+e.gutX+'). '+
+          'Boards end at '+e.half+'. '+
+          (bad.length?('<span class="no">'+bad.length+' decal(s) still fighting the lane plane</span>')
+                     :'<span class="ok">every lane decal is depth-biased — nothing fights the boards</span>'));
+    },
+    rack:function(){running(false);fullRack();say('Fresh rack.');},
+    newgame:function(){try{A.newGame();say('New game.');}catch(e){say('could not start a new game','no');}}
+  };
+
+  document.getElementById('panel').addEventListener('click',function(ev){
+    var b=ev.target.closest('button');if(!b)return;
+    if(!ready)return say('the lane is still loading','no');
+    var a=b.getAttribute('data-a');
+    if(acts[a]){ try{acts[a]();}catch(e){say('that one errored: '+e.message,'no');} }
+  });
+})();
+</script>
+</body>
+</html>
