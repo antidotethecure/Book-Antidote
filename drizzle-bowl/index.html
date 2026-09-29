@@ -1139,7 +1139,7 @@ function boardBtnLabel(){ /* the button says what you have to beat, so the numbe
   var t=g.board&&g.board[0];
   b.innerHTML=t?('\uD83C\uDFC6 BEAT '+t.score):'\uD83C\uDFC6 SCORE TO BEAT';
 }
-function pushChampion(){ /* the blimp flies their face past on its banner */
+function pushChampion(){ /* the plane drags their face past on its banner */
   boardBtnLabel();
   var t=g.board&&g.board[0];
   if(t&&t.photo&&window.B3D&&B3D.setChampion){try{B3D.setChampion({photo:t.photo,name:t.name,score:t.score});}catch(e){}}
@@ -3016,41 +3016,123 @@ const bannerT=bake(512,96,(g,w,h)=>{g.clearRect(0,0,w,h);
   g.fillStyle='#f2a81d';g.fillText('THE WORLD IS YOURS...',w/2,h/2+2);});
 /* THE BLIMP CARRIES THE CHAMPION. Whoever is top of the week gets their face flown across the
    back of the room on the banner, with the score everyone is chasing. No champion, no photo, or
-   a picture that will not load: the blimp keeps its own slogan. */
+   a picture that will not load: the banner keeps its own slogan. */
 let champBanCv=null,champBanT=null;
+/* THE TOW BANNER. This used to be a 512x96 strip down the side of a blimp, which is a shape that can
+   only really hold a line of text -- the leader's face got 84 pixels of it. A banner on a rope behind
+   a plane is the other way round: it is the thing everyone is meant to look at, so the picture is the
+   banner and the words run beside it. */
+const CHB_W=1024,CHB_H=256;
+function champBanDraw(info){
+  if(!champBanCv){champBanCv=document.createElement('canvas');champBanCv.width=CHB_W;champBanCv.height=CHB_H;}
+  const c=champBanCv.getContext('2d');
+  c.clearRect(0,0,CHB_W,CHB_H);
+  const g2=c.createLinearGradient(0,0,0,CHB_H);
+  g2.addColorStop(0,'#1b1016');g2.addColorStop(0.5,'#2a1118');g2.addColorStop(1,'#140b10');
+  c.fillStyle=g2;c.fillRect(0,0,CHB_W,CHB_H);
+  c.strokeStyle='#f2a81d';c.lineWidth=10;c.strokeRect(5,5,CHB_W-10,CHB_H-10);
+  c.strokeStyle='#b8322c';c.lineWidth=4;c.strokeRect(17,17,CHB_W-34,CHB_H-34);
+  return c;
+}
+function champBanTex(){
+  if(!champBanT){champBanT=new THREE.CanvasTexture(champBanCv);champBanT.colorSpace=THREE.SRGBColorSpace;champBanT.anisotropy=8;}
+  champBanT.needsUpdate=true;
+  for(const b of towBanners){b.material.map=champBanT;b.material.needsUpdate=true;}
+}
 function setChampion(info){
   if(!info||!info.photo)return false;
   const im=new Image();
   im.onload=function(){
-    if(!champBanCv){champBanCv=document.createElement('canvas');champBanCv.width=512;champBanCv.height=96;}
-    const c=champBanCv.getContext('2d');
-    c.clearRect(0,0,512,96);
-    c.save();c.beginPath();c.rect(10,6,84,84);c.clip();c.drawImage(im,10,6,84,84);c.restore();
-    c.lineWidth=4;c.strokeStyle='#f2a81d';c.strokeRect(10,6,84,84);
+    const c=champBanDraw(info);
+    /* the face, big, on the left -- squared off and cropped to fill so nobody comes out stretched */
+    const S=CHB_H-56,X=38,Y=28;
+    const ar=(im.naturalWidth||1)/(im.naturalHeight||1);
+    let sw=im.naturalWidth,sh=im.naturalHeight;
+    if(ar>1){sw=sh;}else{sh=sw;}
+    const sx=((im.naturalWidth-sw)/2)|0, sy=((im.naturalHeight-sh)/2)|0;
+    c.save();c.beginPath();c.rect(X,Y,S,S);c.clip();
+    try{c.drawImage(im,sx,sy,sw,sh,X,Y,S,S);}catch(e){}
+    c.restore();
+    c.lineWidth=7;c.strokeStyle='#f2a81d';c.strokeRect(X,Y,S,S);
+    const TX=X+S+40;
     c.textAlign='left';c.textBaseline='middle';
-    c.font='bold 24px Impact,sans-serif';c.fillStyle='#fbe9c4';c.fillText('SCORE TO BEAT',108,24);
-    c.font='bold 42px Impact,sans-serif';
-    const line=String(info.name||'').toUpperCase()+'  '+info.score;
-    c.lineWidth=7;c.strokeStyle='#b8322c';c.strokeText(line,108,62);
-    c.fillStyle='#f2a81d';c.fillText(line,108,62);
-    if(!champBanT){champBanT=new THREE.CanvasTexture(champBanCv);champBanT.colorSpace=THREE.SRGBColorSpace;champBanT.anisotropy=8;}
-    champBanT.needsUpdate=true;
-    for(const b of blimpBanners){b.material.map=champBanT;b.material.needsUpdate=true;}
+    c.font='bold 40px Impact,sans-serif';c.fillStyle='#fbe9c4';
+    c.fillText('SCORE TO BEAT',TX,66);
+    let line=String(info.name||'').toUpperCase();
+    c.font='bold 78px Impact,sans-serif';
+    while(line.length>3&&c.measureText(line).width>CHB_W-TX-48)line=line.slice(0,-2)+'\u2026';
+    c.lineWidth=10;c.strokeStyle='#b8322c';c.strokeText(line,TX,140);
+    c.fillStyle='#f2a81d';c.fillText(line,TX,140);
+    c.font='bold 66px Impact,sans-serif';
+    c.lineWidth=9;c.strokeStyle='#14090e';c.strokeText(String(info.score),TX,212);
+    c.fillStyle='#fbe9c4';c.fillText(String(info.score),TX,212);
+    champBanTex();
   };
   im.onerror=function(){};
   im.src=info.photo;
   return true;
 }
-const blimpBanners=[];
-const blimp=new THREE.Group();
-{const hull=new M(new THREE.SphereGeometry(0.5,18,12),new THREE.MeshStandardMaterial({color:0xc9cdd6,roughness:0.35,metalness:0.2}));hull.scale.set(2.7,1,1);blimp.add(hull);
- const fin=new M(new THREE.BoxGeometry(0.3,0.35,0.03),new THREE.MeshStandardMaterial({color:0xb8322c}));fin.position.set(-1.25,0.15,0);blimp.add(fin);
- const gond=new M(new THREE.BoxGeometry(0.45,0.14,0.16),new THREE.MeshStandardMaterial({color:0x22242c}));gond.position.set(0.1,-0.5,0);blimp.add(gond);
- const ban=new M(new THREE.PlaneGeometry(2.1,0.40),new THREE.MeshBasicMaterial({map:bannerT,transparent:true}));ban.position.set(0,0.03,0.53);blimp.add(ban);
- const ban2=new M(new THREE.PlaneGeometry(2.1,0.40),new THREE.MeshBasicMaterial({map:bannerT,transparent:true}));ban2.position.set(0,0.03,-0.53);ban2.rotation.y=Math.PI;blimp.add(ban2);
- blimpBanners.push(ban,ban2);
- const bl2=new M(new THREE.SphereGeometry(0.05,6,6),new THREE.MeshBasicMaterial({color:0xff3333}));bl2.position.set(1.3,0,0);blimp.add(bl2);blimp.userData.light=bl2;}
-blimp.scale.set(1.7,1.7,1.7);blimp.position.set(-17,5.6,-20.5);amb.add(blimp);
+const towBanners=[];
+/* ---------- THE BANNER PLANE ----------
+   A blimp carries its advertising painted down its flank, which means the picture is small, flat and
+   stuck to a balloon. A plane drags it behind on a rope, which is the shape this actually wants: the
+   banner is the whole point and it gets to be seven metres of it.
+   The banner is a strip of cloth, not a signboard -- the ripple is a travelling wave along its
+   length, dead at the rope end and biggest at the loose end, exactly like a real tow banner, plus a
+   little lift and a slow twist so it is never a flat rectangle. 25 x 5 vertices rewritten per frame. */
+const planeGrp=new THREE.Group();
+const BAN_W=7.0,BAN_H=1.75,BAN_SEG=24,BAN_ROWS=4;
+let banMesh=null,banPos=null,banBase=null,planeProp=null;
+{
+  const body=new THREE.MeshStandardMaterial({color:0xe8eaf0,roughness:0.42,metalness:0.28});
+  const trim=new THREE.MeshStandardMaterial({color:0xb8322c,roughness:0.5});
+  const dark=new THREE.MeshStandardMaterial({color:0x22242c,roughness:0.6});
+
+  const fus=new M(new THREE.CylinderGeometry(0.17,0.10,2.20,12),body);
+  fus.rotation.z=Math.PI/2;planeGrp.add(fus);
+  const nose=new M(new THREE.SphereGeometry(0.17,12,10),body);nose.position.x=1.06;planeGrp.add(nose);
+  const cock=new M(new THREE.SphereGeometry(0.13,10,8),new THREE.MeshStandardMaterial({color:0x2a3646,roughness:0.2,metalness:0.5}));
+  cock.position.set(0.44,0.13,0);cock.scale.set(1.5,0.7,0.9);planeGrp.add(cock);
+  const wing=new M(new THREE.BoxGeometry(0.62,0.045,3.00),body);wing.position.set(0.12,0.02,0);planeGrp.add(wing);
+  const wtip=new M(new THREE.BoxGeometry(0.62,0.05,0.10),trim);wtip.position.set(0.12,0.03,1.50);planeGrp.add(wtip);
+  const wtip2=wtip.clone();wtip2.position.z=-1.50;planeGrp.add(wtip2);
+  const stab=new M(new THREE.BoxGeometry(0.40,0.04,1.10),body);stab.position.set(-0.95,0.06,0);planeGrp.add(stab);
+  const fin=new M(new THREE.BoxGeometry(0.42,0.56,0.05),trim);fin.position.set(-1.00,0.34,0);planeGrp.add(fin);
+  planeProp=new M(new THREE.BoxGeometry(0.03,0.92,0.07),dark);planeProp.position.x=1.17;planeGrp.add(planeProp);
+  const spin=new M(new THREE.ConeGeometry(0.08,0.18,10),trim);spin.rotation.z=-Math.PI/2;spin.position.x=1.22;planeGrp.add(spin);
+  const nav=new M(new THREE.SphereGeometry(0.055,6,6),new THREE.MeshBasicMaterial({color:0xff3333}));
+  nav.position.set(-1.05,0.62,0);planeGrp.add(nav);planeGrp.userData.light=nav;
+
+  /* the rope, from the tail back to the leading edge of the banner */
+  const rope=new M(new THREE.CylinderGeometry(0.012,0.012,1.30,5),dark);
+  rope.rotation.z=Math.PI/2;rope.position.set(-1.85,0.06,0);planeGrp.add(rope);
+
+  const bg=new THREE.PlaneGeometry(BAN_W,BAN_H,BAN_SEG,BAN_ROWS);
+  banMesh=new M(bg,new THREE.MeshBasicMaterial({map:bannerT,transparent:true,side:THREE.DoubleSide,toneMapped:false}));
+  banMesh.position.set(-2.50-BAN_W/2,0.02,0);          /* hangs off the rope, trailing behind */
+  planeGrp.add(banMesh);
+  towBanners.push(banMesh);
+  banPos=bg.attributes.position;
+  banBase=new Float32Array(banPos.array);              /* the flat cloth, kept to wave from */
+}
+planeGrp.position.set(-20,6.1,-20.5);amb.add(planeGrp);
+/* the cloth, every frame */
+let planePark=null;   /* diagnostics only: hold it still to look at it */
+function banTick(t,dt){
+  if(!banPos)return;
+  const arr=banPos.array;
+  for(let i=0;i<arr.length;i+=3){
+    const x=banBase[i],y=banBase[i+1];
+    const u=1-((x+BAN_W/2)/BAN_W);            /* 0 at the rope, 1 at the loose end */
+    const amp=u*u*0.42;
+    const w=Math.sin(x*2.35-t*7.6)+0.45*Math.sin(x*4.7-t*11.3+y*1.7);
+    arr[i+2]=w*amp;                            /* the ripple, across the cloth */
+    arr[i+1]=y+Math.sin(x*1.9-t*6.4)*amp*0.30; /* and a little lift with it */
+  }
+  banPos.needsUpdate=true;
+  banMesh.geometry.computeVertexNormals();
+  if(planeProp)planeProp.rotation.x+=dt*34;
+}
 function mkTesla(color){
   const c2=new THREE.Group();
   const bod=new M(new THREE.BoxGeometry(0.58,0.09,0.22),new THREE.MeshStandardMaterial({color:color,roughness:0.25,metalness:0.5}));c2.add(bod);
@@ -3197,52 +3279,88 @@ function btvKick(){ /* a tap, or coming back to the tab, is a fresh chance: clea
 window.addEventListener('pointerdown',btvKick,{passive:true});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)btvKick();});
 setTimeout(()=>{if(!btvHovTag)btvHovNext();},1500);
+/* THE SCREEN TAKES THE SHAPE OF WHAT IS ON IT.
+   It was a fixed 16:9 panel, and every single thing that plays on it is portrait -- the review
+   covers are 380x570 and the preview clips are 720x1280. A portrait picture on a landscape screen
+   gives you three choices and only three: crop it, stretch it, or bar it. It was barred, sitting on
+   a blurred blow-up of itself to keep the corners from going dead black, and that surround is the
+   "phone outline" -- a tall video pillarboxed on a wide screen, exactly like a phone clip on a TV.
+   You cannot have the whole picture, the whole screen and no border unless the screen is the same
+   shape as the picture. So it is: the panel, its bezel, its glow and its ring of bulbs all take the
+   aspect of whatever is showing, and the picture is drawn edge to edge with nothing behind it. The
+   caption is no longer a black band stealing height off the bottom -- it is a soft gradient lying on
+   the picture, the way a caption sits on a reel. */
+const BTV_W0=7.1,BTV_H0=3.99;          /* the size the geometry was built at */
+const BTV_H=6.7,BTV_WMAX=8.4;          /* how much room it is allowed in the sky */
+let btvAR=BTV_W0/BTV_H0;
+function btvFit(ar){
+  if(!(ar>0.05&&ar<8)||Math.abs(ar-btvAR)<0.004)return;
+  btvAR=ar;
+  let H=1280,W=Math.round(H*ar);
+  if(W>1600){W=1600;H=Math.round(W/ar);}       /* a landscape source never blows the texture up */
+  btvC.width=W;btvC.height=H;
+  btvG.imageSmoothingEnabled=true;try{btvG.imageSmoothingQuality='high';}catch(e){}
+  let w=BTV_H*ar,h=BTV_H;
+  if(w>BTV_WMAX){w=BTV_WMAX;h=w/ar;}
+  const sx=w/BTV_W0,sy=h/BTV_H0;
+  btv.scale.set(sx,sy,1);
+  btvFrame.scale.set(sx,sy,1);
+  btvGlow.scale.set(sx,sy,1);
+  btvBulbs.scale.set(sx,sy,1);                 /* the bulbs are one point cloud: scaling moves them and leaves their size alone */
+}
 let btvLast=-1;
 function drawBTV(t){
   if(t-btvLast<0.10)return;btvLast=t;
   const covers=(A3.covers||[]).filter(im=>im&&im.complete&&im.naturalWidth);
-  const W2=1280,H2=720;
-  btvG.fillStyle='#000';btvG.fillRect(0,0,W2,H2);
   const showHov=btvHovOk&&!btvHov.paused&&btvHov.readyState>=2&&btvHov.videoWidth>0;
-  let label=showHov?btvHovTag:'';
-  if(showHov){
-    const vw=btvHov.videoWidth||720,vh=btvHov.videoHeight||1280,boxH=H2-96,boxW=Math.round(boxH*vw/vh),bx=Math.round((W2-boxW)/2);
-    try{btvG.save();btvG.globalAlpha=0.35;btvG.filter='blur(14px) brightness(0.6)';btvG.drawImage(btvHov,0,0,W2,H2);btvG.restore();btvG.drawImage(btvHov,bx,0,boxW,boxH);}catch(e){}
-  }else if(covers.length){
-    const per=6,idx=Math.floor(t/per)%covers.length,ph2=(t%per)/per,im=covers[idx];label=im.__name||'';
-    const ar=im.naturalWidth/im.naturalHeight;
-    /* THE ARTWORK FITS THE SCREEN NOW. It used to be scaled to COVER the 16:9 frame and then zoomed
-       and panned on top of that. Every review cover is portrait -- 380x570, two by three -- so
-       covering a landscape screen threw away 62% of the picture and showed a zoomed middle band of
-       it, which is what read as stretched. It is CONTAINED instead: the whole cover is on screen,
-       nothing cropped, sitting on a blurred blow-up of itself so the frame is still filled edge to
-       edge. That is exactly the treatment the video already gets a few lines up, so the two match. */
-    const BH=H2-96;                       /* the label bar owns the bottom, same as the video */
-    let th=BH,tw=th*ar;
-    if(tw>W2){tw=W2;th=tw/ar;}
-    const ix=Math.round((W2-tw)/2),iy=Math.round((BH-th)/2);
-    try{btvG.save();btvG.globalAlpha=0.38;btvG.filter='blur(16px) brightness(0.55)';
-      /* the backdrop is the one that covers, so the sides are never dead black */
-      let bw,bh;if(ar>W2/H2){bh=H2;bw=bh*ar;}else{bw=W2;bh=bw/ar;}
-      btvG.drawImage(im,(W2-bw)/2,(H2-bh)/2,bw,bh);btvG.restore();}catch(e){}
-    btvG.drawImage(im,ix,iy,tw,th);
-    /* broadcast punch: a touch of contrast + vignette so it reads crisp from the lane */
-    btvG.globalCompositeOperation='overlay';btvG.fillStyle='rgba(255,255,255,.14)';btvG.fillRect(0,0,W2,H2);btvG.globalCompositeOperation='source-over';
-    const vg=btvG.createRadialGradient(W2/2,H2/2,H2*0.45,W2/2,H2/2,H2*0.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.35)');btvG.fillStyle=vg;btvG.fillRect(0,0,W2,H2);
+  let label=showHov?btvHovTag:'',src=null;
+  if(showHov)src=btvHov;
+  else if(covers.length){
+    const per=6,idx=Math.floor(t/per)%covers.length;src=covers[idx];label=src.__name||'';
   }
-  btvG.fillStyle='rgba(0,0,0,.62)';btvG.fillRect(0,H2-96,W2,96);
-  if(Math.sin(t*4)>0){btvG.fillStyle='#f21d1d';btvG.beginPath();btvG.arc(54,H2-48,18,0,7);btvG.fill();}
-  btvG.fillStyle='#fff';btvG.font='bold 44px Verdana';btvG.textAlign='left';btvG.textBaseline='middle';btvG.fillText(label?'REVIEW \u00b7 '+label:'ANTIDOTE FOOD REVIEWS',96,H2-48);
-  /* and what is playing, on the right of the same bar -- the review on the left, the track on
-     the right, both under the picture */
+  /* the panel becomes whatever shape the source is, BEFORE anything is drawn */
+  if(src){
+    const sw=src.videoWidth||src.naturalWidth,sh=src.videoHeight||src.naturalHeight;
+    if(sw&&sh)btvFit(sw/sh);
+  }
+  const W2=btvC.width,H2=btvC.height;
+  btvG.fillStyle='#000';btvG.fillRect(0,0,W2,H2);
+  if(src){
+    try{btvG.drawImage(src,0,0,W2,H2);}catch(e){}   /* edge to edge: same shape, so nothing is cropped and nothing is bare */
+    /* broadcast punch, lighter than before because there are no bars left for it to sit on */
+    btvG.globalCompositeOperation='overlay';btvG.fillStyle='rgba(255,255,255,.10)';btvG.fillRect(0,0,W2,H2);btvG.globalCompositeOperation='source-over';
+    const vg=btvG.createRadialGradient(W2/2,H2/2,Math.min(W2,H2)*0.46,W2/2,H2/2,Math.max(W2,H2)*0.72);
+    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.28)');btvG.fillStyle=vg;btvG.fillRect(0,0,W2,H2);
+  }
+  /* the caption lies ON the picture */
+  const capH=Math.round(H2*0.20);
+  const gr=btvG.createLinearGradient(0,H2-capH,0,H2);
+  gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(0.55,'rgba(0,0,0,.42)');gr.addColorStop(1,'rgba(0,0,0,.80)');
+  btvG.fillStyle=gr;btvG.fillRect(0,H2-capH,W2,capH);
+  const pad=Math.round(W2*0.050);
   const song=(A3.nowPlaying&&A3.nowPlaying())||'';
+  /* the caption has to fit a NARROW screen now, so the type shrinks to the words rather than the
+     words being cut off at whatever size looked right on a wide one */
+  let head=label?'REVIEW · '+label:'ANTIDOTE FOOD REVIEWS';
+  let fs=Math.max(20,Math.round(H2*0.044));
+  const room=W2-pad*2-Math.round(H2*0.052);
+  btvG.textAlign='left';btvG.textBaseline='middle';
+  for(;fs>20;fs-=2){btvG.font='bold '+fs+'px Verdana';if(btvG.measureText(head).width<=room)break;}
+  btvG.font='bold '+fs+'px Verdana';
+  while(head.length>6&&btvG.measureText(head).width>room)head=head.slice(0,-2)+'…';
+  const baseY=H2-Math.round(H2*(song?0.125:0.082));
+  if(Math.sin(t*4)>0){btvG.fillStyle='#f21d1d';btvG.beginPath();btvG.arc(pad+fs*0.40,baseY,fs*0.36,0,7);btvG.fill();}
+  btvG.fillStyle='#fff';
+  btvG.fillText(head,pad+fs*1.00,baseY);
   if(song){
-    btvG.font='bold 32px Verdana';btvG.textAlign='right';btvG.fillStyle='#f2a81d';
-    let t2='\u266a '+song.toUpperCase();
-    while(t2.length>4&&btvG.measureText(t2).width>W2*0.42)t2=t2.slice(0,-2)+'\u2026';
-    btvG.fillText(t2,W2-44,H2-48);btvG.textAlign='left';
+    let fs2=Math.max(16,Math.round(fs*0.78));
+    let t2='♪ '+song.toUpperCase();
+    for(;fs2>16;fs2-=2){btvG.font='bold '+fs2+'px Verdana';if(btvG.measureText(t2).width<=W2-pad*2)break;}
+    btvG.font='bold '+fs2+'px Verdana';btvG.fillStyle='#f2a81d';
+    while(t2.length>4&&btvG.measureText(t2).width>W2-pad*2)t2=t2.slice(0,-2)+'…';
+    btvG.fillText(t2,pad,H2-Math.round(H2*0.062));
   }
-  btvG.fillStyle='#f2a81d';btvG.fillRect(0,H2-10,W2*((t%6)/6),10);
+  btvG.fillStyle='#f2a81d';btvG.fillRect(0,H2-Math.max(6,Math.round(H2*0.010)),W2*((t%6)/6),Math.max(6,Math.round(H2*0.010)));
   btvT.needsUpdate=true;
 }
 let bbLast=-1;
@@ -3279,7 +3397,7 @@ function drawBillboard(t){
   bbT.needsUpdate=true;
 }
 if(RETRO){
-  const keep=new Set([blimp,stPlane,stPlane2,btvFrame,btvGlow,btv,bill,shoot,road].concat(birds.map(b=>b.g),teslas.map(t=>t.grp)));
+  const keep=new Set([planeGrp,stPlane,stPlane2,btvFrame,btvGlow,btv,bill,shoot,road].concat(birds.map(b=>b.g),teslas.map(t=>t.grp)));
   amb.children.forEach(o=>{if(!keep.has(o)&&!o.isPoints)o.visible=false;});
   scene.fog.far=95;scene.fog.near=14;
   road.material.color.set(0x0a0714);
@@ -3368,12 +3486,16 @@ function ambient(dt,gs){
   if(shoot.userData.life>0){shoot.userData.life-=dt;shoot.position.x+=dt*15;shoot.position.y-=dt*3.6;
     shoot.material.opacity=Math.min(1,shoot.userData.life*2.4)*0.9;}
   else shoot.material.opacity=0;
-  /* blimp drifting THE WORLD IS YOURS across the sky */
+  /* the banner plane crossing the sky, always the same way so the banner never reads backwards */
   {const BC=70,bt=ambT%BC;
-   if(bt<38){blimp.visible=true;const dir2=Math.floor(ambT/BC)%2?-1:1;
-     blimp.position.x=dir2*(-17+bt/38*34);blimp.rotation.y=dir2===1?0:Math.PI;
-     blimp.userData.light.visible=day<0.4&&Math.sin(bt*6)>0;}
-   else blimp.visible=false;}
+   if(planePark!=null){planeGrp.visible=true;planeGrp.position.x=planePark;banTick(ambT,dt);}
+   else if(bt<42){planeGrp.visible=true;
+     planeGrp.position.x=-20+(bt/42)*40;
+     planeGrp.position.y=6.1+Math.sin(ambT*0.5)*0.18;        /* riding the air a little */
+     planeGrp.rotation.z=Math.sin(ambT*0.42)*0.045;
+     planeGrp.userData.light.visible=day<0.4&&Math.sin(bt*6)>0;
+     banTick(ambT,dt);}
+   else planeGrp.visible=false;}
   /* Teslas pull up, watch the scene, pull off */
   for(const tc of teslas){tc.t+=dt;const u=tc.t%tc.cyc;
     const g2=tc.grp;g2.visible=true;
@@ -6251,7 +6373,7 @@ function unprojHome(px,py){
   _pv.set(wx,0,wz).project(homeCam);_pv2.set(wx,1,wz).project(homeCam);
   return [wx,wz,Math.abs((_pv.y-_pv2.y)*0.5*VH)];
 }
-window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&blimpBanners.length&&blimpBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__cam:function(v){bCamOv=v||null;},__relRoll:function(){return +(bowler.userData.relRoll||0).toFixed(3);},__relFly:function(){return {on:relB.on,t:+relB.t.toFixed(2),op:real?+real.ball.material.opacity.toFixed(2):null,inHand:!!(real&&relB.home&&real.ball.parent===relB.home.parent),vis:!!(real&&real.ball.visible),pos:real?[+real.ball.position.x.toFixed(4),+real.ball.position.y.toFixed(4),+real.ball.position.z.toFixed(4)]:null,homePos:relB.home?[+relB.home.pos.x.toFixed(4),+relB.home.pos.y.toFixed(4),+relB.home.pos.z.toFixed(4)]:null};},__handPx:function(){ /* where the held ball actually is on screen, through the bowler's own camera */
+window.B3D={bowlerPx:bowlerScreenX,ok:true,setChampion:setChampion,__champBanner:function(){return !!(champBanT&&towBanners.length&&towBanners[0].material.map===champBanT);},__champBannerPng:function(){return champBanCv?champBanCv.toDataURL('image/png'):null;},__cam:function(v){bCamOv=v||null;},__relRoll:function(){return +(bowler.userData.relRoll||0).toFixed(3);},__relFly:function(){return {on:relB.on,t:+relB.t.toFixed(2),op:real?+real.ball.material.opacity.toFixed(2):null,inHand:!!(real&&relB.home&&real.ball.parent===relB.home.parent),vis:!!(real&&real.ball.visible),pos:real?[+real.ball.position.x.toFixed(4),+real.ball.position.y.toFixed(4),+real.ball.position.z.toFixed(4)]:null,homePos:relB.home?[+relB.home.pos.x.toFixed(4),+relB.home.pos.y.toFixed(4),+relB.home.pos.z.toFixed(4)]:null};},__handPx:function(){ /* where the held ball actually is on screen, through the bowler's own camera */
   if(!real)return null;const p=new THREE.Vector3();real.ball.getWorldPosition(p);
   p.project(bCam);
   return [+((p.x*0.5+0.5)*LW).toFixed(1),+(400+(1-(p.y*0.5+0.5))*VH).toFixed(1)];},
@@ -6351,7 +6473,7 @@ __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3)
   if(real&&real.bones.anL&&real.bones.anR){const v=new THREE.Vector3();
     real.bones.anL.getWorldPosition(v);o.aL=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
     real.bones.anR.getWorldPosition(v);o.aR=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
-  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,clampPins:clampPins,armClamp:armClamp,__nudgeBall:function(vx){if(!ballBody)return false;ballBody.wakeUp();ballBody.velocity.x+=vx;return true;},__ballState:function(){return ballBody?{x:+ballBody.position.x.toFixed(3),z:+ballBody.position.z.toFixed(2),gutter:S.gutter,hit:S.hit}:null;},__laneEdges:function(){const tx=gutTroughs.length?+Math.abs(gutTroughs[0].position.x).toFixed(4):0;const near=[];scene.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.parameters)return;const p=o.geometry.parameters;if(!p.height||!p.width||!(p.depth>15))return;const top=o.position.y+p.height/2,bot=o.position.y-p.height/2;const x0=Math.abs(o.position.x)-p.width/2;if(x0>=HALF-0.001)return;if(top>-0.0015&&bot<0.0015)near.push({x:+o.position.x.toFixed(3),top:+top.toFixed(5),w:+p.width.toFixed(3),off:!!(o.material&&o.material.polygonOffset)});});return {troughX:tx,coplanar:near,half:HALF,gutX:GUT_X,gutwX:GUTW_X};},quality:function(v){if(v==='auto'){SHAD.locked=false;try{localStorage.removeItem('adbShadow');}catch(e){}return 'auto';}shadowsOn(v==='high');SHAD.locked=true;try{localStorage.setItem('adbShadow',v==='high'?'1':'0');}catch(e){}return v;},__shadow:function(){return {on:SHAD.on,locked:SHAD.locked,enabled:renderer.shadowMap.enabled,casts:dl.castShadow,map:[dl.shadow.mapSize.x,dl.shadow.mapSize.y],deckMap:[pinLight.shadow.mapSize.x,pinLight.shadow.mapSize.y],deckCasts:pinLight.castShadow,laneRecv:laneMesh.receiveShadow,pinCast:pins.filter(p=>p&&p.alive&&p.mesh&&p.mesh.castShadow).length,ballCast:!!(ballMesh&&ballMesh.castShadow),blobs:{pin:pins.filter(p=>p&&p.alive&&p.shadow&&p.shadow.visible).length,ball:!!(ballShadow&&ballShadow.visible),food:foods.filter(f=>f&&f.shadow&&f.shadow.visible).length}};},__place:function(i,p){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.position.set(p[0],p[1],p[2]);pn.body.velocity.set(0,0,0);pn.body.angularVelocity.set(0,0,0);return true;},__shove:function(i,v,w){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(v[0],v[1],v[2]);if(w)pn.body.angularVelocity.set(w[0],w[1],w[2]);return true;},__foodMass:function(){return foods.map(f=>+f.body.mass.toFixed(3));},__foodAt:function(i,sp){const pn=pins[i];if(!pn||!pn.alive)return null;let f=null;for(const q of foods)if(!f||q.body.mass>f.body.mass)f=q;if(!f)return null;const p=pn.body.position;f.body.wakeUp();f.body.position.set(p.x+0.30,0.16,p.z);f.body.velocity.set(-(sp||7),0,0);f.body.angularVelocity.set(0,0,0);pn.body.wakeUp();return {mass:+f.body.mass.toFixed(3),e:f.e,pin:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)]};},__biteAt:function(t){biteOnClip(t);return {bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,armed:clampArmed,cued:clampCued};},__bitten:function(){return bitten.length;},__clamp:function(){return {armed:clampArmed,cued:clampCued,bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,alive:pins.filter(function(p){return p&&p.alive;}).length,flying:bitten.length,hitAt:+(S.hitAt||0).toFixed(2),on:RPL.on,clock:+RPL.clock.toFixed(2),prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0};},soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,clampPins:clampPins,armClamp:armClamp,__plane:function(){return {vis:planeGrp.visible,pos:[+planeGrp.position.x.toFixed(2),+planeGrp.position.y.toFixed(2),+planeGrp.position.z.toFixed(2)],banner:banMesh?{w:BAN_W,h:BAN_H,verts:banPos.count,map:(banMesh.material.map===champBanT?'champion':'slogan'),ripple:+(function(){let mx=0;const a=banPos.array;for(let i=2;i<a.length;i+=3)mx=Math.max(mx,Math.abs(a[i]));return mx;})().toFixed(3)}:null,prop:+planeProp.rotation.x.toFixed(2)};},__flyNow:function(x){planePark=(x==null?null:x);planeGrp.visible=true;if(x!=null)planeGrp.position.x=x;return planePark;},__btvShape:function(){return {ar:+btvAR.toFixed(3),cv:[btvC.width,btvC.height],plane:[+(7.1*btv.scale.x).toFixed(2),+(3.99*btv.scale.y).toFixed(2)],scale:[+btv.scale.x.toFixed(3),+btv.scale.y.toFixed(3)],bulbs:[+btvBulbs.scale.x.toFixed(3),+btvBulbs.scale.y.toFixed(3)],hov:btvHovOk,vid:[btvHov.videoWidth,btvHov.videoHeight]};},__nudgeBall:function(vx){if(!ballBody)return false;ballBody.wakeUp();ballBody.velocity.x+=vx;return true;},__ballState:function(){return ballBody?{x:+ballBody.position.x.toFixed(3),z:+ballBody.position.z.toFixed(2),gutter:S.gutter,hit:S.hit}:null;},__laneEdges:function(){const tx=gutTroughs.length?+Math.abs(gutTroughs[0].position.x).toFixed(4):0;const near=[];scene.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.parameters)return;const p=o.geometry.parameters;if(!p.height||!p.width||!(p.depth>15))return;const top=o.position.y+p.height/2,bot=o.position.y-p.height/2;const x0=Math.abs(o.position.x)-p.width/2;if(x0>=HALF-0.001)return;if(top>-0.0015&&bot<0.0015)near.push({x:+o.position.x.toFixed(3),top:+top.toFixed(5),w:+p.width.toFixed(3),off:!!(o.material&&o.material.polygonOffset)});});return {troughX:tx,coplanar:near,half:HALF,gutX:GUT_X,gutwX:GUTW_X};},quality:function(v){if(v==='auto'){SHAD.locked=false;try{localStorage.removeItem('adbShadow');}catch(e){}return 'auto';}shadowsOn(v==='high');SHAD.locked=true;try{localStorage.setItem('adbShadow',v==='high'?'1':'0');}catch(e){}return v;},__shadow:function(){return {on:SHAD.on,locked:SHAD.locked,enabled:renderer.shadowMap.enabled,casts:dl.castShadow,map:[dl.shadow.mapSize.x,dl.shadow.mapSize.y],deckMap:[pinLight.shadow.mapSize.x,pinLight.shadow.mapSize.y],deckCasts:pinLight.castShadow,laneRecv:laneMesh.receiveShadow,pinCast:pins.filter(p=>p&&p.alive&&p.mesh&&p.mesh.castShadow).length,ballCast:!!(ballMesh&&ballMesh.castShadow),blobs:{pin:pins.filter(p=>p&&p.alive&&p.shadow&&p.shadow.visible).length,ball:!!(ballShadow&&ballShadow.visible),food:foods.filter(f=>f&&f.shadow&&f.shadow.visible).length}};},__place:function(i,p){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.position.set(p[0],p[1],p[2]);pn.body.velocity.set(0,0,0);pn.body.angularVelocity.set(0,0,0);return true;},__shove:function(i,v,w){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(v[0],v[1],v[2]);if(w)pn.body.angularVelocity.set(w[0],w[1],w[2]);return true;},__foodMass:function(){return foods.map(f=>+f.body.mass.toFixed(3));},__foodAt:function(i,sp){const pn=pins[i];if(!pn||!pn.alive)return null;let f=null;for(const q of foods)if(!f||q.body.mass>f.body.mass)f=q;if(!f)return null;const p=pn.body.position;f.body.wakeUp();f.body.position.set(p.x+0.30,0.16,p.z);f.body.velocity.set(-(sp||7),0,0);f.body.angularVelocity.set(0,0,0);pn.body.wakeUp();return {mass:+f.body.mass.toFixed(3),e:f.e,pin:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)]};},__biteAt:function(t){biteOnClip(t);return {bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,armed:clampArmed,cued:clampCued};},__bitten:function(){return bitten.length;},__clamp:function(){return {armed:clampArmed,cued:clampCued,bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,alive:pins.filter(function(p){return p&&p.alive;}).length,flying:bitten.length,hitAt:+(S.hitAt||0).toFixed(2),on:RPL.on,clock:+RPL.clock.toFixed(2),prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0};},soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
