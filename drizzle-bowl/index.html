@@ -3209,8 +3209,18 @@ bill.position.set(0,1.02,-16.90);amb.add(bill);
 const btvC=document.createElement('canvas');btvC.width=1280;btvC.height=720;const btvG=btvC.getContext('2d');btvG.imageSmoothingEnabled=true;try{btvG.imageSmoothingQuality='high';}catch(e){}
 btvG.imageSmoothingEnabled=true;try{btvG.imageSmoothingQuality='high';}catch(e){}
 const btvT=new THREE.CanvasTexture(btvC);btvT.colorSpace=THREE.SRGBColorSpace;btvT.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());btvT.generateMipmaps=true;btvT.minFilter=THREE.LinearMipmapLinearFilter;btvT.magFilter=THREE.LinearFilter;
-const btvFrame=new M(new THREE.BoxGeometry(7.5,4.3,0.16),new THREE.MeshBasicMaterial({color:0x0a0a0c}));btvFrame.position.set(4.6,4.95,-21.7);amb.add(btvFrame);
-const btvGlow=new M(new THREE.PlaneGeometry(9.4,6.0),new THREE.MeshBasicMaterial({color:0x7fb8ff,transparent:true,opacity:0.24,blending:THREE.AdditiveBlending,depthWrite:false}));btvGlow.position.set(4.6,4.95,-21.75);amb.add(btvGlow);
+/* THE BEZEL IS A REAL FRAME. It was a flat unlit black rectangle with a 9.4 x 6.0 additive blue
+   plane hung behind it as a 'glow'. That plane is the grey highlight around the screen -- and
+   once the panel went portrait it scaled with it into a six-by-ten-metre haze, taller than the
+   screen it was supposed to be flattering. It is gone. What is left is a frame with actual
+   thickness and a lit material, so it catches the room and reads as a box in the air rather
+   than a sticker: the bulbs on it are the only light around the picture now, which is what a
+   marquee is. */
+const btvFrame=new M(new THREE.BoxGeometry(7.62,4.42,0.34),new THREE.MeshStandardMaterial({color:0x15151c,roughness:0.42,metalness:0.55}));
+btvFrame.position.set(4.6,4.95,-21.80);amb.add(btvFrame);
+/* a narrow inner lip, so the picture sits DOWN inside the frame instead of floating on its face */
+const btvLip=new M(new THREE.BoxGeometry(7.26,4.14,0.16),new THREE.MeshStandardMaterial({color:0x0b0b10,roughness:0.7,metalness:0.2}));
+btvLip.position.set(4.6,4.95,-21.70);amb.add(btvLip);
 const btv=new M(new THREE.PlaneGeometry(7.1,3.99),new THREE.MeshBasicMaterial({map:btvT,toneMapped:false}));btv.position.set(4.6,4.95,-21.6);amb.add(btv);
 /* ---------- CHASE LIGHTS around the big screen ----------
    A marquee border of bulbs on the bezel, with colour running round the frame and a bright wave
@@ -3305,7 +3315,7 @@ function btvFit(ar){
   const sx=w/BTV_W0,sy=h/BTV_H0;
   btv.scale.set(sx,sy,1);
   btvFrame.scale.set(sx,sy,1);
-  btvGlow.scale.set(sx,sy,1);
+  btvLip.scale.set(sx,sy,1);
   btvBulbs.scale.set(sx,sy,1);                 /* the bulbs are one point cloud: scaling moves them and leaves their size alone */
 }
 let btvLast=-1;
@@ -3397,7 +3407,7 @@ function drawBillboard(t){
   bbT.needsUpdate=true;
 }
 if(RETRO){
-  const keep=new Set([planeGrp,stPlane,stPlane2,btvFrame,btvGlow,btv,bill,shoot,road].concat(birds.map(b=>b.g),teslas.map(t=>t.grp)));
+  const keep=new Set([planeGrp,stPlane,stPlane2,btvFrame,btvLip,btv,bill,shoot,road].concat(birds.map(b=>b.g),teslas.map(t=>t.grp)));
   amb.children.forEach(o=>{if(!keep.has(o)&&!o.isPoints)o.visible=false;});
   scene.fog.far=95;scene.fog.near=14;
   road.material.color.set(0x0a0714);
