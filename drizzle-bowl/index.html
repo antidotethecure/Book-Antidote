@@ -1219,7 +1219,7 @@ var HOVER_REVIEWS=[ /* every review preview on antidotethefoodie.com: the halfti
   ['GRITZ2', 'Gritz N Wafflez Pt. II'],
   ['HABIBI', 'Habibi Time'],
   ['HIBIKI', 'Hibiki BBQ'],
-  ["JAWNYS", "Jawny's \\u00b7 ft. Problem Da Goon"],
+  ["JAWNYS", "Jawny's · ft. Problem Da Goon"],
   ['KAVA', 'Kava Hana'],
   ['KAYSER', 'Maison Kayser'],
   ['KUTE', 'Kute N the Kitchen'],
@@ -1237,7 +1237,7 @@ var HOVER_REVIEWS=[ /* every review preview on antidotethefoodie.com: the halfti
   ['MELODY', 'Melody Bar & Grill'],
   ['MESOFISHY', 'MeSoFishLA'],
   ['MYNY', 'My NY Pizza'],
-  ['MYNY2', 'My NY Pizza 2 \\u00b7 ft. Mike Zombie'],
+  ['MYNY2', 'My NY Pizza 2 · ft. Mike Zombie'],
   ['NALU', 'Nalu Vida (Venice)'],
   ['NYGYRO', 'New York Chicken & Gyro'],
   ['PAPILLON', 'Papillon Bakery'],
@@ -1246,7 +1246,7 @@ var HOVER_REVIEWS=[ /* every review preview on antidotethefoodie.com: the halfti
   ['STORM2', 'Storm Burger Pt. 2'],
   ['WANGS', 'Wangs N Thangs'],
   ['WAX', 'Wax Smashburgers'],
-  ["ZFOODBOIL", "Z's Foodboil \\u00b7 ft. C-Nova"],
+  ["ZFOODBOIL", "Z's Foodboil · ft. C-Nova"],
   ['ZIGGLE', 'Ziggle Korean BBQ']];
 function dealDeck(key,names,n){ /* deal n names from a shuffled deck kept on the device; the deck only refills once everything has played, so nothing repeats until the whole catalogue has been through */
   var deck=[];try{deck=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
@@ -1343,7 +1343,16 @@ function showHalftime(){
         var p2=v.play();if(p2&&p2.catch)p2.catch(function(){tap.textContent='TAP TO PLAY';tap.onclick=function(e){e.stopPropagation();v.muted=false;tap.hidden=true;var p4=v.play();if(p4&&p4.catch)p4.catch(next);};});}
       else next();});
     /* stall watch: give a review clip time to buffer on a phone; move on only if it is truly not progressing */
+    /* A clip that has no data yet sits on its first frame, and a still frame of a review IS a photo
+       of a review as far as anyone watching is concerned. Until data is actually flowing the video
+       is kept out of sight -- the card underneath still names the review -- and it only appears once
+       there is something moving to show. */
+    var noData=0;
     var lastT=-1,stuck=0;clipTimer=setInterval(function(){if(ended){clearInterval(clipTimer);return;}
+      if(c.kind!=='song'){
+        if(v.readyState>=2){noData=0;if(v.style.visibility==='hidden')v.style.visibility='';}
+        else if(++noData>=2)v.style.visibility='hidden';   /* a second with nothing: do not show the still */
+      }
       /* A paused clip shows its first frame and nothing else, which looks like a photo of the
          review rather than the review. Muted playback is always allowed, so take that over a
          still: the tap prompt then only decides sound. */
