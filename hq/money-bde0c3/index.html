@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Money">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Money</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one column money app: live XRP hero, everything-together sum, payouts, calendar, sources, expenses, verdict. */
+:root{
+  --bg:#f3f5fb;--panel:#fff;--ink:#0e1a3a;--muted:#56607a;--line:#dde2ee;--chip:#e9edf8;
+  --blue:#1740c8;--hero:#0b1a4a;--yellow:#f5c400;--yellow-ink:#5a4600;--red:#d42a2a;--green:#127a4a;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#07102a;--panel:#0e1a3f;--ink:#eef1fb;--muted:#9aa5c4;--line:#223063;--chip:#16245a;
+  --blue:#7d99ff;--hero:#0b1a4a;--yellow:#ffd43b;--yellow-ink:#ffd43b;--red:#ff6b6b;--green:#4cd69a;color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+h1{font:800 30px/1.05 var(--f-display);margin:0;letter-spacing:-.01em}
+h2{font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fresh{font-size:12px;color:var(--muted);text-align:right}
+button,.btn{font:600 14px/1 var(--f-body);border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+button.primary{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+/* gate */
+#gate{max-width:380px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
+#gate input[type=password]{padding:14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:16px}
+.rm{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.err{color:var(--red);font-size:14px;min-height:1.3em}
+/* hero */
+.hero{background:var(--hero);color:#fff;border-radius:14px;padding:18px;display:grid;gap:8px}
+.hero .k{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#b9c6ff}
+.hero .v{font:800 40px/1.05 var(--f-num);color:var(--yellow)}
+.hero .s{font-size:14px;color:#dfe6ff}
+.hero svg{width:100%;height:64px;display:block}
+.hero .l{fill:none;stroke:var(--yellow);stroke-width:2;vector-effect:non-scaling-stroke}
+.hero .a{fill:rgba(255,212,59,.14)}
+.up{color:#4cd69a}.down{color:#ff8c8c}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#dfe6ff}
+.dot{width:8px;height:8px;border-radius:50%;background:#4cd69a;animation:p 2s infinite}
+@keyframes p{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+/* sums */
+.sum{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 16px}
+.line{display:grid;grid-template-columns:1fr auto;gap:12px;padding:11px 0;border-top:1px dashed var(--line);align-items:baseline}
+.line:first-child{border-top:0}
+.line small{display:block;color:var(--muted);font-size:12px}
+.line .num{font-weight:700}
+.total{border-top:2px solid var(--ink)!important;padding-top:14px}
+.total span:first-child{font:800 18px/1.2 var(--f-display)}
+.total .num{font-size:26px;color:var(--blue)}
+.minus{color:var(--red)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.tile .v{font:700 22px/1.25 var(--f-num);margin-top:3px}
+/* lists */
+.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row.two{grid-template-columns:1fr auto}
+.date{font:700 13px/1.2 var(--f-num);text-transform:uppercase}
+.date small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.what{min-width:0}.what b{display:block;font-weight:600}
+.meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.amt{font:700 16px/1 var(--f-num);text-align:right;white-space:nowrap}
+.empty{padding:20px 16px;color:var(--muted)}
+.pill{display:inline-block;font:600 11px/1 var(--f-body);letter-spacing:.03em;padding:4px 7px;border-radius:99px;margin-left:6px;vertical-align:1px;background:var(--chip);color:var(--muted)}
+.pill.hold{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.pill.est{background:color-mix(in srgb,var(--yellow) 28%,transparent);color:var(--yellow-ink)}
+.pill.ok{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+/* payouts */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.pay{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ph{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ph b{font:800 17px/1.2 var(--f-display)}
+.acct{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.next{background:var(--chip);border-radius:9px;padding:10px 12px}
+.next .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.next .v{font:700 20px/1.2 var(--f-num)}
+.next p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0;font-size:14px}
+dt{color:var(--muted)}dd{margin:0;font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:auto}
+.foot .btn{font-size:13px;padding:7px 10px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.verdict{font:800 22px/1.2 var(--f-num)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.note{font-size:13px;color:var(--muted)}
+.lock{background:none;border:0;color:var(--muted);padding:6px 0;font-weight:500}
+@media (max-width:480px){.row{grid-template-columns:54px 1fr auto;padding:12px}.hero .v{font-size:34px}}
+</style></head><body>
+<div id="gate">
+  <h1>Money</h1>
+  <p class="note">Private. Enter your password to unlock.</p>
+  <form id="f"><div style="display:flex;flex-direction:column;gap:12px">
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <label class="rm"><input type="checkbox" id="rem" checked> Remember on this phone</label>
+    <button class="primary" type="submit">Unlock</button>
+    <div class="err" id="err"></div></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top"><h1>Money</h1><div class="fresh" id="fresh"></div></div>
+
+  <section class="hero" aria-label="XRP live">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="k">XRP · <span id="xAmt"></span></span><span class="live"><span class="dot"></span>Live</span></div>
+    <div class="v" id="xVal">—</div>
+    <div class="s num" id="xSub">Loading price…</div>
+    <svg viewBox="0 0 300 64" preserveAspectRatio="none" id="xSpark" aria-label="XRP price, last 24 hours"></svg>
+  </section>
+
+  <section><h2>Everything together</h2><div class="sum" id="together"></div></section>
+
+  <section><h2>Payouts by platform</h2><div class="pgrid" id="payouts"></div></section>
+
+  <section class="tiles" aria-label="Totals">
+    <div class="tile"><div class="k">Next 30 days</div><div class="v" id="t30">—</div></div>
+    <div class="tile"><div class="k">This month</div><div class="v" id="tMonth">—</div></div>
+    <div class="tile"><div class="k" id="kNext">Next month</div><div class="v" id="tNext">—</div></div>
+    <div class="tile"><div class="k">Monthly repeat</div><div class="v" id="tRecur">—</div></div>
+  </section>
+
+  <section><h2>Coming in (next 60 days)</h2><div class="list" id="upcoming"></div></section>
+  <section><h2>Income sources</h2><div class="list" id="sources"></div></section>
+  <section><h2>Expenses</h2><div class="list" id="expenses"></div></section>
+  <section><h2>Am I going positive or negative?</h2><div class="cmp" id="cmp"></div></section>
+
+  <p class="note">To add or change income, expenses or payouts, tell Claude (“add expense rent $1,500 on the 1st”, “refresh my payouts”). This page picks it up within a few minutes. <button class="lock" id="lk" type="button">Lock this phone</button></p>
+</div>
+
+<script>
+"use strict";
+const K="antidote.money.pw", DATA_URL="data.enc.json";
+const $=id=>document.getElementById(id);
+const usd=n=>n==null||isNaN(n)?"—":(+n).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:Math.abs(n)>=1000?0:2});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const DAY=864e5;
+let PW=null, D=null, price=null, stats=null, candles=[];
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw,E){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c))));
+}
+async function loadData(){
+  const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("data "+r.status);
+  D=await decrypt(PW,await r.json());
+  render();
+}
+async function loadPrice(){
+  try{
+    const [s,c]=await Promise.all([
+      fetch("https://api.exchange.coinbase.com/products/XRP-USD/stats",{cache:"no-store"}).then(r=>r.json()),
+      candles.length&&Date.now()-candles.t<5*6e4?null:fetch("https://api.exchange.coinbase.com/products/XRP-USD/candles?granularity=900",{cache:"no-store"}).then(r=>r.json())]);
+    stats=s; price=+s.last;
+    if(c&&Array.isArray(c)){candles=c.slice(0,96).reverse().map(x=>x[4]);candles.t=Date.now()}
+    renderXrp();render();
+  }catch(e){$("xSub").textContent="Can't reach Coinbase right now. Retrying…"}
+}
+/* ---- schedule math ---- */
+const parseD=s=>{if(!s)return null;const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
+const monthDay=(y,m,day)=>new Date(y,m,Math.min(day,new Date(y,m+1,0).getDate()));
+function occ(it,from,to){
+  const out=[],start=parseD(it.date);
+  if(it.cadence==="monthly"){const day=+it.day||start?.getDate()||1;
+    for(let k=0;k<4;k++){const d=monthDay(from.getFullYear(),from.getMonth()+k,day);if(d>=from&&d<=to&&(!start||d>=start))out.push(d)}}
+  else if(it.cadence==="weekly"||it.cadence==="biweekly"){if(!start)return out;const step=(it.cadence==="weekly"?7:14)*DAY;let d=start;
+    while(d<from)d=new Date(d.getTime()+step);while(d<=to){out.push(new Date(d));d=new Date(d.getTime()+step)}}
+  else if(it.cadence==="yearly"){if(start)for(let y=from.getFullYear();y<=to.getFullYear();y++){const d=monthDay(y,start.getMonth(),start.getDate());if(d>=from&&d<=to)out.push(d)}}
+  else if(start&&start>=from&&start<=to)out.push(start);
+  return out.map(d=>({d,it,amt:+it.amount||0}));
+}
+function active(it){const s=parseD(it.date);return it.cadence==="once"||!s||s<=today()}
+const perMonth=it=>{const a=+it.amount||0;return it.cadence==="monthly"?a:it.cadence==="weekly"?a*52/12:it.cadence==="biweekly"?a*26/12:it.cadence==="yearly"?a/12:0};
+const ord=n=>{const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+const fmt=(d,o)=>d.toLocaleDateString("en-US",o||{month:"short",day:"numeric"});
+function cadenceText(it){const s=parseD(it.date);
+  if(it.cadence==="monthly")return `Every month on the ${ord(+it.day||s?.getDate()||1)}`+(s&&s>today()?`, starting ${fmt(s)}`:"");
+  if(it.cadence==="weekly")return "Every week";if(it.cadence==="biweekly")return "Every 2 weeks";
+  if(it.cadence==="yearly")return "Every year"+(s?" on "+fmt(s):"");
+  return "One time"+(s?", "+fmt(s,{month:"short",day:"numeric",year:"numeric"}):"")}
+const pill=s=>s==="hold"?'<span class="pill hold">On hold</span>':s==="estimated"?'<span class="pill est">Estimated</span>':'<span class="pill ok">Confirmed</span>';
+const line=(l,sub,a,cls)=>`<div class="line${cls?" "+cls:""}"><span>${l}${sub?`<small>${sub}</small>`:""}</span><span class="num">${a}</span></div>`;
+const ago=iso=>{if(!iso)return"";const m=Math.round((Date.now()-Date.parse(iso))/6e4);return m<1?"just now":m<60?`${m} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+/* ---- render ---- */
+function renderXrp(){
+  const amt=D?.xrp?.amount;$("xAmt").textContent=amt!=null?(+amt).toLocaleString("en-US")+" coins":"";
+  if(price==null||amt==null)return;
+  $("xVal").textContent=usd(amt*price);
+  let sub=`$${price.toFixed(4)} per XRP`;
+  if(stats){const o=+stats.open,d=(price-o)*amt,pc=(price/o-1)*100;
+    sub+=` · <span class="${d>=0?"up":"down"}">${d>=0?"▲ +":"▼ −"}${usd(Math.abs(d))} (${pc>=0?"+":""}${pc.toFixed(2)}%) 24h</span>`}
+  $("xSub").innerHTML=sub;
+  if(candles.length>1){const lo=Math.min(...candles),hi=Math.max(...candles),r=(hi-lo)||hi*.001;
+    const pts=candles.map((p,i)=>[i/(candles.length-1)*300,60-((p-lo)/r)*54]);
+    const l="M"+pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join("L");
+    $("xSpark").innerHTML=`<path class="a" d="${l}L300,64L0,64Z"/><path class="l" d="${l}"/>`}
+}
+function render(){
+  if(!D)return;
+  const t=today(),items=D.income||[],exps=D.expenses||[],pays=D.payouts||[];
+  $("fresh").innerHTML=`Data updated ${ago(D.generatedAt)}`;
+  const to60=new Date(t.getTime()+60*DAY),to30=new Date(t.getTime()+30*DAY);
+  const all=items.flatMap(it=>occ(it,t,to60)).sort((a,b)=>a.d-b.d);
+  const sum=a=>a.reduce((s,o)=>s+o.amt,0);
+  const mStart=new Date(t.getFullYear(),t.getMonth(),1),mEnd=new Date(t.getFullYear(),t.getMonth()+1,0);
+  const nStart=new Date(t.getFullYear(),t.getMonth()+1,1),nEnd=new Date(t.getFullYear(),t.getMonth()+2,0);
+  const nm=fmt(nStart,{month:"long"});
+  $("t30").textContent=usd(sum(all.filter(o=>o.d<=to30)));
+  $("tMonth").textContent=usd(sum(items.flatMap(it=>occ(it,mStart,mEnd))));
+  $("kNext").textContent=nm;
+  const inNext=sum(items.flatMap(it=>occ(it,nStart,nEnd)));
+  $("tNext").textContent=usd(inNext);
+  const recurIn=items.filter(active).reduce((s,it)=>s+perMonth(it),0);
+  $("tRecur").textContent=usd(recurIn);
+  // together
+  const xv=(price!=null&&D.xrp?.amount!=null)?D.xrp.amount*price:null;
+  const oneTime=items.filter(it=>it.cadence==="once"&&parseD(it.date)>=t),oneSum=oneTime.reduce((s,it)=>s+(+it.amount||0),0);
+  const owed=pays.reduce((s,p)=>s+(+p.balance||0),0);
+  $("together").innerHTML=line("XRP",xv==null?"Waiting for the live price":"Live price",usd(xv))+
+    line("Repeat income","One month of repeat payments",usd(recurIn))+
+    line("Money coming in",`${oneTime.length} upcoming one-time payment(s)`,usd(oneSum))+
+    line("Platform balances","Earned, not paid out yet",usd(owed))+
+    line("Everything together","",usd((xv||0)+recurIn+oneSum+owed),"total");
+  // payouts
+  const row=(k,v)=>v==null?"":`<dt>${esc(k)}</dt><dd>${v}</dd>`;
+  $("payouts").innerHTML=pays.length?pays.map(p=>`<article class="pay">
+    <div class="ph"><b>${esc(p.platform)}</b>${pill(p.status)}</div>
+    <div class="acct">${esc(p.account)}<br>Pays to: ${esc(p.paysTo)}</div>
+    <div class="next"><div class="k">Next payout</div>
+      <div class="v">${p.nextAmount!=null?usd(p.nextAmount):(p.nextDate?"Not yet":"None scheduled")}${p.nextDate?` <span style="font-size:14px;color:var(--muted)">· ${p.nextAmount!=null?"":"likely "}${fmt(parseD(p.nextDate))}</span>`:""}</div>
+      ${p.nextNote?`<p>${esc(p.nextNote)}</p>`:""}</div>
+    <dl>${row(p.monthLabel||"This month",p.earnedMonth!=null?usd(p.earnedMonth):null)}${row("Last month",p.lastMonth!=null?usd(p.lastMonth):null)}${row("Balance (unpaid)",p.balance!=null?usd(p.balance):null)}${row("Payout minimum",p.threshold!=null?usd(p.threshold):null)}${row("Last payment",p.lastPayment!=null?usd(p.lastPayment):null)}${row("Lifetime",p.lifetime!=null?usd(p.lifetime):null)}</dl>
+    <div class="foot"><span>Checked ${ago(p.asOf)}${p.dataThrough?` · data through ${fmt(parseD(p.dataThrough))}`:""}</span><a class="btn" href="${esc(p.link)}" target="_blank" rel="noopener">Open ↗</a></div></article>`).join(""):'<div class="pay"><div class="acct">No payout data yet.</div></div>';
+  // upcoming
+  $("upcoming").innerHTML=all.length?all.map(o=>`<div class="row"><div class="date">${fmt(o.d)}<small>${fmt(o.d,{weekday:"short"})}</small></div>
+    <div class="what"><b>${esc(o.it.name)}${pill(o.it.status)}</b><div class="meta">${esc(o.it.entity||"")}${o.it.note?" · "+esc(o.it.note):""}</div></div><div class="amt">${usd(o.amt)}</div></div>`).join("")
+    :'<div class="empty">Nothing due in the next 60 days.</div>';
+  $("sources").innerHTML=items.length?items.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"")).map(it=>`<div class="row two"><div class="what"><b>${esc(it.name)}${pill(it.status)}</b><div class="meta">${cadenceText(it)}${it.entity?" · "+esc(it.entity):""}</div></div><div class="amt">${usd(it.amount)}</div></div>`).join(""):'<div class="empty">No income yet.</div>';
+  const recurOut=exps.filter(active).reduce((s,e)=>s+perMonth(e),0);
+  $("expenses").innerHTML=exps.length?exps.slice().sort((a,b)=>perMonth(b)-perMonth(a)).map(e=>`<div class="row two"><div class="what"><b>${esc(e.name)}<span class="pill">${esc(e.category||"Other")}</span></b><div class="meta">${cadenceText(e)}${e.paidFrom?" · "+esc(e.paidFrom):""}${e.note?" · "+esc(e.note):""}</div></div><div class="amt minus">−${usd(e.amount)}</div></div>`).join("")+
+    `<div class="row two"><div class="what"><b>Total per month</b><div class="meta">Weekly and yearly bills converted to monthly</div></div><div class="amt minus">−${usd(recurOut)}</div></div>`
+    :'<div class="empty">No expenses yet. Tell Claude your bills and they show up here.</div>';
+  const outNext=sum(exps.flatMap(e=>occ(e,nStart,nEnd)));
+  const card=(title,sub,inn,out)=>{const n=inn-out;return `<div class="sum">${line(`<b>${title}</b>`,sub,"")}${line("Money in","",usd(inn))}${line("Expenses","",`<span class="minus">−${usd(out)}</span>`)}<div class="line total"><span>${n>=0?"Positive":"Negative"}</span><span class="verdict ${n>=0?"pos":"neg"}">${n>=0?"+":"−"}${usd(Math.abs(n))}</span></div></div>`};
+  $("cmp").innerHTML=card("Every month","Repeat income vs repeat bills",recurIn,recurOut)+card(nm,"Everything scheduled next month",inNext,outNext);
+  renderXrp();
+}
+/* ---- boot ---- */
+async function unlock(pw,remember){
+  PW=pw; await loadData();
+  $("gate").hidden=true;$("app").hidden=false;
+  try{if(remember)localStorage.setItem(K,pw)}catch(e){}
+  loadPrice(); setInterval(loadPrice,20000); setInterval(()=>loadData().catch(()=>{}),120000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden){loadPrice();loadData().catch(()=>{})}});
+}
+$("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err.textContent="Unlocking…";
+  unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load your data. Check your connection.":"Wrong password."})});
+$("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
+(()=>{let s=null;try{s=localStorage.getItem(K)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
+</script></body></html>
