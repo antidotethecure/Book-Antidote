@@ -1831,6 +1831,171 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 </section>
 <!-- BOOK -->
 <!-- THE DRIZZLE LIST — members-only alerts. Your details get engraved onto a live card as you type; submitting stamps it. -->
+<!-- ================= MERCH WAITLIST — reserve a piece before it drops (2026-09-28) =================
+     Signups go to the same Drizzle List API as #join, tagged in `wants` with exactly what they
+     reserved (wl-tee-XL, wl-lbc, …) so demand is counted per item and size before stock is ordered. -->
+<style>
+#waitlist{position:relative;padding:90px 0 70px;background:linear-gradient(180deg,rgba(11,42,111,.0),rgba(11,42,111,.35) 40%,rgba(11,42,111,0))}
+#waitlist .mw-head{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center;margin-bottom:34px}
+#waitlist .mw-head h2{margin:.2em 0 .35em}
+#waitlist .mw-lead{color:#cfd6e6;font-size:1.05rem;line-height:1.6;max-width:560px}
+#waitlist .mw-count{display:inline-flex;gap:10px;align-items:center;margin-top:14px;padding:8px 14px;border-radius:999px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.35);color:#ffd60a;font-weight:700;font-size:.92rem}
+#waitlist .mw-count i{width:9px;height:9px;border-radius:50%;background:#e10600;box-shadow:0 0 0 0 rgba(225,6,0,.7);animation:mwPulse 1.6s infinite}
+@keyframes mwPulse{70%{box-shadow:0 0 0 10px rgba(225,6,0,0)}100%{box-shadow:0 0 0 0 rgba(225,6,0,0)}}
+#waitlist .mw-hero{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#waitlist .mw-hero img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+#waitlist .mw-hero img:nth-child(2){transform:translateY(18px)}
+#waitlist .mw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-bottom:28px}
+#waitlist .mw-card{position:relative;display:flex;flex-direction:column;background:rgba(10,14,28,.78);border:2px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:border-color .2s,transform .2s}
+#waitlist .mw-card:hover{transform:translateY(-3px)}
+#waitlist .mw-card.on{border-color:#ffd60a;box-shadow:0 0 0 3px rgba(255,214,10,.18)}
+#waitlist .mw-card img{width:100%;aspect-ratio:1/1;object-fit:cover;background:#0b0f1d}
+#waitlist .mw-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+#waitlist .mw-name{font-weight:800;line-height:1.25;color:#fff}
+#waitlist .mw-price{color:#ffd60a;font-weight:800}
+#waitlist .mw-tag{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:8px;background:#e10600;color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.06em}
+#waitlist .mw-tag.live{background:#1e6bff}
+#waitlist .mw-sizes{display:flex;flex-wrap:wrap;gap:6px}
+#waitlist .mw-sizes button{padding:5px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#dfe6f5;font-weight:700;font-size:.8rem;cursor:pointer}
+#waitlist .mw-sizes button.on{background:#ffd60a;color:#0b0f1d;border-color:#ffd60a}
+#waitlist .mw-pick{margin-top:auto;padding:9px 12px;border-radius:10px;border:0;background:#1e6bff;color:#fff;font-weight:800;cursor:pointer}
+#waitlist .mw-card.on .mw-pick{background:#ffd60a;color:#0b0f1d}
+#waitlist .mw-buy{margin-top:auto;text-align:center;padding:9px 12px;border-radius:10px;background:#e10600;color:#fff;font-weight:800;text-decoration:none}
+#waitlist .mw-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:760px;background:rgba(10,14,28,.85);border:1px solid rgba(30,107,255,.45);border-radius:18px;padding:20px}
+#waitlist .mw-form label{display:flex;flex-direction:column;gap:6px;color:#aeb8cf;font-size:.85rem;font-weight:700}
+#waitlist .mw-form input{padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0b0f1d;color:#fff;font-size:1rem}
+#waitlist .mw-form .mw-full{grid-column:1/-1}
+#waitlist .mw-summary{grid-column:1/-1;color:#dfe6f5;font-size:.95rem;min-height:1.3em}
+#waitlist .mw-summary b{color:#ffd60a}
+#waitlist .mw-note{grid-column:1/-1;font-size:.9rem;color:#aeb8cf}
+#waitlist .mw-note.ok{color:#7dffa8}#waitlist .mw-note.err{color:#ff7a7a}
+#waitlist .mw-hp{position:absolute;left:-9999px}
+#waitlist .mw-count[hidden]{display:none}
+@media (max-width:820px){#waitlist .mw-head{grid-template-columns:1fr}#waitlist .mw-form{grid-template-columns:1fr}}
+</style>
+<section id="waitlist">
+  <div class="wrap">
+    <div class="mw-head">
+      <div>
+        <div class="eyebrow">WokeDote Clothing · Launch Drop</div>
+        <h2>Reserve yours <span class="neon">before it drops.</span></h2>
+        <p class="mw-lead">The first run is small. Tap the pieces you want, pick your size, and drop your email — the waitlist gets first access and the launch price before anyone else. Nothing is charged now.</p>
+        <div class="mw-count" id="mwCount" hidden><i></i><span id="mwCountTxt"></span></div>
+      </div>
+      <div class="mw-hero" aria-hidden="true">
+        <img src="assets/img/merch/lookbook.webp" alt="" loading="lazy">
+        <img src="assets/img/merch/venice.webp" alt="" loading="lazy">
+        <img src="assets/img/merch/rooftop.webp" alt="" loading="lazy">
+      </div>
+    </div>
+
+    <div class="mw-grid" id="mwGrid">
+      <div class="mw-card" data-code="tee" data-sized="1">
+        <span class="mw-tag">WAITLIST</span>
+        <img src="assets/img/merch/studio.webp" alt="Speak It Into Existence Tee" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">Speak It Into Existence Tee</div>
+          <div class="mw-price">$49.99</div>
+          <div class="mw-sizes"><button type="button">S</button><button type="button">M</button><button type="button">L</button><button type="button" class="on">XL</button><button type="button">2XL</button></div>
+          <button type="button" class="mw-pick">Reserve</button>
+        </div>
+      </div>
+      <div class="mw-card" data-code="lbc">
+        <span class="mw-tag">WAITLIST</span>
+        <img src="assets/img/merch/snapback.webp" alt="LBC × CPT As Above So Below Snapback" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">LBC × CPT — As Above • So Below Snapback</div>
+          <div class="mw-price">$74.99</div>
+          <button type="button" class="mw-pick">Reserve</button>
+        </div>
+      </div>
+      <div class="mw-card" data-code="la">
+        <span class="mw-tag">WAITLIST</span>
+        <img src="https://cdn.shopify.com/s/files/1/0673/0199/8688/files/IMG-4026.png?v=1783142104&width=600" alt="LA Frequency Snapback" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">LA Frequency Snapback — Vibrate High, Align Higher</div>
+          <div class="mw-price">$74.99</div>
+          <button type="button" class="mw-pick">Reserve</button>
+        </div>
+      </div>
+      <div class="mw-card" data-code="eye">
+        <span class="mw-tag">WAITLIST</span>
+        <img src="https://cdn.shopify.com/s/files/1/0673/0199/8688/files/CF3B1F97-D156-441C-ACE4-E3BB8C00DF6A.png?v=1783202456&width=600" alt="Awakened Vision Snapback" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">Awakened Vision Snapback — See Beyond, Live Aware</div>
+          <div class="mw-price">$74.99</div>
+          <button type="button" class="mw-pick">Reserve</button>
+        </div>
+      </div>
+      <div class="mw-card" data-code="solar">
+        <span class="mw-tag">WAITLIST</span>
+        <img src="https://cdn.shopify.com/s/files/1/0673/0199/8688/files/D014C715-C6A3-438E-8D6D-21A509164E92.png?v=1783163971&width=600" alt="Solar Alignment Snapback" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">Solar Alignment Snapback — I Am The Light</div>
+          <div class="mw-price">$74.99</div>
+          <button type="button" class="mw-pick">Reserve</button>
+        </div>
+      </div>
+      <div class="mw-card mw-live">
+        <span class="mw-tag live">AVAILABLE NOW</span>
+        <img src="assets/img/merch/streamkit.webp" alt="Stream-Ready Kit" loading="lazy">
+        <div class="mw-body">
+          <div class="mw-name">Stream-Ready Kit — headset, clip mic, ring-light webcam, 4K HDMI</div>
+          <div class="mw-price">$114.80</div>
+          <a class="mw-buy" id="mwKit" href="https://wokedote-clothing.myshopify.com/collections/gaming" target="_blank" rel="noopener">Buy now ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <form class="mw-form" id="mwForm" novalidate>
+      <div class="mw-summary" id="mwSummary">Tap <b>Reserve</b> on the pieces you want.</div>
+      <label>Name<input type="text" id="mwName" maxlength="40" autocomplete="name" placeholder="What do we call you"></label>
+      <label>Email *<input type="email" id="mwEmail" maxlength="120" autocomplete="email" inputmode="email" placeholder="you@email.com" required></label>
+      <label>Phone <em style="font-weight:400">(text me when it drops)</em><input type="tel" id="mwPhone" maxlength="24" autocomplete="tel" inputmode="tel" placeholder="optional"></label>
+      <label>Instagram<input type="text" id="mwIg" maxlength="40" autocomplete="off" placeholder="@handle"></label>
+      <input type="text" name="website" class="mw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="mw-full"><button type="submit" class="btn btn-gold" id="mwSubmit">✦ Put me on the waitlist</button></div>
+      <div class="mw-note" id="mwNote">No payment now. You'll get first access + the launch price.</div>
+    </form>
+  </div>
+</section>
+<script>
+/* MERCH WAITLIST — cards toggle, the tee carries a size, submit files the reservation on the Drizzle List */
+(function(){
+  const API='https://drizzle-bowl-scores.higgsfield.app/api/subscribe';
+  const grid=document.getElementById('mwGrid'),form=document.getElementById('mwForm');if(!grid||!form)return;
+  const $=id=>document.getElementById(id);
+  const sum=$('mwSummary'),note=$('mwNote'),submit=$('mwSubmit');
+  const KIT='https://wokedote-clothing.myshopify.com/cart/43151441264736:1,43151440969824:1,43151488286816:1,43151440380000:1';
+  $('mwKit').href=KIT;
+  const picks=()=>[...grid.querySelectorAll('.mw-card.on')].map(c=>{
+    const s=c.dataset.sized?(c.querySelector('.mw-sizes .on')||{}).textContent:'';
+    return {code:c.dataset.code,size:s,name:c.querySelector('.mw-name').textContent.split(' — ')[0]};});
+  const render=()=>{const p=picks();sum.innerHTML=p.length?('Reserving: <b>'+p.map(x=>x.name+(x.size?' ('+x.size+')':'')).join('</b>, <b>')+'</b>'):'Tap <b>Reserve</b> on the pieces you want.';};
+  grid.addEventListener('click',e=>{
+    const sz=e.target.closest('.mw-sizes button');
+    if(sz){sz.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===sz));const c=sz.closest('.mw-card');c.classList.add('on');c.querySelector('.mw-pick').textContent='✓ Reserved';render();return;}
+    const pk=e.target.closest('.mw-pick');if(!pk)return;
+    const c=pk.closest('.mw-card');const on=c.classList.toggle('on');pk.textContent=on?'✓ Reserved':'Reserve';render();
+    if(on&&window.innerWidth<820)form.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  fetch(API).then(r=>r.json()).then(j=>{if(j&&j.count>=5){$('mwCountTxt').textContent=j.count+' people already on the list';$('mwCount').hidden=false;}}).catch(()=>{});
+  form.addEventListener('submit',async e=>{e.preventDefault();
+    const p=picks();if(!p.length){note.textContent='Pick at least one piece first.';note.className='mw-note err';return;}
+    const em=$('mwEmail').value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){note.textContent='That email does not look right.';note.className='mw-note err';$('mwEmail').focus();return;}
+    if(form.website&&form.website.value)return;
+    const wants=['drops',...p.map(x=>('wl-'+x.code+(x.size?'-'+x.size:'')).slice(0,16))].slice(0,8);
+    const body={name:$('mwName').value.trim().slice(0,40),email:em.toLowerCase(),phone:$('mwPhone').value.trim().slice(0,24),
+      ig:$('mwIg').value.trim().slice(0,40),wants:wants,source:'merch-waitlist'};
+    submit.disabled=true;note.textContent='Saving your spot…';note.className='mw-note';
+    try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));
+      if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));
+      submit.textContent='✓ You are on the waitlist';note.textContent='Locked in. You get first access and the launch price when it drops.';note.className='mw-note ok';
+    }catch(err){submit.disabled=false;note.textContent='Could not reach the list. Try again in a moment.';note.className='mw-note err';console.warn('[waitlist]',err);}
+  });
+})();
+</script>
+
 <section id="join">
   <div class="wrap">
     <div class="eyebrow">Members only</div>
