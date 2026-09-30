@@ -62,7 +62,7 @@
       "@type":"ProfessionalService",
       "name":"Antidote Food Review Legacy",
       "image":"https://antidotethefoodie.com/thumbnail.png",
-      "description":"Book Antidote for a cinematic restaurant food review — filmed, edited, and produced end to end. Serving Los Angeles, Long Beach, Compton, and all of Southern California.",
+      "description":"Cinematic restaurant food reviews by Antidote — filmed, edited, and produced end to end across Los Angeles, Long Beach, Compton, and Southern California.",
       "url":"https://antidotethefoodie.com/",
       "telephone":"+1-424-309-4068",
       "email":"CollabWithAntidote@gmail.com",
@@ -1075,7 +1075,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 
 <nav>
   <a class="logo" href="#top" aria-label="Antidote The Foodie — home"><img class="nav-crest" data-img="LOGO" alt="Antidote The Foodie logo">ANTIDOTE <span>FOOD REVIEW</span> LEGACY</a>
-  <a class="nav-book" href="#book">Book Me</a>
+  <a class="nav-book" href="#reviews">See The Work</a>
 </nav>
 
 <!-- HERO -->
@@ -1313,7 +1313,6 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
       <a class="stat" href="#join"><b>✦ Join</b> the Drizzle List</a>
   </div>
   <div class="cta-row">
-    <a class="btn btn-gold" href="tel:+14243094068">📞 Book Your Review</a>
     <a class="btn btn-play" href="/drizzle-bowl/">🎳 Play Drizzle Bowl</a>
     <a class="btn btn-ghost" href="#reviews">See The Reviews</a>
   </div>
@@ -2046,22 +2045,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
   </div>
 </section>
 
-<section id="book">
-  <div class="wrap">
-    <div class="book-card reveal">
-      <div class="eyebrow">Restaurant Owners</div>
-      <h2>Your Restaurant. <span class="neon">The Antidote Treatment.</span></h2>
-      <p class="book-sub">One review = your best dishes getting the Clamp, the Drizzle, custom cover artwork, and a spot in the Legacy — in front of a food-obsessed audience across YouTube and Instagram. Slots book fast.</p>
-      <a class="phone" href="tel:+14243094068">(424) 309-4068</a>
-      <div class="book-btns">
-        <a class="btn btn-gold" href="sms:+14243094068">💬 Text Me</a>
-        <a class="btn btn-ghost" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">📸 DM @TheRealAntidote</a>
-        <a class="btn btn-ghost" href="mailto:CollabWithAntidote@gmail.com">✉️ CollabWithAntidote@gmail.com</a>
-      </div>
-      <div class="sline">Drizzle. Bite. Repeat. — let's make your spot famous.</div>
-    </div>
-  </div>
-</section>
+
 
 
 
@@ -2912,37 +2896,44 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 .bm-result.fail .bm-score{color:#f2a08a}
 .bm-msg{color:rgba(245,235,215,.9);line-height:1.6;font-size:.96rem}
 .bm-play{display:inline-flex;align-items:center;gap:9px;margin-top:14px}
-/* ===== TOC rail — top-right, retracted until tapped ===== */
-.toc{position:fixed;right:8px;top:74px;left:auto;bottom:auto;z-index:72;
-  display:flex;flex-direction:column;align-items:flex-end;gap:8px;
-  background:none;padding:0;pointer-events:none}
-.toc-tog{pointer-events:auto;width:30px;height:30px;border-radius:50%;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(11,10,8,.55);border:1px solid rgba(245,166,35,.4);
-  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:.3;
-  transition:opacity .22s ease,transform .22s ease,border-color .22s ease;
-  -webkit-tap-highlight-color:transparent}
-.toc-tog:hover,.toc-tog:focus-visible{opacity:1;transform:scale(1.06);border-color:rgba(245,166,35,.9)}
-.toc.open .toc-tog{opacity:1;border-color:var(--syrup,#f5a623)}
-.toc-bars{display:flex;flex-direction:column;gap:3px;width:13px}
-.toc-bars i{height:2px;border-radius:2px;background:var(--syrup-hi,#ffd166);
-  transition:transform .24s ease,opacity .18s ease}
+/* ===== SECTIONS menu — labeled button top-right, opens a full list over a scrim ===== */
+.toc{position:fixed;right:10px;top:70px;z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
+.toc-tog{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 15px 0 13px;border-radius:999px;cursor:pointer;
+  background:rgba(11,10,8,.88);border:1.5px solid var(--syrup,#f5a623);color:var(--syrup-hi,#ffd166);
+  font:800 12px/1 'Barlow',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.45);
+  transition:transform .2s ease,background .2s ease;-webkit-tap-highlight-color:transparent}
+.toc-tog:hover,.toc-tog:focus-visible{transform:scale(1.04);background:rgba(30,22,8,.95)}
+.toc-tog.nudge{animation:tocNudge 1.6s ease-in-out 3}
+@keyframes tocNudge{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.45)}50%{box-shadow:0 0 0 7px rgba(245,166,35,.28),0 6px 18px rgba(0,0,0,.45)}}
+.toc-bars{display:flex;flex-direction:column;gap:3px;width:14px}
+.toc-bars i{height:2px;border-radius:2px;background:currentColor;transition:transform .24s ease,opacity .18s ease}
 .toc.open .toc-bars i:nth-child(1){transform:translateY(5px) rotate(45deg)}
 .toc.open .toc-bars i:nth-child(2){opacity:0}
 .toc.open .toc-bars i:nth-child(3){transform:translateY(-5px) rotate(-45deg)}
-.toc-list{pointer-events:none;display:flex;flex-direction:column;align-items:flex-end;gap:9px;
-  max-height:0;opacity:0;overflow:hidden;transform:translateX(12px);
-  transition:max-height .3s ease,opacity .2s ease,transform .26s cubic-bezier(.2,.9,.28,1.2)}
-.toc.open .toc-list{pointer-events:auto;max-height:72vh;opacity:1;overflow:visible;transform:none}
-.toc-i{position:relative;display:flex;align-items:center;justify-content:flex-end;width:16px;height:16px;text-decoration:none;-webkit-tap-highlight-color:transparent}
-.toc-dot{width:9px;height:9px;border-radius:50%;background:rgba(245,166,35,.35);border:1px solid rgba(245,166,35,.75);transition:transform .2s ease,background .2s ease}
-.toc-i:hover .toc-dot,.toc-i:focus-visible .toc-dot{transform:scale(1.55);background:var(--syrup,#f5a623)}
-.toc-i.on .toc-dot{background:var(--syrup,#f5a623);transform:scale(1.3)}
-.toc-plate{position:absolute;right:20px;top:50%;transform:translateY(-50%) scale(.55) rotate(-5deg);transform-origin:right center;opacity:0;pointer-events:none;transition:opacity .16s ease,transform .26s cubic-bezier(.2,.9,.28,1.35);display:flex;align-items:center;justify-content:center;min-width:128px;height:42px;padding:0 15px;border-radius:50% / 40%;background:radial-gradient(ellipse at 50% 34%,#fffdf7 0%,#f6efdc 58%,#e0d4b8 100%);box-shadow:0 7px 18px rgba(0,0,0,.5),inset 0 0 0 3px rgba(255,255,255,.8),inset 0 0 0 4.5px rgba(186,170,134,.5);color:#2b1d0b;font:800 10px/1 'Barlow',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap}
-.toc-i:hover .toc-plate,.toc-i:focus-visible .toc-plate{opacity:1;transform:translateY(-50%) scale(1) rotate(0deg)}
-@media(max-width:600px){.toc{top:66px;right:6px;gap:7px}.toc-tog{width:28px;height:28px}
-  .toc-dot{width:8px;height:8px}.toc-plate{min-width:112px;height:38px;font-size:9px;right:18px}}
-@media(prefers-reduced-motion:reduce){.toc-plate,.toc-list{transition:opacity .12s ease}}
+.toc-hint{pointer-events:auto;position:relative;max-width:220px;padding:10px 13px;border-radius:12px;background:var(--syrup,#f5a623);color:#1b1204;
+  font:700 13px/1.35 'Barlow',system-ui,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.5);cursor:pointer}
+.toc-hint::before{content:"";position:absolute;top:-6px;right:26px;width:12px;height:12px;background:inherit;transform:rotate(45deg)}
+.toc-hint[hidden]{display:none}
+.toc-list{pointer-events:none;width:min(290px,calc(100vw - 20px));max-height:calc(100vh - 150px);overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;padding:8px;border-radius:16px;background:rgba(14,12,9,.97);border:1px solid rgba(245,166,35,.45);
+  box-shadow:0 18px 44px rgba(0,0,0,.6);opacity:0;transform:translateY(-8px) scale(.98);transform-origin:top right;visibility:hidden;
+  transition:opacity .18s ease,transform .22s ease,visibility 0s linear .22s}
+.toc.open .toc-list{pointer-events:auto;opacity:1;transform:none;visibility:visible;transition:opacity .18s ease,transform .22s ease}
+.toc-head{padding:6px 10px 8px;color:rgba(245,235,215,.6);font:700 11px/1.3 'Barlow',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.toc-i{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 12px;border-radius:10px;text-decoration:none;color:#f5ebd7;-webkit-tap-highlight-color:transparent}
+.toc-i+.toc-i{border-top:1px solid rgba(245,235,215,.07)}
+.toc-i:hover,.toc-i:focus-visible{background:rgba(245,166,35,.12)}
+.toc-i.on{background:rgba(245,166,35,.18);color:var(--syrup-hi,#ffd166)}
+.toc-dot{flex:none;width:8px;height:8px;border-radius:50%;background:rgba(245,166,35,.35);border:1px solid rgba(245,166,35,.75)}
+.toc-i.on .toc-dot{background:var(--syrup,#f5a623)}
+.toc-plate{font:700 15px/1.2 'Barlow',system-ui,sans-serif;letter-spacing:.01em}
+.toc-i.on .toc-plate::after{content:"  · you're here";font-weight:500;font-size:12px;color:rgba(245,235,215,.55)}
+.toc-top{margin-top:4px;border-top:1px solid rgba(245,166,35,.3)!important}
+.toc-scrim{position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.55);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s}
+body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
+@media(max-width:600px){.toc{top:62px;right:8px}.toc-tog{height:38px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.toc-list,.toc-scrim{transition:none}.toc-tog.nudge{animation:none}}
 
 .africa{position:relative;overflow:hidden;padding:90px 16px 110px;text-align:center;
   background:linear-gradient(180deg,#0b0a08 0%,#1c0f04 18%,#3d1c06 46%,#57260a 62%,#170c04 88%,#0b0a08 100%)}
@@ -4482,10 +4473,12 @@ function agencySubmit(e){
 <audio id="africaTrack" loop preload="none" playsinline><source src="antidote-africa.mp3" type="audio/mpeg"></audio>
 <audio id="cryptoTrack" loop preload="none" playsinline><source src="audio/xtreme-rich-person.m4a" type="audio/mp4"></audio>
 <div class="toc" id="toc" role="navigation" aria-label="Jump to section">
-  <button class="toc-tog" id="tocTog" type="button" aria-expanded="false" aria-controls="tocList" aria-label="Table of contents">
-    <span class="toc-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+  <button class="toc-tog" id="tocTog" type="button" aria-expanded="false" aria-controls="tocList">
+    <span class="toc-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="toc-lbl">Sections</span>
   </button>
+  <div class="toc-hint" id="tocHint" hidden>👆 Long page! Tap <b>Sections</b> to jump straight to any part.</div>
   <div class="toc-list" id="tocList">
+    <div class="toc-head">Jump to a section</div>
     <a class="toc-i" href="#moves"><span class="toc-dot"></span><span class="toc-plate">🎬 The Moves</span></a>
     <a class="toc-i" href="#reviews"><span class="toc-dot"></span><span class="toc-plate">⭐ Reviews</span></a>
     <a class="toc-i" href="#celebs"><span class="toc-dot"></span><span class="toc-plate">🌟 Celebrities</span></a>
@@ -4494,7 +4487,6 @@ function agencySubmit(e){
     <a class="toc-i" href="#cnova"><span class="toc-dot"></span><span class="toc-plate">🤝 C-Nova</span></a>
     <a class="toc-i" href="#africa"><span class="toc-dot"></span><span class="toc-plate">🌍 Africa Tour</span></a>
     <a class="toc-i" href="#waitlist"><span class="toc-dot"></span><span class="toc-plate">👕 Woke Dote</span></a>
-    <a class="toc-i" href="#book"><span class="toc-dot"></span><span class="toc-plate">📅 Book Antidote</span></a>
     <a class="toc-i" href="#kick"><span class="toc-dot"></span><span class="toc-plate">🎮 On Kick</span></a>
     <a class="toc-i" href="#music"><span class="toc-dot"></span><span class="toc-plate">🎤 The Catalog</span></a>
     <a class="toc-i" href="#believe"><span class="toc-dot"></span><span class="toc-plate">🔮 Believe Me</span></a>
@@ -4503,10 +4495,11 @@ function agencySubmit(e){
     <a class="toc-i" href="#wall"><span class="toc-dot"></span><span class="toc-plate">🕊️ Remembrance</span></a>
     <a class="toc-i" href="#collab"><span class="toc-dot"></span><span class="toc-plate">🍽️ Collab Menu</span></a>
     <a class="toc-i" href="#agency"><span class="toc-dot"></span><span class="toc-plate">💼 The Agency</span></a>
+    <a class="toc-i toc-top" href="#top" id="tocTopLink"><span class="toc-dot"></span><span class="toc-plate">⬆️ Back to top</span></a>
   </div>
 </div>
+<div class="toc-scrim" id="tocScrim" aria-hidden="true"></div>
 <div class="sticky-bar">
-  <a class="sb-call" href="tel:+14243094068">📞 Book</a>
   <a class="sb-ig" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">Instagram</a>
   <a class="sb-yt" href="https://www.youtube.com/playlist?list=PLeCbq97Ik8EvrlE7avrZfm0rk1PVKuXkE" target="_blank" rel="noopener">YouTube</a>
 </div>
@@ -5650,12 +5643,26 @@ const KICKCLIPS=[
     return {a:a, el:document.getElementById(a.getAttribute("href").slice(1))};
   }).filter(function(o){ return o.el; });
   if(!map.length){ rail.style.display="none"; return; }
-  var tog=document.getElementById("tocTog");
-  function shut(){ rail.classList.remove("open"); if(tog) tog.setAttribute("aria-expanded","false"); }
-  function flip(){ var o=rail.classList.toggle("open"); if(tog) tog.setAttribute("aria-expanded",o?"true":"false"); }
+  var tog=document.getElementById("tocTog"), scrim=document.getElementById("tocScrim"), hint=document.getElementById("tocHint");
+  var SEEN="antidote.toc.seen";
+  function seen(){ if(hint) hint.hidden=true; if(tog) tog.classList.remove("nudge"); try{localStorage.setItem(SEEN,"1")}catch(e){} }
+  function shut(){ rail.classList.remove("open"); document.body.classList.remove("toc-on"); if(tog) tog.setAttribute("aria-expanded","false"); }
+  function flip(){ var o=rail.classList.toggle("open"); document.body.classList.toggle("toc-on",o); if(tog) tog.setAttribute("aria-expanded",o?"true":"false"); if(o) seen(); }
   if(tog) tog.addEventListener("click",function(e){ e.stopPropagation(); flip(); });
+  if(hint) hint.addEventListener("click",function(e){ e.stopPropagation(); flip(); });
+  if(scrim) scrim.addEventListener("click",function(e){ e.preventDefault(); e.stopPropagation(); shut(); });
   map.forEach(function(o){ o.a.addEventListener("click",shut); });
+  var topLink=document.getElementById("tocTopLink");
+  if(topLink) topLink.addEventListener("click",function(e){ e.preventDefault(); shut(); window.scrollTo({top:0,behavior:"smooth"}); });
   document.addEventListener("click",function(e){ if(!rail.contains(e.target)) shut(); });
+  /* first visit: once they have scrolled a bit, point at the button */
+  var wasSeen=false; try{wasSeen=localStorage.getItem(SEEN)==="1"}catch(e){}
+  if(!wasSeen&&hint&&tog){
+    var shown=false;
+    var onScroll=function(){ if(shown||window.scrollY<600) return; shown=true; window.removeEventListener("scroll",onScroll);
+      hint.hidden=false; tog.classList.add("nudge"); setTimeout(function(){ if(!rail.classList.contains("open")) hint.hidden=true; },9000); };
+    window.addEventListener("scroll",onScroll,{passive:true});
+  }
   document.addEventListener("keydown",function(e){ if(e.key==="Escape"||e.keyCode===27) shut(); });
   if("IntersectionObserver" in window){
     var io=new IntersectionObserver(function(es){
