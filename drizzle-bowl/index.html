@@ -1667,11 +1667,11 @@ function finishRoll(){
      which is the throw that most deserves the hose. */
   var dept=wasFire&&!strike;
   var spare=!strike&&fr.length>=2&&fr[fr.length-2]!==10&&fr[fr.length-2]+n===10;
-  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});/* THE BITE IS ARMED HERE AND FIRED BY THE REPLAY ITSELF. It used to run on a wall-clock timer a
-     second from now, which dropped it into the run-up part of the slow motion: the tops came off
-     before the replayed ball had even reached the rack, and the pieces flew at full speed through a
-     shot running at a third of it. Armed, it goes off on the frame the ball hits the pins, and the
-     screen-clamp and the callout go with it -- see armClamp() and rplFrame(). */
+  if(strike){g.streak++;m=(sfx.roar(),g.streak===6?'ULTIMATE FLAME UNLOCKED!':g.streak>6?('ULTIMATE FLAME! '+g.streak+' IN A ROW!'):g.streak>=3?('ON FIRE! '+g.streak+' IN A ROW!'):'CLAMP!');g.face='cheese';g.faceT=3.2;sfx.strike();sfx.crowd();g.papT=2.4;g.cheer=1.9;if(g.streak>=3){g.confT=3.2;spawnConfetti();g.crowdTarget=Math.min(34,g.crowdTarget+6);}g.crowd.forEach(function(c){if(c.phone)c.flashT=0.4+Math.random()*0.6;});/* THE CLAMP IS ARMED HERE AND FIRED BY THE REPLAY ITSELF. It used to run on a wall-clock timer a
+     second from now, which dropped it into the run-up part of the slow motion -- it went off before
+     the replayed ball had even reached the rack. Armed, it goes off on the frame the ball hits the
+     pins, and the callout goes with it -- see armClamp() and rplFrame(). Nothing happens to the
+     pins any more: the mouth closes over the top of the shot and the rack keeps its heads. */
   if(USE3D&&window.B3D&&B3D.armClamp)B3D.armClamp();
   else{setTimeout(sfx.chomp,980);g.fx={type:'clamp',t:0};}
   setTimeout(sfx.laugh,1320);if(g.streak>=2){setTimeout(sfx.chant,1500);setTimeout(sfx.chant,2150);}}
@@ -1771,8 +1771,8 @@ function easeOut(t){return 1-Math.pow(1-t,3);}
    deliberately keeps the middle of the frame clear rather than covering the very thing you want to
    see happen. */
 function drawClamp(t){
-  var CH=0.98;                                   /* the shadow lands on the beat of the chomp */
-  var close=t<CH?Math.pow(Math.min(1,t/CH),1.7):Math.max(0,1-(t-CH)/0.42);
+  var CH=0.36;                                   /* the shadow lands on the beat of the chomp -- the same beat the mouth shuts on down in the lane view */
+  var close=t<CH?Math.pow(Math.min(1,t/CH),1.7):(t<0.70?1:Math.max(0,1-(t-0.70)/0.42));
   if(close<=0.002)return;
   ctx.save();ctx.beginPath();ctx.rect(72,0,W-144,TOP.h);ctx.clip();
   /* something crossing the lights: darkness rolling in from above and below, heaviest at the edges
@@ -1901,7 +1901,7 @@ function drawTop(){
     txt('ACTION REPLAY',rx+78,ry+14,'bold 11px Verdana,sans-serif','#fff');
     ctx.restore();
   }
-  if(g.msgT>0&&g.msg&&!(g.fx&&g.fx.type==='clamp'&&g.fx.t<0.45)){
+  if(g.msgT>0&&g.msg&&!(g.fx&&g.fx.type==='clamp'&&g.fx.t<0.38)){
     var fire=g.msg.indexOf('ON FIRE')===0||g.msg.indexOf('ULTIMATE')===0;
     var ult=g.msg.indexOf('ULTIMATE')===0;
     var big=fire||g.msg==='CLAMP!'||g.msg==='DRIZZLE!';
@@ -2897,7 +2897,7 @@ function shadowSchedule(gs){
      built on that answers "moving" forever. The phase is the honest question: the lane can only
      move while the physics is actually running. */
   const ph=gs&&gs.phase;
-  let moving=SHAD.dirty>0||bitten.length>0||
+  let moving=SHAD.dirty>0||
     ph==='roll'||ph==='settle'||ph==='result';
   if(SHAD.dirty>0)SHAD.dirty--;
   if(!moving){dl.shadow.needsUpdate=false;pinLight.shadow.needsUpdate=false;SHAD.skip++;return;}
@@ -3795,131 +3795,266 @@ const pinGeo=new THREE.LatheGeometry(pinProfile,24);
 { /* map the texture by height so the LED channel lands exactly on its lit strip */
   const pa=pinGeo.attributes.position,ua=pinGeo.attributes.uv;for(let i=0;i<ua.count;i++)ua.setY(i,pa.getY(i)/0.381);ua.needsUpdate=true;}
 pinGeo.rotateY(Math.PI/2);
-/* ---------- THE CLAMP: the tops get bitten off the pins ----------
-   No teeth anywhere. Something takes the head off every pin and the heads go with it. The pin is a
-   lathe turned from a 2D profile, so the profile can simply be cut in two: everything below the
-   bite line becomes the stub left standing, everything above becomes the piece that leaves. Both
-   halves keep the same texture mapping as the whole pin, so the food and the LED channel still line
-   up on whatever is left.
-   The cut is not a saw cut. The rim of the stub is pulled down by how far round the pin you are --
-   all the way on one side, not at all on the other -- so what is left is the crescent a bite takes
-   out, deepest where it went in. A few smaller ripples on top of that are the marks. */
-const BITE_Y=0.286;
-function biteAmount(th){ return (0.5+0.5*Math.cos(th))*(0.86+0.14*Math.cos(th*4)); }
-function splitPinProfile(cut){
-  var below=[],above=[],rc=0;
-  for(var i=0;i<pinProfile.length;i++){
-    var p=pinProfile[i];
-    if(p.y<cut)below.push(p.clone());
-    else{
-      if(!above.length&&i>0){
-        var q=pinProfile[i-1],t=(cut-q.y)/(p.y-q.y);
-        rc=q.x+(p.x-q.x)*t;
-      }
-      above.push(p.clone());
+/* ---------- THE CLAMP: a real mouth, and it closes on air ----------
+   The pins keep their heads now. What comes down over the deck is a mouth built out of geometry --
+   two rows of teeth with enamel on them, lit and glazed -- drawn as an overlay pass on top of the
+   lane view, the same way the bowler is composited in. Four earlier goes at this were flat shapes
+   painted on the 2D canvas, which is why they never had any gloss or any depth: paint cannot catch
+   a light. This one is lit.
+   There is only ONE row of teeth in this file. The upper jaw is the lower jaw cloned and flipped in
+   Y, and the key lights are a mirrored pair, so the top row cannot come out looking different from
+   the bottom one -- it IS the bottom one, upside down, under the same light. */
+const CFX={on:false,t:0,park:false};
+const clampScene=new THREE.Scene();
+const CLAMP_Z=6.2;
+const clampCam=new THREE.PerspectiveCamera(46,LW/VH,0.35,60);
+clampCam.position.set(0,0,CLAMP_Z);clampCam.lookAt(0,0,0);
+/* ---- one crown ----
+   A tooth is not a box with the corners knocked off -- that was the last four goes at this, and it
+   is why they came out looking like dominoes. This one is turned: rings of a superellipse stacked
+   up the crown, so there is no flat side anywhere and no hard corner down the length of it.
+   Width and depth both pinch in toward the cervical line -- the neck, where the gum holds it -- and
+   swell out again through the middle third; the whole crown leans out toward the labial face, the
+   one you actually see; and the lingual side carries the cingulum, the pad of enamel at the neck.
+   What happens at the biting edge is what tells one tooth from another: an incisor is a chisel with
+   its corners rounded off, a canine comes to a single point, and a premolar or a molar is a table
+   with cusps standing at the corners and a fossa sunk between them.
+   The colour is painted into the vertices, because enamel is not one colour. Warm ivory at the neck
+   where it lies thin over the dentine, neutral through the body, and cool and slightly grey right
+   at the edge, where it is translucent and there is nothing behind it. */
+const CERV_C=[0.845,0.748,0.582],BODY_C=[0.952,0.932,0.892],EDGE_C=[0.872,0.898,0.918];
+function toothGeo(w,h,d,kind){
+  const M=22,N=16;
+  const ne=(kind==='inc'||kind==='can')?3.05:3.30;   /* how square the cross section is */
+  const pw=2/ne;
+  const NV=(N+1)*M+2;
+  const pos=new Float32Array(NV*3),col=new Float32Array(NV*3),uvs=new Float32Array(NV*2),idx=[];
+  function drop(u,tz){
+    if(kind==='can')return 0.34*Math.pow(Math.abs(u),1.3)+0.06*tz*tz;               /* one point */
+    if(kind==='pos')return 0.17*(1-tz*tz);                                          /* two cusps, a groove between */
+    if(kind==='mol')return 0.13*(1-tz*tz)+0.11*Math.max(0,1-Math.abs(u)*2.4);       /* four cusps round a fossa */
+    return 0.15*Math.pow(Math.abs(u),4)+0.05*tz*tz;                                 /* a chisel, corners rounded */
+  }
+  function paint(o,v,u,tz){
+    let c0,c1,c2;
+    if(v<0.58){const k=v/0.58;c0=CERV_C[0]+(BODY_C[0]-CERV_C[0])*k;c1=CERV_C[1]+(BODY_C[1]-CERV_C[1])*k;c2=CERV_C[2]+(BODY_C[2]-CERV_C[2])*k;}
+    else{const k=(v-0.58)/0.42;c0=BODY_C[0]+(EDGE_C[0]-BODY_C[0])*k;c1=BODY_C[1]+(EDGE_C[1]-BODY_C[1])*k;c2=BODY_C[2]+(EDGE_C[2]-BODY_C[2])*k;}
+    const sh=1-0.18*Math.pow(Math.abs(u),6)-0.14*Math.max(0,-tz);   /* where two teeth touch sits in shade */
+    col[o]=c0*sh;col[o+1]=c1*sh;col[o+2]=c2*sh;
+  }
+  for(let i=0;i<=N;i++){
+    const v=i/N;
+    const fil=Math.max(0,(v-0.88)/0.12),f=1-0.105*fil*fil;         /* the rim rolls over instead of ending square */
+    const A=w*0.5*(0.83+0.21*v-0.045*v*v)*f, D=d*0.5*(0.79+0.27*v-0.065*v*v)*f;
+    const cz=0.055*d*Math.sin(Math.PI*v), cing=0.15*d*Math.max(0,1-v*3.2);
+    const near=Math.max(0,(v-0.86)/0.14);
+    for(let j=0;j<M;j++){
+      const th=j/M*Math.PI*2,ca=Math.cos(th),sa=Math.sin(th);
+      const u=Math.sign(ca)*Math.pow(Math.abs(ca),pw), tz=Math.sign(sa)*Math.pow(Math.abs(sa),pw);
+      const o=(i*M+j)*3;
+      pos[o]=A*u;
+      pos[o+1]=-h+v*h-drop(u,tz)*h*near;
+      pos[o+2]=D*tz+cz-cing*Math.pow(Math.max(0,-sa),2);   /* squared, or the pad creases down the sides */
+      uvs[(i*M+j)*2]=j/M;uvs[(i*M+j)*2+1]=v;
+      paint(o,v,u,tz);
     }
   }
-  below.push(new THREE.Vector2(rc,cut));
-  below.push(new THREE.Vector2(0.0008,cut));            /* close the cut face */
-  above.unshift(new THREE.Vector2(rc,cut));
-  above.unshift(new THREE.Vector2(0.0008,cut));
-  return {below:below,above:above,rc:rc};
-}
-function makePinPiece(prof,scallop){
-  var g=new THREE.LatheGeometry(prof,24);
-  var pa=g.attributes.position,ua=g.attributes.uv;
-  for(var i=0;i<ua.count;i++)ua.setY(i,pa.getY(i)/0.381);   /* same mapping as the whole pin */
-  if(scallop){
-    for(var j=0;j<pa.count;j++){
-      var y=pa.getY(j);
-      if(y>=BITE_Y-0.0015){
-        var x=pa.getX(j),z=pa.getZ(j),r=Math.hypot(x,z);
-        var th=r<1e-4?0:Math.atan2(z,x);
-        var amt=r<1e-4?0.5:biteAmount(th);
-        pa.setY(j,y-0.034*amt);
-      }
-    }
+  const topI=(N+1)*M, botI=topI+1;
+  {const o=topI*3;pos[o]=0;pos[o+1]=-drop(0,0)*h;pos[o+2]=0.055*d;paint(o,1,0,0);uvs[topI*2]=0.5;uvs[topI*2+1]=1;}
+  {const o=botI*3;pos[o]=0;pos[o+1]=-h;pos[o+2]=0;paint(o,0,0,0);uvs[botI*2]=0.5;uvs[botI*2+1]=0;}
+  for(let i=0;i<N;i++)for(let j=0;j<M;j++){
+    const a=i*M+j,b=i*M+(j+1)%M,c=(i+1)*M+j,e=(i+1)*M+(j+1)%M;
+    idx.push(a,c,b, b,c,e);
   }
-  pa.needsUpdate=true;ua.needsUpdate=true;
+  for(let j=0;j<M;j++){idx.push(N*M+j,topI,N*M+(j+1)%M);idx.push(botI,j,(j+1)%M);}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.setAttribute('uv',new THREE.BufferAttribute(uvs,2));
+  g.setIndex(idx);
   g.computeVertexNormals();
-  g.rotateY(Math.PI/2);
   return g;
 }
-var _pinSplit=splitPinProfile(BITE_Y);
-const pinStubGeo=makePinPiece(_pinSplit.below,true);
-const pinTopGeo =makePinPiece(_pinSplit.above,false);
-/* the heads that came off, on their way out */
-const bitten=[];
-const _bitP=new THREE.Vector3(),_bitQ=new THREE.Quaternion();
-/* ONE PIN LOSES ITS TOP. The head is cut loose as a free mesh at whatever world transform the pin
-   is wearing right now -- which during a replay is the REPLAYED transform, not the settled one --
-   and what is left of the pin keeps standing as a stub. */
-function bitePin(pn){
-  if(!pn||!pn.alive||pn.__bit||!pn.mesh)return false;
-  pn.__bit=true;
-  pn.mesh.updateWorldMatrix(true,false);
-  pn.mesh.getWorldPosition(_bitP);pn.mesh.getWorldQuaternion(_bitQ);
-  var mat=pn.mat?pn.mat.clone():pn.mesh.material;
-  mat.transparent=true;
-  var top=new M(pinTopGeo,mat);
-  top.position.copy(_bitP);top.quaternion.copy(_bitQ);
-  top.scale.copy(pn.mesh.getWorldScale(new THREE.Vector3()));
-  top.castShadow=true;scene.add(top);
-  bitten.push({m:top,t:0,
-    v:new THREE.Vector3((Math.random()-0.5)*1.5,2.4+Math.random()*1.4,1.1+Math.random()*1.2),
-    w:new THREE.Vector3((Math.random()-0.5)*14,(Math.random()-0.5)*10,(Math.random()-0.5)*14)});
-  pn.mesh.geometry=pinStubGeo;                        /* what is left standing */
-  return true;
+/* the arch is an ellipse: half a mouth wide, and deeper than it is wide */
+const ARCH_A=2.62,ARCH_B=3.25,ARCH_GAP=0.018;
+/*        width height depth kind   edge off plane  labial tilt */
+const TOOTH=[
+  [0.88,  1.06,  0.72, 'inc',  0.000,  0.10],   /* central incisor -- the two front teeth */
+  [0.67,  0.92,  0.64, 'inc',  0.000,  0.09],   /* lateral incisor */
+  [0.78,  1.05,  0.80, 'can',  0.000,  0.06],   /* canine */
+  [0.72,  0.87,  0.88, 'pos', -0.020,  0.03],   /* first premolar */
+  [0.69,  0.85,  0.90, 'pos', -0.035,  0.02],   /* second premolar */
+  [1.03,  0.79,  1.05, 'mol', -0.050,  0.01]    /* first molar */
+];
+function archTheta(s){   /* how far round the ellipse you are after walking s along it from the midline */
+  let a=0,acc=0;const st=0.0015;
+  while(acc<s&&a<1.56){acc+=Math.hypot(ARCH_A*Math.cos(a),ARCH_B*Math.sin(a))*st;a+=st;}
+  return a;
 }
-function clampPins(){
-  var any=false;
-  clampArmed=false;shadowsDirty(4);
-  for(var i=0;i<pins.length;i++)if(bitePin(pins[i]))any=true;
-  if(any)clampCue();
-  return any;
+const enamelT=bake(128,128,(g,w,h)=>{
+  g.fillStyle='#8a8a8a';g.fillRect(0,0,w,h);
+  g.globalAlpha=0.22;g.strokeStyle='#d8d8d8';g.lineWidth=1;
+  for(let i=0;i<46;i++){const y=Math.random()*h;g.beginPath();g.moveTo(0,y);
+    for(let x=0;x<=w;x+=8)g.lineTo(x,y+Math.sin(x*0.08+i)*1.4);g.stroke();}
+  g.globalAlpha=0.12;
+  for(let i=0;i<260;i++){g.fillStyle=Math.random()<0.5?'#ffffff':'#5a5a5a';
+    g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,1+Math.random()*2);}
+  g.globalAlpha=1;
+});
+const enamelMat=new THREE.MeshPhysicalMaterial({vertexColors:true,color:0xffffff,roughness:0.19,metalness:0.0,roughnessMap:enamelT,bumpMap:enamelT,bumpScale:0.012,clearcoat:1.0,clearcoatRoughness:0.06,side:THREE.DoubleSide});
+const gumMat=new THREE.MeshStandardMaterial({color:0x662830,roughness:0.62,metalness:0.0,side:THREE.DoubleSide});
+const gumBall=new THREE.SphereGeometry(1,12,9);
+const shroudT=bake(256,256,(g,w,h)=>{
+  /* only the top few per cent of this ever reaches the screen -- the fall-off has to live up there,
+     or the whole thing reads as one flat red wall */
+  const gr=g.createLinearGradient(0,0,0,h);
+  gr.addColorStop(0,'#63262a');gr.addColorStop(0.02,'#43181c');gr.addColorStop(0.055,'#210a0c');gr.addColorStop(0.12,'#0b0203');gr.addColorStop(1,'#020000');
+  g.fillStyle=gr;g.fillRect(0,0,w,h);
+  g.globalAlpha=0.30;                                   /* wet tissue is mottled, not painted */
+  for(let i=0;i<220;i++){
+    const y=Math.pow(Math.random(),2.4)*h*0.34,x=Math.random()*w,r=3+Math.random()*13;
+    const rg=g.createRadialGradient(x,y,1,x,y,r);
+    rg.addColorStop(0,Math.random()<0.5?'rgba(150,66,70,0.55)':'rgba(24,6,8,0.55)');
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=rg;g.beginPath();g.arc(x,y,r,0,7);g.fill();
+  }
+  g.globalAlpha=0.18;g.strokeStyle='#000';g.lineWidth=3;   /* and it creases where the jaw folds */
+  for(let i=0;i<18;i++){const x=(i+0.5)/18*w;g.beginPath();g.moveTo(x,0);g.lineTo(x+(x-w/2)*0.30,h);g.stroke();}
+  g.globalAlpha=1;
+});
+const throatT=bake(64,64,(g,w,h)=>{
+  const gr=g.createRadialGradient(w/2,h*0.42,2,w/2,h*0.42,w*0.62);
+  gr.addColorStop(0,'#3a1013');gr.addColorStop(0.45,'#170508');gr.addColorStop(1,'#050102');
+  g.fillStyle=gr;g.fillRect(0,0,w,h);
+});
+const shroudMat=new THREE.MeshBasicMaterial({map:shroudT,side:THREE.DoubleSide});
+const throatMat=new THREE.MeshBasicMaterial({map:throatT,side:THREE.DoubleSide});
+const tongueMat=new THREE.MeshPhysicalMaterial({color:0x5e242b,roughness:0.34,metalness:0.0,clearcoat:0.7,clearcoatRoughness:0.26,side:THREE.DoubleSide});
+function buildJaw(){
+  const jaw=new THREE.Group();
+  let run=0,thMax=0;
+  for(let j=0;j<TOOTH.length;j++){
+    const T=TOOTH[j],geo=toothGeo(T[0],T[1],T[2],T[3]);
+    const cen=run+T[0]*0.5;run+=T[0]+ARCH_GAP;
+    const th=archTheta(cen);thMax=archTheta(run);
+    const yaw=Math.atan2(ARCH_B*Math.sin(th),ARCH_A*Math.cos(th));
+    for(let s=-1;s<=1;s+=2){
+      const m=new THREE.Mesh(geo,enamelMat);
+      m.rotation.order='YXZ';
+      m.position.set(s*ARCH_A*Math.sin(th),T[4],-ARCH_B*(1-Math.cos(th)));
+      m.rotation.set(T[5],s*yaw,0);
+      jaw.add(m);
+      const gc=new THREE.Mesh(gumBall,gumMat);       /* the collar it comes out of */
+      gc.position.copy(m.position).add(new THREE.Vector3(0,-T[1]+0.13,0).applyEuler(m.rotation));
+      gc.rotation.order='YXZ';gc.rotation.copy(m.rotation);
+      gc.scale.set(T[0]*0.56,0.26,T[2]*0.50);
+      jaw.add(gc);
+    }
+  }
+  const cp=[];
+  for(let k=-16;k<=16;k++){const th=thMax*k/16;cp.push(new THREE.Vector3(ARCH_A*Math.sin(th),-0.92,-ARCH_B*(1-Math.cos(th))));}
+  jaw.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cp),44,0.24,9,false),gumMat));
+  /* the flesh the jaw is set in. It cannot be a flat card behind the arch: on a card the back teeth
+     are left hanging in shot with nothing under them the second the mouth starts to open. This is a
+     skirt hung off the gum line itself, flaring out and dropping away, so wherever there is a tooth
+     there is flesh directly beneath it -- and it fills the frame as the mouth closes, which is what
+     makes this read as a bite and not as two combs sliding past each other. */
+  const SK_TH=Math.PI/2,SKN=40,SKK=7,SKA=ARCH_A+0.30,SKB=ARCH_B+0.25,SKY=-0.80;
+  const sp=new Float32Array((SKN+1)*(SKK+1)*3),su=new Float32Array((SKN+1)*(SKK+1)*2),si=[];
+  for(let a=0;a<=SKN;a++){
+    const th=-SK_TH+2*SK_TH*a/SKN;
+    const gx=SKA*Math.sin(th),gz=-SKB*(1-Math.cos(th));
+    let nx=SKB*Math.sin(th),nz=SKA*Math.cos(th);
+    const nl=Math.hypot(nx,nz)||1;nx/=nl;nz/=nl;
+    for(let k=0;k<=SKK;k++){
+      const q=k/SKK,o=a*(SKK+1)+k;
+      sp[o*3]=gx+nx*(0.6*q+2.2*q*q);sp[o*3+1]=SKY-(1.5*q+12.0*q*q);sp[o*3+2]=gz+nz*(0.6*q+2.2*q*q);
+      su[o*2]=a/SKN;su[o*2+1]=1-q;
+    }
+  }
+  for(let a=0;a<SKN;a++)for(let k=0;k<SKK;k++){
+    const q0=a*(SKK+1)+k,q1=q0+1,q2=(a+1)*(SKK+1)+k,q3=q2+1;
+    si.push(q0,q2,q1,q1,q2,q3);
+  }
+  const skG=new THREE.BufferGeometry();
+  skG.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  skG.setAttribute('uv',new THREE.BufferAttribute(su,2));
+  skG.setIndex(si);skG.computeVertexNormals();
+  jaw.add(new THREE.Mesh(skG,shroudMat));
+  const tm=new THREE.Mesh(new THREE.PlaneGeometry(28,17),throatMat);tm.position.set(0,-8.25,-4.60);jaw.add(tm);
+  return jaw;
 }
-/* ---- WHEN the bite happens ----
-   A strike ARMS the bite; it is fired by the action replay, on the frame the replayed ball reaches
-   the rack, so the break is the thing the slow motion is showing. The front pin goes on impact and
-   the rows behind it follow a frame or two apart, so the bite sweeps through the rack the way the
-   ball does. If no replay runs at all -- a clip too short to play, or the fire department cutting in
-   -- the deadline below fires the whole rack anyway, about where the old timer used to. */
-const BITE_ROW=[0,1,1,2,2,2,3,3,3,3];   /* pin index -> its row in the rack */
-const BITE_LEAD=0.04;                   /* seconds of CLIP time after impact before the head pin goes */
-const BITE_ROWGAP=0.055;                /* and each row behind it */
+const CLAMP_PIV=5.6,CLAMP_OPEN=0.50,CLAMP_LIFT=2.85;
+const jawLo=buildJaw();
+const jawUp=jawLo.clone(true);      /* the upper row IS the lower row, upside down */
+jawUp.scale.y=-1;
+{const tg=new THREE.Mesh(gumBall,tongueMat);tg.position.set(0,-0.74,-2.55);tg.scale.set(2.20,0.40,2.45);jawLo.add(tg);}
+jawLo.position.z=CLAMP_PIV;jawUp.position.z=CLAMP_PIV;
+const hingeLo=new THREE.Group(),hingeUp=new THREE.Group();
+hingeLo.position.set(0,0,-CLAMP_PIV);hingeUp.position.set(0,0,-CLAMP_PIV);
+hingeLo.add(jawLo);hingeUp.add(jawUp);
+const mouthGrp=new THREE.Group();mouthGrp.add(hingeLo);mouthGrp.add(hingeUp);
+clampScene.add(mouthGrp);
+/* mirrored key lights, so neither row is the better lit one */
+clampScene.add(new THREE.HemisphereLight(0xfff2e4,0x2b0d12,0.42));
+for(let sy=-1;sy<=1;sy+=2){
+  const k=new THREE.DirectionalLight(0xfff3e0,1.08);k.position.set(1.15,sy*1.75,3.20);clampScene.add(k);
+  const r=new THREE.DirectionalLight(0xffc98a,0.42);r.position.set(-2.40,sy*0.95,-1.10);clampScene.add(r);
+}
+{const sp=new THREE.PointLight(0xffffff,6.0,16,1.7);sp.position.set(0,0,4.2);clampScene.add(sp);}
+try{renderer.compile(clampScene,clampCam);}catch(e){}
+/* ---- the shape of the bite ----
+   1 is wide open and off the top and bottom of the frame, 0 is enamel on enamel. It comes down slow
+   and then snaps, holds clenched for a quarter of a second, and lets go. */
+function clampCurve(t){
+  if(t<=0)return 1;
+  if(t<0.36)return 1-Math.pow(t/0.36,2.0);
+  if(t<0.70)return 0;
+  if(t<1.12)return Math.pow((t-0.70)/0.42,1.35);
+  return 1;
+}
+/* the press: the rows cannot travel any further into each other without clipping, so the force goes
+   into a squash of the crowns and a lunge at the camera instead */
+function clampPress(t){return (t>=0.36&&t<0.54)?Math.sin(Math.PI*(t-0.36)/0.18):0;}
+const CLAMP_LEAD=0.04;    /* seconds of CLIP time after the ball reaches the rack */
 let clampArmed=false,clampDue=0,clampCued=false;
 function armClamp(){clampArmed=true;clampCued=false;clampDue=performance.now()/1000+1.9;return true;}
 function clampCue(){if(clampCued)return;clampCued=true;
   if(A3&&A3.clampCue){try{A3.clampCue();}catch(e){}}
   else if(A3&&A3.sfx&&A3.sfx.chomp){try{A3.sfx.chomp();}catch(e){}}}
-/* called from inside the replay, after the pins have been moved onto the replayed frame */
-function biteOnClip(t){
+function clampFire(){
+  if(CFX.on){clampArmed=false;return false;}
+  clampArmed=false;CFX.on=true;CFX.t=0;CFX.park=false;
+  clampCue();
+  return true;
+}
+/* called from inside the replay: the mouth shuts on the frame the ball reaches the rack, so the
+   bite is the thing the slow motion is showing */
+function clampOnClip(t){
   if(!clampArmed||!S.hitAt)return;
-  var bit=false,left=false;
-  for(var k=0;k<pins.length;k++){
-    var pn=pins[k];
-    if(!pn||!pn.alive||pn.__bit)continue;
-    if(t>=S.hitAt+BITE_LEAD+BITE_ROWGAP*(BITE_ROW[k]||0)){if(bitePin(pn))bit=true;}
-    else left=true;
-  }
-  if(bit)clampCue();
-  if(!left)clampArmed=false;
+  if(t>=S.hitAt+CLAMP_LEAD)clampFire();
 }
-function biteTick(dt){
-  for(var i=bitten.length-1;i>=0;i--){
-    var b=bitten[i];b.t+=dt;
-    b.v.y-=7.2*dt;
-    b.m.position.addScaledVector(b.v,dt);
-    b.m.rotation.x+=b.w.x*dt;b.m.rotation.y+=b.w.y*dt;b.m.rotation.z+=b.w.z*dt;
-    if(b.t>0.55)b.m.material.opacity=Math.max(0,1-(b.t-0.55)/0.55);
-    if(b.t>1.15){scene.remove(b.m);if(b.m.material.dispose)b.m.material.dispose();bitten.splice(i,1);}
-  }
+function clampTick(dt){
+  if(!CFX.on||CFX.park)return;
+  CFX.t+=dt;
+  if(CFX.t>1.20){CFX.on=false;CFX.t=0;}
 }
-function clampReset(){
-  clampArmed=false;clampCued=false;
-  for(var i=0;i<bitten.length;i++){scene.remove(bitten[i].m);if(bitten[i].m.material.dispose)bitten[i].m.material.dispose();}
-  bitten.length=0;
+function renderClamp(){
+  if(!CFX.on)return;
+  const o=Math.max(0,Math.min(1,clampCurve(CFX.t))),pr=clampPress(CFX.t);
+  hingeLo.rotation.x=o*CLAMP_OPEN;hingeUp.rotation.x=-o*CLAMP_OPEN;
+  hingeLo.position.y=-o*CLAMP_LIFT;hingeUp.position.y=o*CLAMP_LIFT;   /* the hinge alone leaves the back teeth hanging in shot */
+  const sq=1-0.026*pr;jawLo.scale.y=sq;jawUp.scale.y=-sq;
+  mouthGrp.position.z=0.78*(1-o)+0.18*pr;
+  const sh=pr*0.055;
+  mouthGrp.position.x=(Math.random()-0.5)*sh*2.0;
+  mouthGrp.position.y=(Math.random()-0.5)*sh*1.2;
+  mouthGrp.rotation.z=(Math.random()-0.5)*sh*0.5;
+  renderer.autoClear=false;renderer.clearDepth();
+  renderer.render(clampScene,clampCam);
+  renderer.autoClear=true;
 }
+function clampReset(){clampArmed=false;clampCued=false;CFX.on=false;CFX.t=0;CFX.park=false;}
 const LAYOUT=[[0,0],[-1,1],[1,1],[-2,2],[0,2],[2,2],[-3,3],[-1,3],[1,3],[3,3]];
 const pinMats={};function pinMat(fi){if(!pinMats[fi]){const f=(A3.foods||[])[fi];pinMats[fi]=new THREE.MeshStandardMaterial({map:pinTexture(f,fi),roughness:0.22,metalness:0.05,emissiveMap:pinE,emissive:new THREE.Color(LEDCOLS[ledCol]),emissiveIntensity:2.2});}return pinMats[fi];}
 /* compound pin collider: wide base, belly, narrow neck, round head; offsets put the body origin at the real centre of mass */
@@ -4018,7 +4153,7 @@ function tickPuddles(dt){
 }
 function clearPuddles(){puddles.forEach(p=>{scene.remove(p.m);if(p.hl!==p.m)scene.remove(p.hl);});puddles.length=0;drops.forEach(d=>scene.remove(d));drops.length=0;}
 function rack(keep,foodIdx){
-  clampReset();shadowsDirty(4);   /* nothing from the last bite is still flying */
+  clampReset();shadowsDirty(4);   /* a fresh rack starts with the mouth off the screen */
   if(keep&&pins.length===10){
     /* second ball: sweep the deadwood, and do not lay a finger on anything still standing */
     for(let i=0;i<10;i++)if(keep.indexOf(i)<0)sweepPin(i);
@@ -6362,7 +6497,7 @@ function rplFrame(dt,nw){
     pn.grp.position.set(pa[0]+(pb[0]-pa[0])*u,pa[1]+(pb[1]-pa[1])*u,pa[2]+(pb[2]-pa[2])*u);
     _rqa.set(pa[3],pa[4],pa[5],pa[6]);_rqb.set(pb[3],pb[4],pb[5],pb[6]);_rqa.slerp(_rqb,u);pn.grp.quaternion.copy(_rqa);
     if(pn.shadow){pn.shadow.visible=pn.grp.visible&&pn.grp.position.y<0.6;pn.shadow.position.set(pn.grp.position.x,0.002,pn.grp.position.z);}}
-  biteOnClip(t);   /* THE CLAMP: the tops come off here, on the replayed impact, with the pins standing where the clip says */
+  clampOnClip(t);   /* THE CLAMP: the mouth shuts here, on the replayed impact */
   for(let k=0;k<foods.length;k++){const f=foods[k];if(!f||!f.mesh)continue;
     const fa=a.f&&a.f[k],fb=b.f&&b.f[k];if(!fa||!fb)continue;
     if(f.mesh.__rv)f.mesh.__rv.want=!!fb[7];
@@ -6411,7 +6546,7 @@ function rplFrame(dt,nw){
   for(const o of (RPL.shy||[]))o.visible=o.__rv0&&o.position.distanceTo(cam.position)>0.9;
   for(const r of RPL.vis){if(r.drv)continue;const want=(r.want!=null)?r.want:r.v;r.o.visible=want&&r.o.position.distanceTo(cam.position)>CULL;}
   if(done||nw-RPL.t0>14){RPL.on=false;
-    if(clampArmed)clampPins();   /* a clip that ran out before the bite swept the back row */
+    if(clampArmed)clampFire();   /* a clip that ran out before the mouth ever shut */
     if(RPL.fov0){cam.fov=RPL.fov0;cam.updateProjectionMatrix();}
     bumper.visible=true;
     for(const r of RPL.vis)r.o.visible=r.v;RPL.vis=[];
@@ -6479,8 +6614,8 @@ function render(gs){
         ox:pn.body.position.x*OLDX,oy:zToOld(pn.body.position.z)});
     }
   }
-  if(clampArmed&&!RPL.on&&performance.now()/1000>clampDue)clampPins();   /* armed, but no replay ever came */
-  applyPinLeds();biteTick(RPL.on?dt*RPL_RATE:dt);   /* the pieces fly in the same slow motion as the shot they came out of */
+  if(clampArmed&&!RPL.on&&performance.now()/1000>clampDue)clampFire();   /* armed, but no replay ever came */
+  applyPinLeds();clampTick(RPL.on?dt*0.62:dt);   /* it bites a little slower inside a replay, with the rest of the slow motion */
   updateFire(dt,nw);rebTick(dt,nw);fallTick(dt);
   if(!RPL.on&&ballBody&&ballMesh){ballMesh.position.copy(bI);syncQ(ballBody,ballMesh,al);
     if(!S.rest){const wb=Math.sin(nw*11)*0.07*Math.min(1,ballBody.velocity.length()/4);ballMesh.rotateOnWorldAxis(new THREE.Vector3(0,0,1),wb);ballMesh.position.x+=Math.sin(nw*7.3)*0.006;}
@@ -6492,6 +6627,7 @@ function render(gs){
   renderer.setViewport(0,0,LW,VH);renderer.setScissor(0,0,LW,VH);
   renderer.render(scene,cam);
   if(!RPL.on)renderBowler(gs,dt,nw);   /* his overlay would paste itself over the replay */
+  renderClamp();                       /* and the mouth goes over the top of all of it */
   /* the TV screen: a second live camera on the very same pins */
   renderer.setViewport(72,430,336,192);renderer.setScissor(72,430,336,192);
   renderer.render(scene,topCam);
@@ -6620,13 +6756,24 @@ __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3)
   if(real&&real.bones.anL&&real.bones.anR){const v=new THREE.Vector3();
     real.bones.anL.getWorldPosition(v);o.aL=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
     real.bones.anR.getWorldPosition(v);o.aR=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];}
-  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,clampPins:clampPins,armClamp:armClamp,__shadSched:function(){return {on:SHAD.on,dirty:SHAD.dirty,tick:SHAD.tick,dlN:SHAD.dlN,spN:SHAD.spN,skip:SHAD.skip,dlAuto:dl.shadow.autoUpdate,spotAuto:pinLight.shadow.autoUpdate,dlNext:dl.shadow.needsUpdate,spotNext:pinLight.shadow.needsUpdate};},__pinI:function(){const b=pins.find(p=>p&&p.alive);return b?{I:[+b.body.inertia.x.toFixed(5),+b.body.inertia.y.toFixed(5),+b.body.inertia.z.toFixed(5)],m:b.body.mass}:null;},__strike:function(sp){const pn=pins[0];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(0,0,-(sp||8));pn.body.angularVelocity.set(0,0,0);pn.body.position.set(0,PHYS.pinCY,-15.1);return true;},__pinKin:function(){return pins.filter(p=>p&&p.alive).map(p=>({i:p.body.__spot?0:0,x:+p.body.position.x.toFixed(3),z:+p.body.position.z.toFixed(3),y:+p.body.position.y.toFixed(3),w:+p.body.angularVelocity.length().toFixed(2),v:+p.body.velocity.length().toFixed(2)}));},__marqPng:function(){return marqCv.toDataURL('image/png');},__btvEl:function(){return btvHov;},__near:function(){const out=[],p=new THREE.Vector3();scene.traverse(o=>{if(!o.isMesh||!o.visible)return;o.getWorldPosition(p);if(Math.abs(p.x-4.6)>9||Math.abs(p.y-4.95)>9||Math.abs(p.z+21.6)>2.2)return;const g=o.geometry&&o.geometry.parameters||{};out.push({x:+p.x.toFixed(2),y:+p.y.toFixed(2),z:+p.z.toFixed(2),w:g.width!=null?+(g.width*o.scale.x).toFixed(2):null,h:g.height!=null?+(g.height*o.scale.y).toFixed(2):null,map:(o.material&&o.material.map)?(o.material.map===btvT?'BTV':(o.material.map===marqT?'marquee':(o.material.map===champBanT?'champ':'other'))):'none'});});return out;},__setPass:function(p){banSetMap(p);return banIsMarq?'marquee':'champion';},__banMap:function(){return {marquee:banIsMarq,pass:banPass,hasChamp:!!champBanT,map:(banMesh.material.map===marqT?'marquee':(banMesh.material.map===champBanT?'champion':'?'))};},__plane:function(){return {vis:planeGrp.visible,pos:[+planeGrp.position.x.toFixed(2),+planeGrp.position.y.toFixed(2),+planeGrp.position.z.toFixed(2)],banner:banMesh?{w:BAN_W,h:BAN_H,verts:banPos.count,map:(banMesh.material.map===champBanT?'champion':'slogan'),ripple:+(function(){let mx=0;const a=banPos.array;for(let i=2;i<a.length;i+=3)mx=Math.max(mx,Math.abs(a[i]));return mx;})().toFixed(3)}:null,prop:+planeProp.rotation.x.toFixed(2)};},__flyNow:function(x){planePark=(x==null?null:x);planeGrp.visible=true;if(x!=null)planeGrp.position.x=x;return planePark;},__btvShape:function(){return {ar:+btvAR.toFixed(3),cv:[btvC.width,btvC.height],fixed:[BTV_CW,BTV_CH],live:!!(btvHovOk&&!btvHov.paused&&btvHov.readyState>=2&&btvHov.videoWidth>0),paused:btvHov.paused,ready:btvHov.readyState,src:(btvHov.currentSrc||'').slice(-28),plane:[+(7.1*btv.scale.x).toFixed(2),+(3.99*btv.scale.y).toFixed(2)],scale:[+btv.scale.x.toFixed(3),+btv.scale.y.toFixed(3)],bulbs:[+btvBulbs.scale.x.toFixed(3),+btvBulbs.scale.y.toFixed(3)],hov:btvHovOk,vid:[btvHov.videoWidth,btvHov.videoHeight]};},__nudgeBall:function(vx){if(!ballBody)return false;ballBody.wakeUp();ballBody.velocity.x+=vx;return true;},__ballState:function(){return ballBody?{x:+ballBody.position.x.toFixed(3),z:+ballBody.position.z.toFixed(2),gutter:S.gutter,hit:S.hit}:null;},__laneEdges:function(){const tx=gutTroughs.length?+Math.abs(gutTroughs[0].position.x).toFixed(4):0;const near=[];scene.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.parameters)return;const p=o.geometry.parameters;if(!p.height||!p.width||!(p.depth>15))return;const top=o.position.y+p.height/2,bot=o.position.y-p.height/2;const x0=Math.abs(o.position.x)-p.width/2;if(x0>=HALF-0.001)return;if(top>-0.0015&&bot<0.0015)near.push({x:+o.position.x.toFixed(3),top:+top.toFixed(5),w:+p.width.toFixed(3),off:!!(o.material&&o.material.polygonOffset)});});return {troughX:tx,coplanar:near,half:HALF,gutX:GUT_X,gutwX:GUTW_X};},quality:function(v){if(v==='auto'){SHAD.locked=false;try{localStorage.removeItem('adbShadow');}catch(e){}return 'auto';}shadowsOn(v==='high');SHAD.locked=true;try{localStorage.setItem('adbShadow',v==='high'?'1':'0');}catch(e){}return v;},__shadow:function(){return {on:SHAD.on,locked:SHAD.locked,enabled:renderer.shadowMap.enabled,casts:dl.castShadow,map:[dl.shadow.mapSize.x,dl.shadow.mapSize.y],deckMap:[pinLight.shadow.mapSize.x,pinLight.shadow.mapSize.y],deckCasts:pinLight.castShadow,laneRecv:laneMesh.receiveShadow,pinCast:pins.filter(p=>p&&p.alive&&p.mesh&&p.mesh.castShadow).length,ballCast:!!(ballMesh&&ballMesh.castShadow),blobs:{pin:pins.filter(p=>p&&p.alive&&p.shadow&&p.shadow.visible).length,ball:!!(ballShadow&&ballShadow.visible),food:foods.filter(f=>f&&f.shadow&&f.shadow.visible).length}};},__place:function(i,p){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.position.set(p[0],p[1],p[2]);pn.body.velocity.set(0,0,0);pn.body.angularVelocity.set(0,0,0);return true;},__shove:function(i,v,w){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(v[0],v[1],v[2]);if(w)pn.body.angularVelocity.set(w[0],w[1],w[2]);return true;},__foodMass:function(){return foods.map(f=>+f.body.mass.toFixed(3));},__foodAt:function(i,sp){const pn=pins[i];if(!pn||!pn.alive)return null;let f=null;for(const q of foods)if(!f||q.body.mass>f.body.mass)f=q;if(!f)return null;const p=pn.body.position;f.body.wakeUp();f.body.position.set(p.x+0.30,0.16,p.z);f.body.velocity.set(-(sp||7),0,0);f.body.angularVelocity.set(0,0,0);pn.body.wakeUp();return {mass:+f.body.mass.toFixed(3),e:f.e,pin:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)]};},__biteAt:function(t){biteOnClip(t);return {bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,armed:clampArmed,cued:clampCued};},__bitten:function(){return bitten.length;},__clamp:function(){return {armed:clampArmed,cued:clampCued,bit:pins.filter(function(p){return p&&p.alive&&p.__bit;}).length,alive:pins.filter(function(p){return p&&p.alive;}).length,flying:bitten.length,hitAt:+(S.hitAt||0).toFixed(2),on:RPL.on,clock:+RPL.clock.toFixed(2),prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0};},soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
+  return o;},__arm:function(){const U=bowler.userData;return [+U.arms.R.sh.rotation.x.toFixed(4),+U.arms.R.el.rotation.x.toFixed(4),+U.arms.R.wr.rotation.x.toFixed(4),+U.B.spine.rotation.y.toFixed(4),+U.B.spine.rotation.z.toFixed(4),+bowler.position.z.toFixed(4),U.arms.R.ball.visible?1:0];},rack,throwBall,replay:rplStart,replaying:function(){return RPL.on;},__rpl:function(){return {buf:RPL.buf.length,clip:RPL.clip.length,capt:RPL.capt,on:RPL.on,strike:RPL.strike,forced:RPL.forced,prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,hitAt:+(S.hitAt||0).toFixed(2),boomAt:+(S.boomAt||0).toFixed(2),span:+(RPL.clip.length?(RPL.clip[RPL.clip.length-1].t-RPL.clip[0].t):0).toFixed(2)};},setFire:function(v){fireLevel=+v||0;fireOn=fireLevel>0;fireL.color.set(fireLevel>=2?0x6fb4ff:0xff7722);},fireDept:fireDept,clampFire:clampFire,armClamp:armClamp,__shadSched:function(){return {on:SHAD.on,dirty:SHAD.dirty,tick:SHAD.tick,dlN:SHAD.dlN,spN:SHAD.spN,skip:SHAD.skip,dlAuto:dl.shadow.autoUpdate,spotAuto:pinLight.shadow.autoUpdate,dlNext:dl.shadow.needsUpdate,spotNext:pinLight.shadow.needsUpdate};},__pinI:function(){const b=pins.find(p=>p&&p.alive);return b?{I:[+b.body.inertia.x.toFixed(5),+b.body.inertia.y.toFixed(5),+b.body.inertia.z.toFixed(5)],m:b.body.mass}:null;},__strike:function(sp){const pn=pins[0];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(0,0,-(sp||8));pn.body.angularVelocity.set(0,0,0);pn.body.position.set(0,PHYS.pinCY,-15.1);return true;},__pinKin:function(){return pins.filter(p=>p&&p.alive).map(p=>({i:p.body.__spot?0:0,x:+p.body.position.x.toFixed(3),z:+p.body.position.z.toFixed(3),y:+p.body.position.y.toFixed(3),w:+p.body.angularVelocity.length().toFixed(2),v:+p.body.velocity.length().toFixed(2)}));},__marqPng:function(){return marqCv.toDataURL('image/png');},__btvEl:function(){return btvHov;},__near:function(){const out=[],p=new THREE.Vector3();scene.traverse(o=>{if(!o.isMesh||!o.visible)return;o.getWorldPosition(p);if(Math.abs(p.x-4.6)>9||Math.abs(p.y-4.95)>9||Math.abs(p.z+21.6)>2.2)return;const g=o.geometry&&o.geometry.parameters||{};out.push({x:+p.x.toFixed(2),y:+p.y.toFixed(2),z:+p.z.toFixed(2),w:g.width!=null?+(g.width*o.scale.x).toFixed(2):null,h:g.height!=null?+(g.height*o.scale.y).toFixed(2):null,map:(o.material&&o.material.map)?(o.material.map===btvT?'BTV':(o.material.map===marqT?'marquee':(o.material.map===champBanT?'champ':'other'))):'none'});});return out;},__setPass:function(p){banSetMap(p);return banIsMarq?'marquee':'champion';},__banMap:function(){return {marquee:banIsMarq,pass:banPass,hasChamp:!!champBanT,map:(banMesh.material.map===marqT?'marquee':(banMesh.material.map===champBanT?'champion':'?'))};},__plane:function(){return {vis:planeGrp.visible,pos:[+planeGrp.position.x.toFixed(2),+planeGrp.position.y.toFixed(2),+planeGrp.position.z.toFixed(2)],banner:banMesh?{w:BAN_W,h:BAN_H,verts:banPos.count,map:(banMesh.material.map===champBanT?'champion':'slogan'),ripple:+(function(){let mx=0;const a=banPos.array;for(let i=2;i<a.length;i+=3)mx=Math.max(mx,Math.abs(a[i]));return mx;})().toFixed(3)}:null,prop:+planeProp.rotation.x.toFixed(2)};},__flyNow:function(x){planePark=(x==null?null:x);planeGrp.visible=true;if(x!=null)planeGrp.position.x=x;return planePark;},__btvShape:function(){return {ar:+btvAR.toFixed(3),cv:[btvC.width,btvC.height],fixed:[BTV_CW,BTV_CH],live:!!(btvHovOk&&!btvHov.paused&&btvHov.readyState>=2&&btvHov.videoWidth>0),paused:btvHov.paused,ready:btvHov.readyState,src:(btvHov.currentSrc||'').slice(-28),plane:[+(7.1*btv.scale.x).toFixed(2),+(3.99*btv.scale.y).toFixed(2)],scale:[+btv.scale.x.toFixed(3),+btv.scale.y.toFixed(3)],bulbs:[+btvBulbs.scale.x.toFixed(3),+btvBulbs.scale.y.toFixed(3)],hov:btvHovOk,vid:[btvHov.videoWidth,btvHov.videoHeight]};},__nudgeBall:function(vx){if(!ballBody)return false;ballBody.wakeUp();ballBody.velocity.x+=vx;return true;},__ballState:function(){return ballBody?{x:+ballBody.position.x.toFixed(3),z:+ballBody.position.z.toFixed(2),gutter:S.gutter,hit:S.hit}:null;},__laneEdges:function(){const tx=gutTroughs.length?+Math.abs(gutTroughs[0].position.x).toFixed(4):0;const near=[];scene.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.parameters)return;const p=o.geometry.parameters;if(!p.height||!p.width||!(p.depth>15))return;const top=o.position.y+p.height/2,bot=o.position.y-p.height/2;const x0=Math.abs(o.position.x)-p.width/2;if(x0>=HALF-0.001)return;if(top>-0.0015&&bot<0.0015)near.push({x:+o.position.x.toFixed(3),top:+top.toFixed(5),w:+p.width.toFixed(3),off:!!(o.material&&o.material.polygonOffset)});});return {troughX:tx,coplanar:near,half:HALF,gutX:GUT_X,gutwX:GUTW_X};},quality:function(v){if(v==='auto'){SHAD.locked=false;try{localStorage.removeItem('adbShadow');}catch(e){}return 'auto';}shadowsOn(v==='high');SHAD.locked=true;try{localStorage.setItem('adbShadow',v==='high'?'1':'0');}catch(e){}return v;},__shadow:function(){return {on:SHAD.on,locked:SHAD.locked,enabled:renderer.shadowMap.enabled,casts:dl.castShadow,map:[dl.shadow.mapSize.x,dl.shadow.mapSize.y],deckMap:[pinLight.shadow.mapSize.x,pinLight.shadow.mapSize.y],deckCasts:pinLight.castShadow,laneRecv:laneMesh.receiveShadow,pinCast:pins.filter(p=>p&&p.alive&&p.mesh&&p.mesh.castShadow).length,ballCast:!!(ballMesh&&ballMesh.castShadow),blobs:{pin:pins.filter(p=>p&&p.alive&&p.shadow&&p.shadow.visible).length,ball:!!(ballShadow&&ballShadow.visible),food:foods.filter(f=>f&&f.shadow&&f.shadow.visible).length}};},__place:function(i,p){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.position.set(p[0],p[1],p[2]);pn.body.velocity.set(0,0,0);pn.body.angularVelocity.set(0,0,0);return true;},__shove:function(i,v,w){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(v[0],v[1],v[2]);if(w)pn.body.angularVelocity.set(w[0],w[1],w[2]);return true;},__foodMass:function(){return foods.map(f=>+f.body.mass.toFixed(3));},__foodAt:function(i,sp){const pn=pins[i];if(!pn||!pn.alive)return null;let f=null;for(const q of foods)if(!f||q.body.mass>f.body.mass)f=q;if(!f)return null;const p=pn.body.position;f.body.wakeUp();f.body.position.set(p.x+0.30,0.16,p.z);f.body.velocity.set(-(sp||7),0,0);f.body.angularVelocity.set(0,0,0);pn.body.wakeUp();return {mass:+f.body.mass.toFixed(3),e:f.e,pin:[+p.x.toFixed(3),+p.y.toFixed(3),+p.z.toFixed(3)]};},__clampAt:function(t){clampOnClip(t);return {on:CFX.on,armed:clampArmed,cued:clampCued,hitAt:+(S.hitAt||0).toFixed(2),clip:+t.toFixed(3)};},__rpl:function(){return {on:RPL.on,clock:+RPL.clock.toFixed(2),prog:RPL.on?+((RPL.clock-RPL.from)/Math.max(0.001,RPL.to-RPL.from)).toFixed(3):0,alive:pins.filter(function(p){return p&&p.alive;}).length};},soak:function(){soakT=14;},arena:function(v){arena.visible=v!==false;},__cost:function(){const r=renderer.info.render;return {calls:r.calls,tris:r.triangles};},__nlFire:function(i){const L=nlLanes[i|0];nlRack(L);L.t=NL_T.rel;nlThrow(L);return true;},__nlPins:function(i){const L=nlLanes[i|0];return L.pins.map(p=>{const q=p.body.quaternion;return [+(1-2*(q.x*q.x+q.z*q.z)).toFixed(3),+p.body.position.distanceTo(p.home).toFixed(3),p.body.sleepState];});},__arena:function(){return {on:arena.visible,lanes:nlLanes.map(L=>{const down=L.pins.filter(p=>{const q=p.body.quaternion;return (1-2*(q.x*q.x+q.z*q.z))<0.62;}).length;return {x:L.cx,t:+L.t.toFixed(2),thrown:L.thrown,ball:L.ballMesh.visible,bz:+L.ball.position.z.toFixed(2),bx:+L.ball.position.x.toFixed(3),atDeck:L.atDeck,botZ:+L.bot.position.z.toFixed(2),down:down,asleep:L.pins.filter(p=>p.body.sleepState===2).length,moved:L.pins.filter(p=>p.body.position.distanceTo(p.home)>0.03).length};})};},__burning:function(){return burning.map(r=>[r.kind,+r.burn.toFixed(2),+r.fuel.toFixed(1)]);},__dept:function(){return dept?+dept.t.toFixed(2):-1;},__ignite:function(i){const pn=pins[i];if(pn&&pn.alive){const r=recFor(pn.body);if(r)ignite(r);}},__alpha:ialpha,__real:function(){return real?Object.keys(real.bones).filter(k=>real.bones[k]).join(','):null;},__installRig:function(spec){try{installReal(buildRigFromSpec(spec),!!spec.keepProc);return 'ok';}catch(e){return 'ERR '+(e&&e.message);}},__realInfo:function(){if(!real)return null;const o={sc:+real.sc.toFixed(3),ws:+real.ws.toFixed(4),box:real.box,d:{}};for(const k in real.restD)o.d[k]=real.restD[k].toArray().map(v=>+v.toFixed(2));const p=new THREE.Vector3(),p2=new THREE.Vector3(),U=bowler.userData,PB=U.B;o.cmp={};const PM={shL:'elL',elL:'wrL',shR:'elR',elR:'wrR',hpL:'knL',knL:'anL',hpR:'knR',knR:'anR',spine:'chest',neck:'head'};for(const k in PM){const rb=real.bones[k];if(!rb||!PB[k]||!PB[PM[k]])continue;const rc=rb.children.find(x=>x.isBone);if(!rc)continue;rc.getWorldPosition(p);rb.getWorldPosition(p2);const rd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));PB[PM[k]].getWorldPosition(p);PB[k].getWorldPosition(p2);const pd=p.sub(p2).normalize().toArray().map(v=>+v.toFixed(2));o.cmp[k]=[rd,pd];}real.ball.getWorldPosition(p);o.ball=p.toArray().map(v=>+v.toFixed(2));bowler.userData.arms.R.ball.getWorldPosition(p);o.pball=p.toArray().map(v=>+v.toFixed(2));return o;},__bcam:function(v){bCamOv=v||null;},__bowlerH:function(){const a=new THREE.Vector3(0,0,0),b=new THREE.Vector3(0,1.75,0);bowler.localToWorld(a);bowler.localToWorld(b);a.project(bCam);b.project(bCam);return +((b.y-a.y)*VH/2).toFixed(1);},__soak:function(){return +soakT.toFixed(2);},__fp:function(){const c=[0,0,0,0,0];for(const p of fP)if(p.l>0)c[p.k]++;return c;},__tgt:function(){const t=dept&&dept.tgt;return t?(t.rec?'rec':t.ball?'ball':t.spot?'spot':'sweep'):'-';},__tbl:function(){return tables.map(t=>t&&t.grp?[t.grp.visible?1:0,t.dmg||0,t.broken?1:0,+(t.crack?t.crack.mat.opacity:0).toFixed(3),+(t.planks?t.planks[0].rotation.z:0).toFixed(4),+t.grp.position.distanceTo(cam.position).toFixed(2)]:null);},__dbVis:function(){return debris.filter(d=>d&&d.mesh&&d.mesh.visible).length;},__rplSeek:function(p){if(!RPL.on)return -1;RPL.clock=RPL.from+(RPL.to-RPL.from)*Math.max(0,Math.min(0.999,p));return +((RPL.clock-RPL.from)/(RPL.to-RPL.from)).toFixed(3);},__rplFromBuf:function(){RPL.clip=RPL.buf.slice();RPL.capt=true;return RPL.clip.length;},__crack:function(i){const t=tables[i||0];if(t&&!t.broken)crackTable(t,2.0);return t?t.dmg:-1;},__break:function(i){const t=tables[i||0];if(t&&!t.broken)breakTable(t);return debris.length;},__debris:function(){return debris.length;},__reb:function(){return S.reb?1:0;},__camPos:function(){return [+cam.position.x.toFixed(3),+cam.position.y.toFixed(3),+cam.position.z.toFixed(3)];},__shyVis:function(){return (RPL.shy||[]).map(o=>o.visible?1:0);},__ballY:function(){return ballBody?+ballBody.position.y.toFixed(3):null;},__ballX:function(){return ballBody?+ballBody.position.x.toFixed(4):null;},__ghost:function(){return gPts.map(q=>[+q[0].toFixed(4),+q[1].toFixed(3)]);},__ball:function(){return ballBody?[+ballBody.position.z.toFixed(2),+ballBody.velocity.length().toFixed(2),S.done?1:0,S.rest?1:0]:null;},__pinMove:function(){let n=0,mx=0;for(const pn of pins){if(!pn||!pn.alive)continue;const b=pn.body;if(b.sleepState===CANNON.Body.SLEEPING)continue;const v=b.velocity.length()+b.angularVelocity.length()*0.1;if(v>0.05)n++;mx=Math.max(mx,v);}return [n,+mx.toFixed(3)];},__smash:function(){if(foods[0]){foods[0].body.wakeUp();foods[0].body.velocity.set(1.2,2,-0.4);}},edgePx:function(cy){
   const ndcY=1-((cy-400)/400)*2;const v=new THREE.Vector3();
   let best=1e9,bz=0.6;
   for(let z=3.3;z>-8;z-=0.12){v.set(0,0.02,z).project(cam);if(v.z<-1||v.z>1)continue;const d=Math.abs(v.y-ndcY);if(d<best){best=d;bz=z;}}
   v.set(HALF*0.93,0.02,bz).project(cam);
   return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__pins:function(){return pins.map(function(pn){return pn&&pn.alive?[+pn.body.position.x.toFixed(3),+pn.body.position.y.toFixed(3),+pn.body.position.z.toFixed(3),pn.wasUp]:null;});},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
   resize:function(){renderer.setSize(LW,LH,false);},setRatio:function(r){if(Math.abs(renderer.getPixelRatio()-r)<0.01)return;renderer.setPixelRatio(r);renderer.setSize(LW,LH,false);}};
+B3D.__clamp=function(){return {on:CFX.on,park:CFX.park,t:+CFX.t.toFixed(3),open:+clampCurve(CFX.t).toFixed(4),press:+clampPress(CFX.t).toFixed(4),armed:clampArmed};};
+B3D.__clampFire=function(){CFX.on=false;clampArmed=true;return clampFire();};
+B3D.__clampPark=function(t){CFX.on=true;CFX.park=true;CFX.t=t;return true;};
+B3D.__clampGeom=function(){const o={teeth:0,rows:{}};
+  const cnt=function(j,k){let n=0;j.traverse(function(m){if(m.isMesh&&m.material===enamelMat)n++;});o.rows[k]=n;o.teeth+=n;};
+  cnt(jawLo,'lower');cnt(jawUp,'upper');
+  o.sameGeometry=jawLo.children.filter(m=>m.material===enamelMat).every((m,i)=>jawUp.children.filter(q=>q.material===enamelMat)[i].geometry===m.geometry);
+  o.upperFlipped=jawUp.scale.y<0;
+  const fronts=jawLo.children.filter(m=>m.material===enamelMat&&Math.abs(m.position.x)<0.5);
+  o.frontTeeth=fronts.length;o.frontWidth=+TOOTH[0][0].toFixed(3);
+  return o;};
 }catch(err){window.__b3dFail=true;console.warn('3D lane unavailable, staying 2D:',err);}
 </script>
 
