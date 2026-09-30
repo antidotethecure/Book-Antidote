@@ -3843,27 +3843,30 @@ clampCam.position.set(0,0,CLAMP_Z);clampCam.lookAt(0,0,0);
 const CERV_C=[0.845,0.748,0.582],BODY_C=[0.952,0.932,0.892],EDGE_C=[0.872,0.898,0.918];
 function toothGeo(w,h,d,kind){
   const M=22,N=16;
-  const ne=(kind==='inc'||kind==='can')?3.05:3.30;   /* how square the cross section is */
-  const pw=2/ne;
+  /* How square the cross section is -- and it squares up toward the biting edge. Round it all the
+     way and the corners of two neighbours only ever touch at one point, which leaves a black wedge
+     between them right where the rows meet. Flat there, they sit against each other. */
+  const ne0=(kind==='inc'||kind==='can')?3.15:3.40;
   const NV=(N+1)*M+2;
   const pos=new Float32Array(NV*3),col=new Float32Array(NV*3),uvs=new Float32Array(NV*2),idx=[];
   function drop(u,tz){
     if(kind==='can')return 0.34*Math.pow(Math.abs(u),1.3)+0.06*tz*tz;               /* one point */
     if(kind==='pos')return 0.17*(1-tz*tz);                                          /* two cusps, a groove between */
     if(kind==='mol')return 0.13*(1-tz*tz)+0.11*Math.max(0,1-Math.abs(u)*2.4);       /* four cusps round a fossa */
-    return 0.15*Math.pow(Math.abs(u),4)+0.05*tz*tz;                                 /* a chisel, corners rounded */
+    return 0.06*Math.pow(Math.abs(u),4)+0.04*tz*tz;                                 /* a chisel, corners barely taken off */
   }
   function paint(o,v,u,tz){
     let c0,c1,c2;
     if(v<0.58){const k=v/0.58;c0=CERV_C[0]+(BODY_C[0]-CERV_C[0])*k;c1=CERV_C[1]+(BODY_C[1]-CERV_C[1])*k;c2=CERV_C[2]+(BODY_C[2]-CERV_C[2])*k;}
     else{const k=(v-0.58)/0.42;c0=BODY_C[0]+(EDGE_C[0]-BODY_C[0])*k;c1=BODY_C[1]+(EDGE_C[1]-BODY_C[1])*k;c2=BODY_C[2]+(EDGE_C[2]-BODY_C[2])*k;}
-    const sh=1-0.18*Math.pow(Math.abs(u),6)-0.14*Math.max(0,-tz);   /* where two teeth touch sits in shade */
+    const sh=1-0.34*Math.pow(Math.abs(u),4)-0.14*Math.max(0,-tz);   /* where two teeth touch sits in shade -- the crowns are packed tight now, and this is what keeps one tooth from reading as the next */
     col[o]=c0*sh;col[o+1]=c1*sh;col[o+2]=c2*sh;
   }
   for(let i=0;i<=N;i++){
     const v=i/N;
-    const fil=Math.max(0,(v-0.88)/0.12),f=1-0.105*fil*fil;         /* the rim rolls over instead of ending square */
-    const A=w*0.5*(0.83+0.21*v-0.045*v*v)*f, D=d*0.5*(0.79+0.27*v-0.065*v*v)*f;
+    const pw=2/(ne0+1.4*Math.pow(v,1.6));
+    const fil=Math.max(0,(v-0.90)/0.10),f=1-0.05*fil*fil;          /* the rim rolls over instead of ending square */
+    const A=w*0.5*(0.89+0.16*v-0.045*v*v)*f, D=d*0.5*(0.84+0.23*v-0.065*v*v)*f;
     const cz=0.055*d*Math.sin(Math.PI*v), cing=0.15*d*Math.max(0,1-v*3.2);
     const near=Math.max(0,(v-0.86)/0.14);
     for(let j=0;j<M;j++){
@@ -3894,7 +3897,7 @@ function toothGeo(w,h,d,kind){
   return g;
 }
 /* the arch is an ellipse: half a mouth wide, and deeper than it is wide */
-const ARCH_A=2.62,ARCH_B=3.25,ARCH_GAP=0.018;
+const ARCH_A=2.62,ARCH_B=3.25,ARCH_GAP=-0.075;   /* they sit against each other: the arc runs longer than the chord */
 /*        width height depth kind   edge off plane  labial tilt */
 const TOOTH=[
   [0.88,  1.06,  0.72, 'inc',  0.000,  0.10],   /* central incisor -- the two front teeth */
@@ -3950,7 +3953,7 @@ const throatMat=new THREE.MeshBasicMaterial({map:throatT,side:THREE.DoubleSide})
 const tongueMat=new THREE.MeshPhysicalMaterial({color:0x5e242b,roughness:0.34,metalness:0.0,clearcoat:0.7,clearcoatRoughness:0.26,side:THREE.DoubleSide});
 function buildJaw(){
   const jaw=new THREE.Group();
-  let run=0,thMax=0;
+  let run=ARCH_GAP*0.5,thMax=0;   /* and the midline closes too */
   for(let j=0;j<TOOTH.length;j++){
     const T=TOOTH[j],geo=toothGeo(T[0],T[1],T[2],T[3]);
     const cen=run+T[0]*0.5;run+=T[0]+ARCH_GAP;
@@ -3965,7 +3968,7 @@ function buildJaw(){
       const gc=new THREE.Mesh(gumBall,gumMat);       /* the collar it comes out of */
       gc.position.copy(m.position).add(new THREE.Vector3(0,-T[1]+0.13,0).applyEuler(m.rotation));
       gc.rotation.order='YXZ';gc.rotation.copy(m.rotation);
-      gc.scale.set(T[0]*0.56,0.26,T[2]*0.50);
+      gc.scale.set(T[0]*0.50,0.22,T[2]*0.42);
       jaw.add(gc);
     }
   }
