@@ -1880,6 +1880,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
         <div class="eyebrow">WokeDote Clothing · Launch Drop</div>
         <h2>Reserve yours <span class="neon">before it drops.</span></h2>
         <p class="mw-lead">The first run is small. Tap the pieces you want, pick your size, and drop your email — the waitlist gets first access and the launch price before anyone else. Nothing is charged now.</p>
+        <a class="btn btn-galaxy" style="margin-top:14px" id="shopLink" href="https://wokedote-clothing.myshopify.com" target="_blank" rel="noopener">🛒 Shop Woke Dote</a>
         <div class="mw-count" id="mwCount" hidden><i></i><span id="mwCountTxt"></span></div>
       </div>
       <div class="mw-hero" aria-hidden="true">
@@ -2065,28 +2066,7 @@ footer{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(2
 
 
 <!-- SHOP -->
-<section id="shop">
-  <div class="galaxy" id="galaxy"></div>
-  <div class="wrap">
-    <div class="shop-card reveal">
-      <div class="wd-logo" id="wdLogo"><img data-img="WDLOGO" alt="Woke Dote Clothing logo" loading="lazy" decoding="async"><span class="wd-tap">👆 tap the eye</span></div>
-      <div class="eyebrow" style="color:#c9a6ff">Wear The Legacy</div>
-      <h2><span class="neon-v">Woke Dote</span></h2>
-      <p class="shop-sub">The official Antidote clothing line. Drizzle. Bite. Repeat — on your chest. Hover and watch the stars fall. ✨</p>
-      <div class="shop-tags"><span>👕 Tees</span><span>🧥 Hoodies</span><span>🧢 Headwear</span><span>♾️ Legacy Drops</span></div>
-      <div class="shop-grid">
-        <div class="sp"><span class="soon">Coming Soon</span><img data-img="SHOP1" alt="Speak It Into Existence tee — Woke Dote" loading="lazy" decoding="async"><div class="cap">Speak It Into Existence</div></div>
-        <div class="sp"><span class="soon">Coming Soon</span><img data-img="SHOP2" alt="Written In The Stars tee — Woke Dote" loading="lazy" decoding="async"><div class="cap">Written In The Stars</div></div>
-        <div class="sp"><span class="soon">Coming Soon</span><img data-img="SHOP3" alt="LBC / CPT As Above So Below snapback — Woke Dote" loading="lazy" decoding="async"><div class="cap">LBC ✦ CPT Snapback</div></div>
-      </div>
-      <div class="soon-bar">
-        <div class="big"><span class="neon-v">Coming Soon</span> 🌌</div>
-        <div class="sm">The first Woke Dote drop lands soon. As above, so below.</div>
-      </div>
-      <a class="btn btn-galaxy" style="margin-top:20px" id="shopLink" href="https://wokedote-clothing.myshopify.com" target="_blank" rel="noopener">🛒 Shop Woke Dote</a>
-    </div>
-  </div>
-</section>
+
 
 
 <!-- KICK -->
@@ -4513,8 +4493,8 @@ function agencySubmit(e){
     <a class="toc-i" href="#churro"><span class="toc-dot"></span><span class="toc-plate">🍮 Churrito Loco</span></a>
     <a class="toc-i" href="#cnova"><span class="toc-dot"></span><span class="toc-plate">🤝 C-Nova</span></a>
     <a class="toc-i" href="#africa"><span class="toc-dot"></span><span class="toc-plate">🌍 Africa Tour</span></a>
+    <a class="toc-i" href="#waitlist"><span class="toc-dot"></span><span class="toc-plate">👕 Woke Dote</span></a>
     <a class="toc-i" href="#book"><span class="toc-dot"></span><span class="toc-plate">📅 Book Antidote</span></a>
-    <a class="toc-i" href="#shop"><span class="toc-dot"></span><span class="toc-plate">👕 Woke Dote</span></a>
     <a class="toc-i" href="#kick"><span class="toc-dot"></span><span class="toc-plate">🎮 On Kick</span></a>
     <a class="toc-i" href="#music"><span class="toc-dot"></span><span class="toc-plate">🎤 The Catalog</span></a>
     <a class="toc-i" href="#believe"><span class="toc-dot"></span><span class="toc-plate">🔮 Believe Me</span></a>
@@ -6188,6 +6168,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape")closeLB(); });
 
 /* ================= SHOP (galaxy) ================= */
 const gal=document.getElementById("galaxy"), shopSec=document.getElementById("shop");
+if(gal&&shopSec){
 for(let i=0;i<48;i++){
   const s=document.createElement("span"); s.className="gstar";
   s.style.left=(Math.random()*100)+"%";
@@ -6214,6 +6195,7 @@ for(let i=0;i<16;i++){
 shopSec.addEventListener("mouseenter",()=>shopSec.classList.add("on"));
 shopSec.addEventListener("mouseleave",()=>shopSec.classList.remove("on"));
 new IntersectionObserver(es=>es.forEach(x=>shopSec.classList.toggle("on",x.isIntersecting)),{threshold:.3}).observe(shopSec);
+}
 const wdLogo=document.getElementById("wdLogo");
 if(wdLogo) wdLogo.addEventListener("click",()=>{
   wdLogo.classList.remove("zap"); void wdLogo.offsetWidth; wdLogo.classList.add("zap");
