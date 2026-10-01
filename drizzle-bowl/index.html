@@ -5208,6 +5208,21 @@ function makeNeighbourLane(cx,tint,t0){
   }
   const legs={L:makeLeg(-0.088),R:makeLeg(0.088)};
   bot.position.set(cx,0,-1.2);
+  /* SIZE HIM AGAINST THE BALL HE IS HOLDING. Built from the numbers above he comes out about 1.21 m
+     -- the height of a nine-year-old -- while the ball in his hand is a full-size one, so on the
+     neighbouring lanes the ball read as bigger than the man carrying it. A bowling ball is 21.8 cm
+     across and a man is about 1.78 m: the ball is an eighth of him, near enough the size of his own
+     head. He is scaled up to a man's height, his feet stay on the floor, and the ball is scaled back
+     down by the same factor so it stays the one true size in the room. */
+  bot.updateMatrixWorld(true);
+  {const _bb=new THREE.Box3().setFromObject(bot),_wp=new THREE.Vector3(),_ws=new THREE.Vector3();
+   bot.getWorldPosition(_wp);bot.getWorldScale(_ws);
+   const sy=Math.abs(_ws.y)||1,hNat=(_bb.max.y-_bb.min.y)/sy,low=(_bb.min.y-_wp.y)/sy;
+   if(hNat>0.3){const k=1.76/hNat;
+     bot.scale.setScalar(k);bot.position.y-=low*(k-1);      /* grow him about his own feet */
+     held.scale.setScalar(0.218/(BR*2)/k);                  /* and hand him a true 21.8 cm ball back */
+     bot.userData.k=k;bot.userData.hNat=+hNat.toFixed(4);}}
+  bot.name='nlBot';held.name='nlBall';
   const L={cx,pins,ball:ballBodyN,ballMesh,bot,shoulder,elbow,armF,legs,torso,head,held,visor,t:t0,thrown:false,step:0,pz:-1.2};
   nlLanes.push(L);return L;
 }
@@ -6751,7 +6766,50 @@ __lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFix
     ['clR','shR','clL','shL'].forEach(function(k){const b2=real.bones[k];if(!b2)return;
       b2.updateWorldMatrix(true,false);b2.getWorldPosition(v);ch.worldToLocal(v);
       o.rel[k]=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];});}
-  return o;},__deckBounds:function(){return {front:PDECK_FRONT,back:PDECK_BACK,x:PDECK_X};},__deck:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,alive:0});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,alive:1,x:+b.position.x.toFixed(3),z:+b.position.z.toFixed(3),up:pinUp(b,a)?1:0,homeX:+(LAYOUT[i][0]*PDXm).toFixed(3),homeZ:+(Z_HEAD-LAYOUT[i][1]*PDZm).toFixed(3)});}return o;},__upTest:function(x,y,z,ay){return pinUp({position:{x:x,y:y,z:z}},{y:ay})?1:0;},__markDown:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;return true;},__pinLed:function(){return pins.map(function(pn,i){return (pn&&pn.alive&&pn.mat)?{i:i,ledT:+pn.ledT.toFixed(2),restT:+pn.restT.toFixed(2),down:!!pn.down,slp:pn.body.sleepState,emis:+pn.mat.emissiveIntensity.toFixed(3),halo:pn.led?+pn.led.material.opacity.toFixed(4):null,vis:pn.led?pn.led.visible:null}:null;});},__blowPin:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;pn.ledT=0;return true;},__armGeom:function(){const out={};const g=(k)=>{const b=real.bones[k];if(!b)return null;const c=b.children.find(x=>x.isBone);if(!c)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();c.getWorldPosition(p);b.getWorldPosition(q);return p.sub(q).normalize();};['L','R'].forEach(s=>{const u=g('sh'+s),f=g('el'+s);if(!u||!f){out[s]=null;return;}const bend=Math.acos(Math.max(-1,Math.min(1,u.dot(f))))*180/Math.PI;const bw=new THREE.Vector3().copy(bowler.worldToLocal(new THREE.Vector3())); out[s]={solvedLeg:!!(bowler.userData.legDir&&bowler.userData.legDir[s]),
+  return o;},__scale:function(){
+  /* On-screen size, in lane-viewport pixels, of the things that have to agree: how tall he is and
+     how fat the ball is. He is composited through his own camera; the lane ball goes through the
+     lane camera. If those two disagree the ball cannot look the right size next to him however
+     correct the metres are. */
+  const o={},v=new THREE.Vector3();
+  const toPx=(p3,camr)=>{v.copy(p3).project(camr);return [(v.x*0.5+0.5)*LW,(1-(v.y*0.5+0.5))*VH];};
+  if(real){
+    const crown=real.bones.crown||real.bones.head,sole=real.bones.toeL||real.bones.anL;
+    crown.updateWorldMatrix(true,false);sole.updateWorldMatrix(true,false);
+    const c=crown.getWorldPosition(new THREE.Vector3()),f=sole.getWorldPosition(new THREE.Vector3());
+    o.manMetres=+(c.y-f.y).toFixed(4);
+    const cp=toPx(c,bCam),fp=toPx(f,bCam);
+    o.manPx=+Math.abs(fp[1]-cp[1]).toFixed(1);
+    const hb=real.ball;hb.updateWorldMatrix(true,false);
+    const bc=hb.getWorldPosition(new THREE.Vector3());
+    const r=BR*hb.getWorldScale(new THREE.Vector3()).x;
+    o.handBallMetres=+(2*r).toFixed(4);
+    const l=toPx(bc.clone().setX(bc.x-r),bCam),rr2=toPx(bc.clone().setX(bc.x+r),bCam);
+    o.handBallPx=+Math.abs(rr2[0]-l[0]).toFixed(1);
+  }
+  if(ballMesh&&ballMesh.visible){
+    const bp=ballMesh.getWorldPosition(new THREE.Vector3());
+    const l=toPx(bp.clone().setX(bp.x-BR),cam),r2=toPx(bp.clone().setX(bp.x+BR),cam);
+    o.laneBallPx=+Math.abs(r2[0]-l[0]).toFixed(1);o.laneBallZ=+bp.z.toFixed(2);
+    /* and how tall a 1.76 m man would be drawn at the ball's own depth, through the LANE camera */
+    const a2=toPx(bp,cam),b2=toPx(bp.clone().setY(bp.y+1.76),cam);
+    o.manPxAtBallDepth=+Math.abs(b2[1]-a2[1]).toFixed(1);
+  }
+  if(o.manPx&&o.handBallPx)o.handRatio=+(o.handBallPx/o.manPx).toFixed(4);
+  if(o.laneBallPx&&o.manPxAtBallDepth)o.laneRatio=+(o.laneBallPx/o.manPxAtBallDepth).toFixed(4);
+  o.realRatio=0.1225;   /* a 21.8 cm ball against a 1.78 m man */
+  return o;},__nl:function(){
+  const out=[];const bb=new THREE.Box3(),v=new THREE.Vector3();
+  for(const L of nlLanes){
+    L.bot.updateMatrixWorld(true);bb.setFromObject(L.bot);
+    L.held.updateMatrixWorld(true);
+    const d=BR*2*L.held.getWorldScale(v).x;
+    const h=bb.max.y-bb.min.y;
+    out.push({x:+L.cx.toFixed(2),manH:+h.toFixed(3),feetY:+bb.min.y.toFixed(3),
+      ballD:+d.toFixed(4),ratio:+(d/h).toFixed(4),k:L.bot.userData.k?+L.bot.userData.k.toFixed(3):null,
+      natural:L.bot.userData.hNat||null});
+  }
+  return {real:0.1225,lanes:out};},__deckBounds:function(){return {front:PDECK_FRONT,back:PDECK_BACK,x:PDECK_X};},__deck:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,alive:0});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,alive:1,x:+b.position.x.toFixed(3),z:+b.position.z.toFixed(3),up:pinUp(b,a)?1:0,homeX:+(LAYOUT[i][0]*PDXm).toFixed(3),homeZ:+(Z_HEAD-LAYOUT[i][1]*PDZm).toFixed(3)});}return o;},__upTest:function(x,y,z,ay){return pinUp({position:{x:x,y:y,z:z}},{y:ay})?1:0;},__markDown:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;return true;},__pinLed:function(){return pins.map(function(pn,i){return (pn&&pn.alive&&pn.mat)?{i:i,ledT:+pn.ledT.toFixed(2),restT:+pn.restT.toFixed(2),down:!!pn.down,slp:pn.body.sleepState,emis:+pn.mat.emissiveIntensity.toFixed(3),halo:pn.led?+pn.led.material.opacity.toFixed(4):null,vis:pn.led?pn.led.visible:null}:null;});},__blowPin:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;pn.ledT=0;return true;},__armGeom:function(){const out={};const g=(k)=>{const b=real.bones[k];if(!b)return null;const c=b.children.find(x=>x.isBone);if(!c)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();c.getWorldPosition(p);b.getWorldPosition(q);return p.sub(q).normalize();};['L','R'].forEach(s=>{const u=g('sh'+s),f=g('el'+s);if(!u||!f){out[s]=null;return;}const bend=Math.acos(Math.max(-1,Math.min(1,u.dot(f))))*180/Math.PI;const bw=new THREE.Vector3().copy(bowler.worldToLocal(new THREE.Vector3())); out[s]={solvedLeg:!!(bowler.userData.legDir&&bowler.userData.legDir[s]),
       thigh:(function(){const t=g('hp'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
       shin:(function(){const t=g('kn'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
       kneeDeg:(function(){const a=g('hp'+s),c=g('kn'+s);if(!a||!c)return null;
