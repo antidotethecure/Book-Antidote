@@ -5744,8 +5744,9 @@ const bRoot=new THREE.Group();bRoot.scale.setScalar(BSCALE);bRoot.position.y=0.2
 const BOWLER_GLBS=['assets/antidote.glb','assets/antidote.json','https://d2ol7oe51mr4n9.cloudfront.net/user_3HWG0IWRMvn26mXcv9NkAaLko5Y/557e63ff-735d-4642-9f98-2e4e4b63ae9e.glb'];
 let real=null;
 const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1),DOWN=new THREE.Vector3(0,-1,0),
-      _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3();
+      _rq=new THREE.Quaternion(),_rq2=new THREE.Quaternion(),_rq3=new THREE.Quaternion(),_bq=new THREE.Quaternion(),_rv=new THREE.Vector3(),_rv2=new THREE.Vector3(),_rv3=new THREE.Vector3(),_rv4=new THREE.Vector3();
 const BONE_NAMES={hips:['hips','pelvis'],spine:['spine02','spine'],spine1:['spine01','spine1'],spine2:['spine2','chest','spine'],neck:['neck'],head:['head'],
+  clL:['leftshoulder','leftclavicle','claviclel'],clR:['rightshoulder','rightclavicle','clavicler'],
   shL:['leftarm','leftupperarm','upperarml'],elL:['leftforearm','leftlowerarm','lowerarml'],wrL:['lefthand','handl'],
   shR:['rightarm','rightupperarm','upperarmr'],elR:['rightforearm','rightlowerarm','lowerarmr'],wrR:['righthand','handr'],
   hpL:['leftupleg','leftupperleg','leftthigh'],knL:['leftleg','leftlowerleg','leftcalf'],anL:['leftfoot'],toeL:['lefttoebase','lefttoe'],
@@ -5942,7 +5943,24 @@ function driveReal(){ /* read the control rig's joint angles (already smoothed) 
   setBone('head',qx(sp+B.head.rotation.x).multiply(qy(B.head.rotation.y)));
   ['L','R'].forEach(s=>{const sh=A[s].sh.rotation,el=A[s].el.rotation.x,wr=A[s].wr.rotation.x;
     const qs=qx(sp).multiply(qx(sh.x)).multiply(qz(sh.z));                    /* chest, then the shoulder joint */
-    aimBone('sh'+s,_rv2.copy(DOWN).applyQuaternion(qs));
+    _rv2.copy(DOWN).applyQuaternion(qs);
+    /* THE SHOULDER GIRDLE. The scan is rigged with clavicles and nothing was ever asking them to
+       move, so the whole swing hinged on the humerus alone and the deltoid collapsed into the chest
+       at the top of the backswing. A real shoulder does not work that way: past about thirty degrees
+       of elevation the scapula and clavicle take roughly one degree for every two the arm travels --
+       scapulohumeral rhythm -- so the acromion rides up under the arm instead of staying put.
+       Rotating the clavicle's own rest direction toward the humerus is that rhythm without having to
+       know which way round this particular rig builds its local axes. */
+    const cd=real.restD['cl'+s];
+    if(cd){
+      const elev=Math.acos(Math.max(-1,Math.min(1,_rv2.dot(DOWN))));
+      const girdle=Math.min(0.42,Math.max(0,(elev-0.52)/3));          /* 2:1 past 30 deg, capped near the real limit */
+      if(girdle>0.002){
+        _rv3.copy(cd);_rv4.copy(_rv3).cross(_rv2);
+        if(_rv4.lengthSq()>1e-8){_rv4.normalize();_rv3.applyAxisAngle(_rv4,girdle);aimBone('cl'+s,_rv3);}
+      }else aimBone('cl'+s,cd);
+    }
+    aimBone('sh'+s,_rv2);
     const qe=qs.clone().multiply(qx(el));aimBone('el'+s,_rv2.copy(DOWN).applyQuaternion(qe));
     if(s==='R')aimBoneRoll('wrR',_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))),U.relRoll||0);
     else aimBone('wr'+s,_rv2.copy(DOWN).applyQuaternion(qe.multiply(qx(wr))));
@@ -5951,7 +5969,14 @@ function driveReal(){ /* read the control rig's joint angles (already smoothed) 
     const ld=U.legDir&&U.legDir[s];
     if(ld){aimBone('hp'+s,ld.t);aimBone('kn'+s,ld.s);}
     else{const hp=L[s].hp.rotation.x,kn=L[s].kn.rotation.x;setBone('hp'+s,qx(hp));setBone('kn'+s,qx(hp+kn));}
-    setBone('an'+s,qx(-lean));});
+    /* THE FOOT ROLLS. The ankle used to do one thing -- cancel the body's lean -- so the sole stayed
+       a flat board through the whole step, and the toe bone the scan came with never moved at all.
+       It carries the roll now: the heel lifts once the body has travelled past the planted foot and
+       the push-off runs out through the toe, and a foot in the air leaves toe-down and comes up to
+       meet the floor heel-first. */
+    const rl=ld?(ld.roll||0):0;
+    setBone('an'+s,qx(-lean+0.40*rl));
+    if(real.bones['toe'+s])setBone('toe'+s,qx(-0.62*Math.max(0,rl)));});
   setBone('hips',qy(B.pelvis.rotation.y).multiply(qz(B.pelvis.rotation.z)));
   /* measure how fast the hand is actually moving, so the ball leaves with the swing's speed
      rather than a number I picked */
@@ -6144,6 +6169,12 @@ function solveLegs(){
     if(_gv3.z<out.t.z)out.t.copy(_gv3);                               /* a knee never bends backwards */
     out.t.normalize();
     out.s.copy(_gv).addScaledVector(out.t,-A).normalize();            /* knee -> foot */
+    /* how far through the step this foot is, as one number: +1 is up on the toe driving off, -1 is
+       toe-up reaching for the floor. Measured here because this is where the foot mark and the hip
+       socket are both already in hand. */
+    if(f.sw<0){const dx=_gv2.x-f.x,dz=_gv2.z-f.z;                     /* any direction, not just forward: he side-steps more than he walks */
+      out.roll=Math.max(0,Math.min(1,(Math.hypot(dx,dz)-0.06)/0.16));}
+    else{const tsw=f.sw;out.roll=Math.max(0,1-tsw/0.35)*0.85-Math.max(0,(tsw-0.62)/0.38)*0.55;}
     out.t.applyQuaternion(_liq);out.s.applyQuaternion(_liq);          /* into his frame, which is what aims a bone */
     aimLocal(lg.hp,out.t);
     aimLocal(lg.kn,out.s);
@@ -6702,7 +6733,25 @@ __shot:function(ox,spin,pw,aim){   /* runs the ghost sim headlessly and reports 
     hookBoards:headX===null?null:+((headX-x0)/0.0254).toFixed(1),
     travelS:headT===null?null:+headT.toFixed(2),profile:prof,
     entryDeg:ang===null?null:+ang.toFixed(2),gutter:gut};},
-__lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFixed(3):null,dl:+dl.intensity.toFixed(3),mid:+midL.intensity.toFixed(2),pin:+pinLight.intensity.toFixed(2),pit:+pitGlow.intensity.toFixed(2),led:+ledLight.intensity.toFixed(2),floor:+cosFloorMat.opacity.toFixed(3),floorVis:cosFloor.visible,bKey:+bKey.intensity.toFixed(3),bFill:+bFill.intensity.toFixed(3),bRim:+bRim.intensity.toFixed(2),bUnder:+bUnder.intensity.toFixed(3),bHemi:+bHemi.intensity.toFixed(3),skyCol:hemi?hemi.color.getHexString():null,rimCol:bRim.color.getHexString(),pinEmis:+(pinMats[Object.keys(pinMats)[0]]?pinMats[Object.keys(pinMats)[0]].emissiveIntensity:0).toFixed(2)};},__truck:function(){if(!truck)return null;let mesh=0,tri=0,lights=0;truck.grp.traverse(o=>{if(o.isMesh){mesh++;const g=o.geometry;if(g&&g.index)tri+=g.index.count/3;else if(g&&g.attributes.position)tri+=g.attributes.position.count/3;}if(o.isLight)lights++;});return {meshes:mesh,triangles:Math.round(tri),lights:lights,gunPos:[+truck.gun.position.x.toFixed(3),+truck.gun.position.y.toFixed(3),+truck.gun.position.z.toFixed(3)]};},__deptPose:function(){if(!dept||!truck)return null;const T=truck.grp;return {t:+dept.t.toFixed(2),x:+T.position.x.toFixed(2),z:+T.position.z.toFixed(2),ry:+T.rotation.y.toFixed(2),wr:+truck.wheels[0].rotation.z.toFixed(1),gz:+truck.gun.position.z.toFixed(3),vis:T.visible};},__parkTruck:function(x,y,z,ry){if(!truck)truck=makeTruck();truck.grp.visible=true;truck.grp.position.set(x,y,z);truck.grp.rotation.y=ry||0;truck.lightR.intensity=6;truck.lightB.intensity=6;truck.headL.intensity=3.2;return true;},__pinState:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,gone:1});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,ay:+a.y.toFixed(4),tilt:+(Math.acos(Math.max(-1,Math.min(1,a.y)))*180/Math.PI).toFixed(1),up:pinUp(b,a)?1:0,y:+b.position.y.toFixed(3),z:+b.position.z.toFixed(2),spd:+b.velocity.length().toFixed(3),asp:+b.angularVelocity.length().toFixed(3),slp:b.sleepState});}return o;},__settled:function(){return settled()?1:0;},__bbPng:function(){return bbC.toDataURL('image/png');},__btvPng:function(){return btvC.toDataURL('image/png');},__pinTexPng:function(fi){const f=(A3.foods||[])[fi];const t=pinTexture(f,fi);return {png:t.image.toDataURL('image/png'),cell:FOOD_CELL[fi],sheet:!!foodImg,emoji:f&&f.e};},__topple:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(2.6,0.4,-1.2);pn.body.angularVelocity.set(6,0,10);return true;},__laneFood:function(){return foods.filter(f=>f&&f.lane).map(f=>[+f.body.position.x.toFixed(3),+f.body.position.z.toFixed(2)]);},__deckBounds:function(){return {front:PDECK_FRONT,back:PDECK_BACK,x:PDECK_X};},__deck:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,alive:0});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,alive:1,x:+b.position.x.toFixed(3),z:+b.position.z.toFixed(3),up:pinUp(b,a)?1:0,homeX:+(LAYOUT[i][0]*PDXm).toFixed(3),homeZ:+(Z_HEAD-LAYOUT[i][1]*PDZm).toFixed(3)});}return o;},__upTest:function(x,y,z,ay){return pinUp({position:{x:x,y:y,z:z}},{y:ay})?1:0;},__markDown:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;return true;},__pinLed:function(){return pins.map(function(pn,i){return (pn&&pn.alive&&pn.mat)?{i:i,ledT:+pn.ledT.toFixed(2),restT:+pn.restT.toFixed(2),down:!!pn.down,slp:pn.body.sleepState,emis:+pn.mat.emissiveIntensity.toFixed(3),halo:pn.led?+pn.led.material.opacity.toFixed(4):null,vis:pn.led?pn.led.visible:null}:null;});},__blowPin:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;pn.ledT=0;return true;},__armGeom:function(){const out={};const g=(k)=>{const b=real.bones[k];if(!b)return null;const c=b.children.find(x=>x.isBone);if(!c)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();c.getWorldPosition(p);b.getWorldPosition(q);return p.sub(q).normalize();};['L','R'].forEach(s=>{const u=g('sh'+s),f=g('el'+s);if(!u||!f){out[s]=null;return;}const bend=Math.acos(Math.max(-1,Math.min(1,u.dot(f))))*180/Math.PI;const bw=new THREE.Vector3().copy(bowler.worldToLocal(new THREE.Vector3())); out[s]={solvedLeg:!!(bowler.userData.legDir&&bowler.userData.legDir[s]),
+__lights:function(){return {cos:+cosT.toFixed(3),hemi:hemi?+hemi.intensity.toFixed(3):null,dl:+dl.intensity.toFixed(3),mid:+midL.intensity.toFixed(2),pin:+pinLight.intensity.toFixed(2),pit:+pitGlow.intensity.toFixed(2),led:+ledLight.intensity.toFixed(2),floor:+cosFloorMat.opacity.toFixed(3),floorVis:cosFloor.visible,bKey:+bKey.intensity.toFixed(3),bFill:+bFill.intensity.toFixed(3),bRim:+bRim.intensity.toFixed(2),bUnder:+bUnder.intensity.toFixed(3),bHemi:+bHemi.intensity.toFixed(3),skyCol:hemi?hemi.color.getHexString():null,rimCol:bRim.color.getHexString(),pinEmis:+(pinMats[Object.keys(pinMats)[0]]?pinMats[Object.keys(pinMats)[0]].emissiveIntensity:0).toFixed(2)};},__truck:function(){if(!truck)return null;let mesh=0,tri=0,lights=0;truck.grp.traverse(o=>{if(o.isMesh){mesh++;const g=o.geometry;if(g&&g.index)tri+=g.index.count/3;else if(g&&g.attributes.position)tri+=g.attributes.position.count/3;}if(o.isLight)lights++;});return {meshes:mesh,triangles:Math.round(tri),lights:lights,gunPos:[+truck.gun.position.x.toFixed(3),+truck.gun.position.y.toFixed(3),+truck.gun.position.z.toFixed(3)]};},__deptPose:function(){if(!dept||!truck)return null;const T=truck.grp;return {t:+dept.t.toFixed(2),x:+T.position.x.toFixed(2),z:+T.position.z.toFixed(2),ry:+T.rotation.y.toFixed(2),wr:+truck.wheels[0].rotation.z.toFixed(1),gz:+truck.gun.position.z.toFixed(3),vis:T.visible};},__parkTruck:function(x,y,z,ry){if(!truck)truck=makeTruck();truck.grp.visible=true;truck.grp.position.set(x,y,z);truck.grp.rotation.y=ry||0;truck.lightR.intensity=6;truck.lightB.intensity=6;truck.headL.intensity=3.2;return true;},__pinState:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,gone:1});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,ay:+a.y.toFixed(4),tilt:+(Math.acos(Math.max(-1,Math.min(1,a.y)))*180/Math.PI).toFixed(1),up:pinUp(b,a)?1:0,y:+b.position.y.toFixed(3),z:+b.position.z.toFixed(2),spd:+b.velocity.length().toFixed(3),asp:+b.angularVelocity.length().toFixed(3),slp:b.sleepState});}return o;},__settled:function(){return settled()?1:0;},__bbPng:function(){return bbC.toDataURL('image/png');},__btvPng:function(){return btvC.toDataURL('image/png');},__pinTexPng:function(fi){const f=(A3.foods||[])[fi];const t=pinTexture(f,fi);return {png:t.image.toDataURL('image/png'),cell:FOOD_CELL[fi],sheet:!!foodImg,emoji:f&&f.e};},__topple:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.body.wakeUp();pn.body.velocity.set(2.6,0.4,-1.2);pn.body.angularVelocity.set(6,0,10);return true;},__laneFood:function(){return foods.filter(f=>f&&f.lane).map(f=>[+f.body.position.x.toFixed(3),+f.body.position.z.toFixed(2)]);},__rig:function(){
+  if(!real)return {real:false};
+  const o={real:true,mapped:{},pos:{}},v=new THREE.Vector3();
+  for(const k in real.bones)o.mapped[k]=real.bones[k]?real.bones[k].name:null;
+  ['clL','clR','shL','shR','elR','wrR','anL','anR','toeL','toeR','head'].forEach(function(k){
+    const b2=real.bones[k];if(!b2)return;b2.updateWorldMatrix(true,false);b2.getWorldPosition(v);
+    o.pos[k]=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];});
+  const U=bowler.userData;
+  o.roll=U.legDir?{L:+(U.legDir.L.roll||0).toFixed(3),R:+(U.legDir.R.roll||0).toFixed(3)}:null;
+  o.armX=+bowler.userData.arms.R.sh.rotation.x.toFixed(3);
+  o.ang={};
+  ['clL','clR','shR','elR','anL','anR','toeL','toeR'].forEach(function(k){
+    const b2=real.bones[k];if(!b2)return;o.ang[k]=+(2*Math.acos(Math.min(1,Math.abs(b2.quaternion.w)))).toFixed(4);});
+  const ch=real.bones.spine2;
+  if(ch){ch.updateWorldMatrix(true,false);o.rel={};
+    ['clR','shR','clL','shL'].forEach(function(k){const b2=real.bones[k];if(!b2)return;
+      b2.updateWorldMatrix(true,false);b2.getWorldPosition(v);ch.worldToLocal(v);
+      o.rel[k]=[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];});}
+  return o;},__deckBounds:function(){return {front:PDECK_FRONT,back:PDECK_BACK,x:PDECK_X};},__deck:function(){const o=[];for(let i=0;i<10;i++){const pn=pins[i];if(!pn||!pn.alive){o.push({i:i,alive:0});continue;}const b=pn.body,a=b.quaternion.vmult(UPV,new CANNON.Vec3());o.push({i:i,alive:1,x:+b.position.x.toFixed(3),z:+b.position.z.toFixed(3),up:pinUp(b,a)?1:0,homeX:+(LAYOUT[i][0]*PDXm).toFixed(3),homeZ:+(Z_HEAD-LAYOUT[i][1]*PDZm).toFixed(3)});}return o;},__upTest:function(x,y,z,ay){return pinUp({position:{x:x,y:y,z:z}},{y:ay})?1:0;},__markDown:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;return true;},__pinLed:function(){return pins.map(function(pn,i){return (pn&&pn.alive&&pn.mat)?{i:i,ledT:+pn.ledT.toFixed(2),restT:+pn.restT.toFixed(2),down:!!pn.down,slp:pn.body.sleepState,emis:+pn.mat.emissiveIntensity.toFixed(3),halo:pn.led?+pn.led.material.opacity.toFixed(4):null,vis:pn.led?pn.led.visible:null}:null;});},__blowPin:function(i){const pn=pins[i];if(!pn||!pn.alive)return false;pn.down=true;pn.ledT=0;return true;},__armGeom:function(){const out={};const g=(k)=>{const b=real.bones[k];if(!b)return null;const c=b.children.find(x=>x.isBone);if(!c)return null;const p=new THREE.Vector3(),q=new THREE.Vector3();c.getWorldPosition(p);b.getWorldPosition(q);return p.sub(q).normalize();};['L','R'].forEach(s=>{const u=g('sh'+s),f=g('el'+s);if(!u||!f){out[s]=null;return;}const bend=Math.acos(Math.max(-1,Math.min(1,u.dot(f))))*180/Math.PI;const bw=new THREE.Vector3().copy(bowler.worldToLocal(new THREE.Vector3())); out[s]={solvedLeg:!!(bowler.userData.legDir&&bowler.userData.legDir[s]),
       thigh:(function(){const t=g('hp'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
       shin:(function(){const t=g('kn'+s);return t?[+t.x.toFixed(2),+t.y.toFixed(2),+t.z.toFixed(2)]:null;})(),
       kneeDeg:(function(){const a=g('hp'+s),c=g('kn'+s);if(!a||!c)return null;
