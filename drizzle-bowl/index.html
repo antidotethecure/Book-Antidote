@@ -1113,10 +1113,9 @@ function fanPaintCut(c,cut,paint){
   try{paint(c);}finally{ctx=main;}
   fanOffX.save();fanOffX.globalCompositeOperation='destination-out';fanOffX.globalAlpha=1;
   fanOffX.fillStyle='#000';fanOffX.strokeStyle='#000';fanOffX.lineCap='round';
-  for(var i=0;i<cut.bots.length;i++){var cs=cut.bots[i].caps;
-    for(var j=0;j<cs.length;j++){var k=cs[j];
-      if(k.length===3){fanOffX.beginPath();fanOffX.arc(k[0],k[1],k[2],0,7);fanOffX.fill();}
-      else{fanOffX.lineWidth=2*k[4];fanOffX.beginPath();fanOffX.moveTo(k[0],k[1]);fanOffX.lineTo(k[2],k[3]);fanOffX.stroke();}}}
+  for(var i=0;i<cut.bots.length;i++){var ps=cut.bots[i].polys;
+    for(var j=0;j<ps.length;j++){var h=ps[j];fanOffX.beginPath();fanOffX.moveTo(h[0],h[1]);
+      for(var m=2;m<h.length;m+=2)fanOffX.lineTo(h[m],h[m+1]);fanOffX.closePath();fanOffX.fill();}}
   fanOffX.restore();
   ctx.save();ctx.globalAlpha=1;ctx.drawImage(fanOff,0,0,pw,ph,bx,by,bw,bh);ctx.restore();
 }
@@ -6751,32 +6750,50 @@ function projHud(x,y,z){
    painted straight through their bodies. This hands the 2D side each bowler's silhouette -- the same
    capsules he is built from, a touch inside his real outline so the cut never shows as a halo -- and
    how far he is from the lens, so a fan standing further back can be cut out where he stands. */
-const _oc=new THREE.Vector3(),_ocCam=new THREE.Vector3();
+const _oc=new THREE.Vector3(),_ocCam=new THREE.Vector3(),_ocSamp=new Map();
+/* Every part he is built from is convex -- boxes, capsules, a sphere for the ball -- so the outline of
+   each part on screen is the convex hull of its own corners, and his whole outline is those hulls
+   together. Exact, rather than a hand-sized guess at how wide an arm is. The points are sampled once
+   per geometry and only transformed and projected per frame: a few hundred a bowler. */
+function ocSamples(geo){
+  let pts=_ocSamp.get(geo);if(pts)return pts;
+  pts=[];
+  if(geo.type==='BoxGeometry'){geo.computeBoundingBox();const b=geo.boundingBox;
+    for(const x of [b.min.x,b.max.x])for(const y of [b.min.y,b.max.y])for(const z of [b.min.z,b.max.z])pts.push(x,y,z);}
+  else{const a=geo.attributes.position,n=a.count,st=Math.max(1,Math.floor(n/60));
+    for(let i=0;i<n;i+=st)pts.push(a.getX(i),a.getY(i),a.getZ(i));}
+  _ocSamp.set(geo,pts);return pts;}
+function hull2(p){   /* monotone chain over a flat [x,y,x,y,...] list -> flat hull */
+  const q=[];for(let i=0;i<p.length;i+=2)q.push([p[i],p[i+1]]);
+  q.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);if(q.length<3)return null;
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];
+  for(const v of q){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],v)<=0)lo.pop();lo.push(v);}
+  for(let i=q.length-1;i>=0;i--){const v=q[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],v)<=0)up.pop();up.push(v);}
+  lo.pop();up.pop();const h=lo.concat(up),f=[];for(const v of h)f.push(v[0],v[1]);return f;}
 function nlOcc(){
   const bots=[];
-  cam.getWorldPosition(_ocCam);
+  cam.getWorldPosition(_ocCam);cam.updateMatrixWorld();
   for(const L of nlLanes){
     if(!L.bot.visible)continue;
     L.bot.updateMatrixWorld(true);
-    const k=L.bot.userData.k||1,caps=[],box=[1e9,1e9,-1e9,-1e9];
-    const at=(o,x,y,z)=>{_oc.set(x,y,z);o.localToWorld(_oc);return projHud(_oc.x,_oc.y,_oc.z);};
-    const grow=(x,y,r)=>{if(x-r<box[0])box[0]=x-r;if(y-r<box[1])box[1]=y-r;if(x+r>box[2])box[2]=x+r;if(y+r>box[3])box[3]=y+r;};
-    const seg=(a,b,r)=>{if(!a[3]&&!b[3])return;const rp=r*k*(a[2]+b[2])*0.5;caps.push([a[0],a[1],b[0],b[1],rp]);grow(a[0],a[1],rp);grow(b[0],b[1],rp);};
-    const dot=(a,rWorld)=>{if(!a[3])return;const rp=rWorld*a[2];caps.push([a[0],a[1],rp]);grow(a[0],a[1],rp);};
-    const T=L.torso;
-    seg(at(T,0,0.36,0),at(T,0,-0.12,0),0.122);                       /* chest and hips */
-    dot(at(T,0,0.505,0),0.074*k);                                     /* head */
-    for(const A of [{sh:L.shoulder,el:L.elbow},{sh:L.armF.sh,el:L.armF.el}]){
-      const sh=at(A.sh,0,0,0),el=at(A.el,0,0,0),hd=at(A.el,0,-0.195,0);
-      dot(sh,0.044*k);seg(sh,el,0.034);seg(el,hd,0.029);}
-    for(const s2 of ['L','R']){const lg=L.legs[s2];
-      const hp=at(lg.hp,0,0,0),kn=at(lg.kn,0,0,0),an=at(lg.kn,0,-0.24,0);
-      seg(hp,kn,0.046);seg(kn,an,0.038);seg(at(lg.kn,0,-0.25,0.05),at(lg.kn,0,-0.26,-0.11),0.024);}
-    if(L.held.visible){L.held.getWorldPosition(_oc);const q=projHud(_oc.x,_oc.y,_oc.z);
-      dot(q,BR*L.held.getWorldScale(_oc).x*0.95);}
-    if(!caps.length)continue;
+    const polys=[],box=[1e9,1e9,-1e9,-1e9];
+    L.bot.traverseVisible(o=>{
+      if(!o.isMesh||!o.geometry||!o.geometry.attributes.position)return;
+      if(o.material&&o.material.transparent&&o.material.opacity<0.5)return;
+      const sp=ocSamples(o.geometry),flat=[];let front=false;
+      for(let i=0;i<sp.length;i+=3){
+        _oc.set(sp[i],sp[i+1],sp[i+2]).applyMatrix4(o.matrixWorld).project(cam);
+        if(_oc.z>-1&&_oc.z<1)front=true;
+        flat.push((_oc.x*0.5+0.5)*LW,400+(1-(_oc.y*0.5+0.5))*VH);}
+      if(!front)return;
+      const h=hull2(flat);if(!h)return;
+      polys.push(h);
+      for(let i=0;i<h.length;i+=2){if(h[i]<box[0])box[0]=h[i];if(h[i]>box[2])box[2]=h[i];if(h[i+1]<box[1])box[1]=h[i+1];if(h[i+1]>box[3])box[3]=h[i+1];}
+    });
+    if(!polys.length)continue;
     L.torso.getWorldPosition(_oc);
-    bots.push({d:_oc.distanceTo(_ocCam),caps,box});
+    bots.push({d:_oc.distanceTo(_ocCam),polys,box});
   }
   return {cam:[_ocCam.x,_ocCam.y,_ocCam.z],bots};
 }
