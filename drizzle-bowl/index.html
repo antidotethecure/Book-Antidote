@@ -404,7 +404,7 @@ function drawBoot(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#1a1214';ct
   ctx.save();rr(bx,by,bw,6,3);ctx.clip();ctx.fillStyle=gr;ctx.fillRect(bx,by,bw,6);ctx.restore();
   txt('ANTIDOTE DRIZZLE BOWL',W/2,cy+112,'bold 9px Impact,"Arial Black",sans-serif','rgba(242,168,29,.55)');}
 var dpr=1; /* effective backing ratio = on-screen scale x devicePixelRatio, so nothing is upscaled (capped for phones) */
-function calcDpr(s){var raw=window.devicePixelRatio||1,coarse=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);return Math.max(1,Math.min(coarse?2.2:3,s*raw));}
+function calcDpr(s){var raw=window.devicePixelRatio||1,coarse=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);return Math.max(1,Math.min(coarse?2.0:3,s*raw));}   /* a phone: 2.0, not 2.2 -- 17% fewer pixels to shade, and at arm's length you cannot see the difference */
 function fit(){
   var w=window.innerWidth||document.documentElement.clientWidth||480,h=window.innerHeight||document.documentElement.clientHeight||800;
   if(w<50)w=480;if(h<50)h=800;var s=Math.min(w/W,h/H);dpr=calcDpr(s);window.__fitRatio=dpr;
@@ -1004,7 +1004,13 @@ function drawCrowd(){
       c.x=q[0];c.y=q[1];c.ps=Math.max(0.25,Math.min(3,q[2]/c.h0));
     }
   });
+  var nCut=0,occ=(USE3D&&window.B3D&&B3D.ok&&B3D.nlOcc)?(function(){try{return B3D.nlOcc();}catch(e){return null;}})():null;
   g.crowd.slice().filter(function(c){return !c.off;}).sort(function(a,b){return a.y-b.y;}).forEach(function(c){
+    var cut=(occ&&occ.bots.length)?fanCutters(c,occ):null;
+    if(cut){nCut++;fanPaintCut(c,cut,fanPaint);}else fanPaint(c);   /* fanPaint closes over this frame's cheer, boo and gaze */
+  });
+  window.__fanCut=nCut;
+  function fanPaint(c){
     var sc=(0.52+0.48*Math.max(0,Math.min(1,((c.y0!=null?c.y0:c.y)-536)/236)))*1.35*c.ps;
     var wave=((g.t%22)<3.2)&&Math.sin(g.t*7-c.x*0.05)>0.25;
     var ch2=(cheer||c.hypeT>0||wave)&&c.state==='in';
@@ -1072,8 +1078,47 @@ function drawCrowd(){
     else if(c.chantT>0&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-27,-92,54,15,3);ctx.fill();txt('AN-TI-DOTE!',0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
     else if(c.yellT>0&&c.yell&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-26,-92,52,15,3);ctx.fill();txt(c.yell,0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
     ctx.restore();
-  });
+  }
   ctx.restore();
+}
+
+/* A FAN BEHIND A BOWLER. The crowd is painted over the 3D room, so on its own a fan covers anything
+   3D inside their outline whether it is in front of them or not. If one of the next-lane bowlers is
+   nearer the lens than this fan and overlaps them on screen, the fan is painted into a small sheet of
+   their own, the bowler's silhouette is cut out of that sheet, and what is left goes on screen -- so he
+   stands in front of them, the way he does in the room. Only the fans that need it pay for it. */
+function fanBox(c){
+  var sc=(0.52+0.48*Math.max(0,Math.min(1,((c.y0!=null?c.y0:c.y)-536)/236)))*1.35*c.ps;
+  var kk=ROW_S[c.row||0]*c.ps/sc;
+  var hx=Math.max(44,24*kk+16)*sc*(c.ws||1)+8,top=(96*kk+50)*sc*(c.hs||1)+34;
+  return [c.x-hx,c.y-top,2*hx,top+14];
+}
+function fanCutters(c,occ){
+  if(c.wx==null)return null;
+  var df=Math.hypot(c.wx-occ.cam[0],0.9-occ.cam[1],c.wz-occ.cam[2]),bx=fanBox(c),hit=null;
+  for(var i=0;i<occ.bots.length;i++){var b=occ.bots[i];
+    if(b.d>=df)continue;                                   /* he is further back: painting the fan over him is right */
+    if(b.box[2]<bx[0]||b.box[0]>bx[0]+bx[2]||b.box[3]<bx[1]||b.box[1]>bx[1]+bx[3])continue;
+    (hit||(hit=[])).push(b);}
+  return hit?{box:bx,bots:hit}:null;
+}
+var fanOff=null,fanOffX=null;
+function fanPaintCut(c,cut,paint){
+  var bx=cut.box[0],by=cut.box[1],bw=cut.box[2],bh=cut.box[3],pw=Math.ceil(bw*dpr),ph=Math.ceil(bh*dpr);
+  if(!fanOff){fanOff=document.createElement('canvas');fanOffX=fanOff.getContext('2d');}
+  if(fanOff.width<pw||fanOff.height<ph){fanOff.width=Math.max(pw,fanOff.width);fanOff.height=Math.max(ph,fanOff.height);}
+  fanOffX.setTransform(1,0,0,1,0,0);fanOffX.clearRect(0,0,pw+2,ph+2);
+  fanOffX.setTransform(dpr,0,0,dpr,-bx*dpr,-by*dpr);fanOffX.globalAlpha=1;fanOffX.globalCompositeOperation='source-over';
+  var main=ctx;ctx=fanOffX;
+  try{paint(c);}finally{ctx=main;}
+  fanOffX.save();fanOffX.globalCompositeOperation='destination-out';fanOffX.globalAlpha=1;
+  fanOffX.fillStyle='#000';fanOffX.strokeStyle='#000';fanOffX.lineCap='round';
+  for(var i=0;i<cut.bots.length;i++){var cs=cut.bots[i].caps;
+    for(var j=0;j<cs.length;j++){var k=cs[j];
+      if(k.length===3){fanOffX.beginPath();fanOffX.arc(k[0],k[1],k[2],0,7);fanOffX.fill();}
+      else{fanOffX.lineWidth=2*k[4];fanOffX.beginPath();fanOffX.moveTo(k[0],k[1]);fanOffX.lineTo(k[2],k[3]);fanOffX.stroke();}}}
+  fanOffX.restore();
+  ctx.save();ctx.globalAlpha=1;ctx.drawImage(fanOff,0,0,pw,ph,bx,by,bw,bh);ctx.restore();
 }
 
 /* ---------- leaderboard ---------- */
@@ -2533,7 +2578,14 @@ function drawWet(){if(!(g.wetT>0)||!g.drips)return;var dt=g.dtLast||0.016,fade=M
     var gr=ctx.createRadialGradient(d.x-d.r*0.3,d.y-d.r*0.35,d.r*0.1,d.x,d.y,d.r);gr.addColorStop(0,'rgba(255,255,255,'+(0.85*d.a*fade)+')');gr.addColorStop(0.5,'rgba(170,215,255,'+(0.35*d.a*fade)+')');gr.addColorStop(1,'rgba(120,180,255,0)');
     ctx.fillStyle=gr;ctx.beginPath();ctx.ellipse(d.x,d.y,d.r,d.r*1.35*d.sq,0,0,7);ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,'+(0.22*d.a*fade)+')';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(d.x,d.y,d.r,d.r*1.35*d.sq,0,0,7);ctx.stroke();});}
-function loop(now){if(!last)last=now;var dt=Math.min(0.05,(now-last)/1000);last=now;try{if(g)g.dt=dt;pollPad(dt);update(dt);draw();drawWet();b3dFrame();}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
+/* ?fps on the address shows the real frame rate in the corner -- so "it feels laggy" can become a
+   number from the phone it is actually happening on. */
+var FPS_ON=/[?&]fps\b/.test(location.search),fpsAvg=0;
+function drawFps(raw){if(!FPS_ON||!(raw>0))return;fpsAvg=fpsAvg?fpsAvg*0.92+raw*0.08:raw;
+  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(4,4,62,18);
+  ctx.fillStyle=fpsAvg<0.022?'#7CFC9A':fpsAvg<0.034?'#f2a81d':'#ff5a4f';ctx.font='bold 12px monospace';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(Math.round(1/fpsAvg)+' fps',9,13);ctx.restore();}
+function loop(now){if(!last)last=now;var raw=(now-last)/1000,dt=Math.min(0.05,raw);last=now;try{if(g)g.dt=dt;pollPad(dt);update(dt);draw();drawWet();b3dFrame();drawFps(raw);}catch(e){window.__err=(e&&e.stack||e.message||String(e));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='left';ctx.fillText('Error: '+e.message,10,20);}requestAnimationFrame(loop);}
 function b3dFrame(){
   if(!window.B3D||!B3D.ok)return;
   if(!USE3D&&g.phase==='aim'){
@@ -2866,6 +2918,11 @@ function shadowTier(n){
   n=Math.max(0,Math.min(2,n|0));
   if(n===SHAD.tier)return n;
   SHAD.tier=n;SHAD.on=n>0;
+  /* PCFSoft takes a ring of samples for every lit pixel on every frame. A phone's half-size map does
+     not need it -- the plain hardware filter is a fraction of the cost and, at that resolution, you
+     cannot tell them apart. Turning real shadows on for iPhones was the right call; doing it with the
+     dearest filter there is was what made the game feel heavier afterwards. */
+  renderer.shadowMap.type=n>=2?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;
   /* A shadow map still leaves a pin looking like it is hovering a hair off the boards: it cannot
      resolve the contact, and with this much fill light on the deck the cast shadow is a faint tint.
      So the disc stays at every tier. With maps up it is a tight soft patch the width of the pin's
@@ -6687,6 +6744,42 @@ function projHud(x,y,z){
   const py2=400+(1-(_pv2.y*0.5+0.5))*VH;
   return [px,py,Math.abs(py-py2),(_pv.z>-1&&_pv.z<1)?1:0];
 }
+/* THE CROWD IS PAINTED; THE BOWLERS NEXT DOOR ARE MODELLED. Fans are drawn on the 2D canvas, which
+   sits on top of the 3D one, so a fan covered whatever 3D was behind their outline -- including a
+   bowler on the next lane standing between that fan and the lens. While those bowlers were child-sized
+   it hardly showed; at a man's height they reach up into the crowd and the fans behind them were being
+   painted straight through their bodies. This hands the 2D side each bowler's silhouette -- the same
+   capsules he is built from, a touch inside his real outline so the cut never shows as a halo -- and
+   how far he is from the lens, so a fan standing further back can be cut out where he stands. */
+const _oc=new THREE.Vector3(),_ocCam=new THREE.Vector3();
+function nlOcc(){
+  const bots=[];
+  cam.getWorldPosition(_ocCam);
+  for(const L of nlLanes){
+    if(!L.bot.visible)continue;
+    L.bot.updateMatrixWorld(true);
+    const k=L.bot.userData.k||1,caps=[],box=[1e9,1e9,-1e9,-1e9];
+    const at=(o,x,y,z)=>{_oc.set(x,y,z);o.localToWorld(_oc);return projHud(_oc.x,_oc.y,_oc.z);};
+    const grow=(x,y,r)=>{if(x-r<box[0])box[0]=x-r;if(y-r<box[1])box[1]=y-r;if(x+r>box[2])box[2]=x+r;if(y+r>box[3])box[3]=y+r;};
+    const seg=(a,b,r)=>{if(!a[3]&&!b[3])return;const rp=r*k*(a[2]+b[2])*0.5;caps.push([a[0],a[1],b[0],b[1],rp]);grow(a[0],a[1],rp);grow(b[0],b[1],rp);};
+    const dot=(a,rWorld)=>{if(!a[3])return;const rp=rWorld*a[2];caps.push([a[0],a[1],rp]);grow(a[0],a[1],rp);};
+    const T=L.torso;
+    seg(at(T,0,0.36,0),at(T,0,-0.12,0),0.122);                       /* chest and hips */
+    dot(at(T,0,0.505,0),0.074*k);                                     /* head */
+    for(const A of [{sh:L.shoulder,el:L.elbow},{sh:L.armF.sh,el:L.armF.el}]){
+      const sh=at(A.sh,0,0,0),el=at(A.el,0,0,0),hd=at(A.el,0,-0.195,0);
+      dot(sh,0.044*k);seg(sh,el,0.034);seg(el,hd,0.029);}
+    for(const s2 of ['L','R']){const lg=L.legs[s2];
+      const hp=at(lg.hp,0,0,0),kn=at(lg.kn,0,0,0),an=at(lg.kn,0,-0.24,0);
+      seg(hp,kn,0.046);seg(kn,an,0.038);seg(at(lg.kn,0,-0.25,0.05),at(lg.kn,0,-0.26,-0.11),0.024);}
+    if(L.held.visible){L.held.getWorldPosition(_oc);const q=projHud(_oc.x,_oc.y,_oc.z);
+      dot(q,BR*L.held.getWorldScale(_oc).x*0.95);}
+    if(!caps.length)continue;
+    L.torso.getWorldPosition(_oc);
+    bots.push({d:_oc.distanceTo(_ocCam),caps,box});
+  }
+  return {cam:[_ocCam.x,_ocCam.y,_ocCam.z],bots};
+}
 /* The reverse: a HUD spot under the resting approach camera -> the floor point standing there, plus the
    pixels-per-metre at that point. The crowd is placed once this way and then lives in the room, so the
    camera can fly wherever it likes and nobody drifts with it. */
@@ -6871,6 +6964,7 @@ __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3)
   v.set(HALF*0.93,0.02,bz).project(cam);
   return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__pins:function(){return pins.map(function(pn){return pn&&pn.alive?[+pn.body.position.x.toFixed(3),+pn.body.position.y.toFixed(3),+pn.body.position.z.toFixed(3),pn.wasUp]:null;});},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
   resize:function(){renderer.setSize(LW,LH,false);},setRatio:function(r){if(Math.abs(renderer.getPixelRatio()-r)<0.01)return;renderer.setPixelRatio(r);renderer.setSize(LW,LH,false);}};
+B3D.nlOcc=nlOcc;
 B3D.__clamp=function(){return {on:CFX.on,park:CFX.park,t:+CFX.t.toFixed(3),open:+clampCurve(CFX.t).toFixed(4),press:+clampPress(CFX.t).toFixed(4),armed:clampArmed};};
 B3D.__clampFire=function(){CFX.on=false;clampArmed=true;return clampFire();};
 B3D.__clampPark=function(t){CFX.on=true;CFX.park=true;CFX.t=t;return true;};
