@@ -1,6 +1,8 @@
 
 <meta charset="utf-8">
 <title>Antidote Drizzle Bowl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="assets/food.png">
 <style>
   html,body{margin:0;padding:0;width:100%;height:100%;background:#1a1214;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:Verdana,sans-serif}
@@ -891,7 +893,7 @@ try{crowdImg.src=CROWD_ATLASES[0];}catch(e){}
 var SKINS=['#b8845c','#7a4a2a','#d9a577','#5a3520','#c9946a','#3d2415'],
     SHIRTS=['#4d8bf0','#b8322c','#43aa8b','#f2a81d','#9b5de5','#fbe9c4','#ff6b35','#2ec4b6','#e07be0','#8ecae6','#d62828','#606c38'],
     HAIRC=['#120b0d','#2a1a10','#4a2c14','#000000'],
-    SIGNS=['ANTIDOTE!','CLAMP!','DRIZZLE!','FOOD VIGILANTE','#1 FAN','LET\'S GO!','ANTIDOTE'],YELLS=['ANTIDOTE!','LET\'S GO!','CLAMP IT!','DRIZZLE!','AYYY!','THAT\'S HIM!'];
+    SIGNS=['ANTIDOTE!','CLAMPED OUT LOUD','ANTIDOTE','CLAMPED OUT LOUD!','ANTIDOTE #1 FAN','ANTIDOTE!!','CLAMP!'],YELLS=['ANTIDOTE!','LET\'S GO!','CLAMP IT!','DRIZZLE!','AYYY!','THAT\'S HIM!'];
 function spawnConfetti(){
   for(var i=0;i<140;i++)g.conf.push({x:Math.random()*W,y:-20-Math.random()*320,vx:(Math.random()-0.5)*40,vy:70+Math.random()*100,rot:Math.random()*6.3,rv:(Math.random()-0.5)*9,w:4+Math.random()*5,h:6+Math.random()*7,c:SHIRTS[i%SHIRTS.length],ph:Math.random()*6.3});
 }
@@ -1029,7 +1031,7 @@ function drawCrowd(){
       var shake=(boo&&c.state==='in')?Math.sin(g.t*16+c.ph)*2:0,kk=ROW_S[c.row||0]*c.ps/sc,sw=48*kk,shh=96*kk;
       ctx.drawImage(crowdImg,sx,sy,CA_W,CA_H,-sw/2+shake+step*0.3,-shh,sw,shh);
       if(pose===2&&c.flashT>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(1,-shh*0.74,3.5+Math.random()*2.5,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(1,-shh*0.74,10,0,7);ctx.fill();}
-      if(c.sign&&c.state==='in'&&pose!==2){var sy2=-shh-(ch2?14:6);ctx.fillStyle='#fbe9c4';rr(-21,sy2-9,42,18,2);ctx.fill();ctx.strokeStyle='#8a5a2e';ctx.lineWidth=1.5;rr(-21,sy2-9,42,18,2);ctx.stroke();txt(c.sign,0,sy2,'bold 9px Impact,"Arial Black",sans-serif','#b8322c');}
+      if(c.sign&&c.state==='in'&&pose!==2)fanPoster(c,c.sign,shh,ch2,1);
     }else{
     ctx.strokeStyle='#141012';ctx.lineWidth=5.5;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(-4.5,-20);ctx.lineTo(-4.5+step,-1);ctx.moveTo(4.5,-20);ctx.lineTo(4.5-step,-1);ctx.stroke();
@@ -1074,13 +1076,70 @@ function drawCrowd(){
     if(c.beard){ctx.fillStyle='rgba(30,20,12,.85)';ctx.beginPath();ctx.moveTo(-8.6,-51);ctx.quadraticCurveTo(-8,-41.5,0,-42.6);ctx.quadraticCurveTo(8,-41.5,8.6,-51);ctx.quadraticCurveTo(6,-45.5,0,-45.2);ctx.quadraticCurveTo(-6,-45.5,-8.6,-51);ctx.fill();}
     ctx.restore();
     }
-    if(boo&&c.state==='in'&&c.n%5===0){ctx.fillStyle='#fbe9c4';rr(-20,-86,40,16,3);ctx.fill();txt('BOO!',0,-78,'bold 10px Impact,"Arial Black",sans-serif','#b8322c');}
-    else if(c.chantT>0&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-27,-92,54,15,3);ctx.fill();txt('AN-TI-DOTE!',0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
-    else if(c.yellT>0&&c.yell&&c.state==='in'&&!boo){ctx.fillStyle='#fbe9c4';rr(-26,-92,52,15,3);ctx.fill();txt(c.yell,0,-84.5,'bold 8px Impact,"Arial Black",sans-serif','#b8322c');}
+    var fh=(crowdReady&&typeof shh==='number'&&shh>0)?shh:64;
+    if(!(c.sign&&crowdReady)){   /* a fan already holding a board does not pull out a second one */
+      if(boo&&c.state==='in'&&c.n%5===0)fanPoster(c,'BOO!',fh,false,0.8);
+      else if(c.chantT>0&&c.state==='in'&&!boo)fanPoster(c,'AN-TI-DOTE!',fh,true,0.9);
+      else if(c.yellT>0&&c.yell&&c.state==='in'&&!boo)fanPoster(c,c.yell,fh,true,0.85);}
     ctx.restore();
   }
   ctx.restore();
 }
+
+/* POSTER BOARD. The fans' signs were cream labels with a brown keyline and red type -- a UI chip,
+   not something anyone carried into a bowling alley. They are what a fan actually makes the night
+   before: a sheet of white poster board, a bit bowed, a fold where it was carried, tape on the
+   corners, and the words written out in fat black marker by hand -- every letter a little off its
+   neighbour's line and angle, the ink heavier where the pen paused. Each fan's board is lettered once
+   (their own wobble, seeded from who they are) and kept, so it does not shimmer frame to frame. */
+var MARKER='"Permanent Marker","Marker Felt","Chalkboard SE","Comic Sans MS",Impact,sans-serif';
+var posterCache={};
+if(document.fonts&&document.fonts.load){try{document.fonts.load('64px "Permanent Marker"').then(function(){posterCache={};}).catch(function(){});}catch(e){}}
+function posterRand(seed){var a=(seed*2654435761)>>>0;return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function posterLines(t){if(t.length<=9||t.indexOf(' ')<0)return [t];
+  var best=null,bs=1e9;for(var i=0;i<t.length;i++)if(t[i]===' '){var d=Math.abs(i-(t.length-i-1));if(d<bs){bs=d;best=i;}}
+  return [t.slice(0,best),t.slice(best+1)];}
+function posterCanvas(text,seed){
+  var key=text+'|'+seed;if(posterCache[key])return posterCache[key];
+  var W2=260,H2=180,cv2=document.createElement('canvas');cv2.width=W2;cv2.height=H2;var g2=cv2.getContext('2d'),r=posterRand(seed+7);
+  var bx=10,by=8,bw=W2-20,bh=H2-20;
+  /* the board: bowed a touch, lit from above, a soft shadow under it */
+  g2.save();g2.shadowColor='rgba(0,0,0,.40)';g2.shadowBlur=8;g2.shadowOffsetY=4;
+  var gr=g2.createLinearGradient(0,by,0,by+bh);gr.addColorStop(0,'#fdfcf8');gr.addColorStop(0.55,'#f2efe7');gr.addColorStop(1,'#dcd6c8');g2.fillStyle=gr;
+  var bow=(r()-0.5)*4;
+  g2.beginPath();g2.moveTo(bx,by+2);g2.quadraticCurveTo(W2/2,by-1+bow,bx+bw,by+1);g2.lineTo(bx+bw-1,by+bh-1);g2.quadraticCurveTo(W2/2,by+bh+2-bow,bx+1,by+bh);g2.closePath();g2.fill();g2.restore();
+  g2.save();
+  for(var i=0;i<90;i++){g2.fillStyle='rgba(60,50,40,'+(0.02+r()*0.035)+')';g2.fillRect(bx+r()*bw,by+r()*bh,1+r()*2.5,1);}   /* board grain */
+  if(r()<0.7){var fx=bx+bw*(0.38+r()*0.24);var fg=g2.createLinearGradient(fx-6,0,fx+6,0);fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(0.5,'rgba(0,0,0,.07)');fg.addColorStop(0.52,'rgba(255,255,255,.35)');fg.addColorStop(1,'rgba(0,0,0,0)');
+    g2.fillStyle=fg;g2.fillRect(fx-6,by+1,12,bh-2);}                                                  /* the fold from carrying it */
+  if(r()<0.55){g2.fillStyle='rgba(0,0,0,.10)';g2.beginPath();g2.moveTo(bx+bw,by+bh-26);g2.lineTo(bx+bw-22,by+bh);g2.lineTo(bx+bw,by+bh);g2.closePath();g2.fill();
+    g2.fillStyle='#e9e4d8';g2.beginPath();g2.moveTo(bx+bw,by+bh-24);g2.lineTo(bx+bw-20,by+bh);g2.lineTo(bx+bw-6,by+bh-8);g2.closePath();g2.fill();}   /* a dog-eared corner */
+  [[bx+14,by+4,-0.5],[bx+bw-14,by+4,0.5]].forEach(function(tp){if(r()<0.75){g2.save();g2.translate(tp[0],tp[1]);g2.rotate(tp[2]+(r()-0.5)*0.3);
+    g2.fillStyle='rgba(236,228,196,.78)';g2.fillRect(-13,-5,26,10);g2.fillStyle='rgba(255,255,255,.25)';g2.fillRect(-13,-5,26,2);g2.restore();}});   /* tape */
+  g2.restore();
+  /* the lettering: fat black marker, by hand */
+  var lines=posterLines(text),size=78,ok=false;
+  while(size>14&&!ok){g2.font=size+'px '+MARKER;var wmax=0;for(var li=0;li<lines.length;li++)wmax=Math.max(wmax,g2.measureText(lines[li]).width*1.06);
+    ok=wmax<=bw*0.92&&lines.length*size*0.98<=bh*0.86;if(!ok)size-=2;}
+  g2.font=size+'px '+MARKER;g2.textBaseline='middle';g2.lineJoin='round';g2.lineCap='round';
+  var lh=size*0.98,y0=by+bh/2-(lines.length-1)*lh/2+size*0.04,slope=(r()-0.5)*0.06;
+  for(var l2=0;l2<lines.length;l2++){var ln=lines[l2],tw=0,ws=[];
+    for(var ci=0;ci<ln.length;ci++){var cw2=g2.measureText(ln[ci]).width*1.04;ws.push(cw2);tw+=cw2;}
+    var x=bx+bw/2-tw/2;
+    for(var cj=0;cj<ln.length;cj++){var ch=ln[cj],cx=x+ws[cj]/2,cy=y0+l2*lh+(cx-bx-bw/2)*slope+(r()-0.5)*size*0.06;
+      g2.save();g2.translate(cx,cy);g2.rotate((r()-0.5)*0.12);
+      g2.fillStyle='#121014';g2.strokeStyle='#121014';g2.lineWidth=size*0.09;   /* a fat chisel marker, not a pen */
+      g2.strokeText(ch,-ws[cj]/2/1.04,0);g2.fillText(ch,-ws[cj]/2/1.04,0);
+      g2.globalAlpha=0.35;g2.fillText(ch,-ws[cj]/2/1.04+0.8,0.6);g2.globalAlpha=1;   /* the ink pooling where the pen sat */
+      g2.restore();x+=ws[cj];}}
+  posterCache[key]=cv2;return cv2;}
+/* held up over the head; it pumps when they cheer */
+function fanPoster(c,text,fh,pump,scale){
+  var pw=fh*0.55*(scale||1),ph=pw*0.69,lift=pump?Math.abs(Math.sin(g.t*9+c.ph))*fh*0.07:0;
+  var rot=((((c.n*37)%11)-5)*0.014)+(pump?Math.sin(g.t*7+c.ph)*0.06:Math.sin(g.t*1.3+c.ph)*0.015);
+  ctx.save();ctx.translate(0,-fh*0.97-ph*0.36-lift);ctx.rotate(rot);
+  ctx.drawImage(posterCanvas(text,c.n*13+text.length),-pw/2,-ph/2,pw,ph);
+  ctx.restore();}
 
 /* A FAN BEHIND A BOWLER. The crowd is painted over the 3D room, so on its own a fan covers anything
    3D inside their outline whether it is in front of them or not. If one of the next-lane bowlers is
@@ -3038,10 +3097,96 @@ const sun=new M(new THREE.CircleGeometry(0.95,24),new THREE.MeshBasicMaterial({c
 const sunGlow=new M(new THREE.CircleGeometry(1.9,24),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:0.25,depthWrite:false}));sun.add(sunGlow);
 const moon=new M(new THREE.CircleGeometry(0.55,24),new THREE.MeshBasicMaterial({color:0xe8e4da,transparent:true}));moon.position.set(0,-9,-23);amb.add(moon);
 const mcr=new M(new THREE.CircleGeometry(0.09,10),new THREE.MeshBasicMaterial({color:0xc9c4b8}));mcr.position.set(0.15,0.12,0.01);moon.add(mcr);
-const starGeo=new THREE.BufferGeometry();{const sp=[];for(let i=0;i<150;i++)sp.push(-14+Math.random()*28,2.0+Math.random()*7.5,-22.6);
-starGeo.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));}
-const starMat=new THREE.PointsMaterial({color:0xfff6dd,size:0.07,transparent:true,opacity:0,depthWrite:false});
-amb.add(new THREE.Points(starGeo,starMat));
+/* ---------- THE NIGHT SKY ----------
+   The stars used to be a flat sheet of 150 square dots hung 22 m out -- in FRONT of the skyline, so
+   they were painted straight across the towers, and down among their bases as well. A star is
+   further away than anything in a city. They sit on a dome 85 m out now, behind every tower, so a
+   building simply hides whatever is behind it; and they are only scattered above the middle of the
+   sky in the shot, thinning toward the skyline the way they do over a lit city. Three magnitudes,
+   round rather than square, the colours real stars come in, each one twinkling on its own clock. */
+const STAR_C=new THREE.Vector3(0,1.32,3.5),STAR_R=85;
+const SUN_DIR=new THREE.Vector3(-24,10.5-1.32,-92-3.5).normalize();   /* the retro sun: no stars across its face */
+const starDot=bake(32,32,(g,w,h)=>{g.clearRect(0,0,w,h);const r=g.createRadialGradient(16,16,0,16,16,16);
+  r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(0.2,'rgba(255,255,255,.9)');r.addColorStop(0.45,'rgba(255,255,255,.25)');r.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r;g.fillRect(0,0,w,h);});
+const starLayers=[];
+function starLayer(n,size,bright,tw){
+  const pos=[],hue=[],base=[],ph=[],sp=[],d=new THREE.Vector3();let made=0,guard=0;
+  while(made<n&&guard++<n*30){
+    const inShot=Math.random()<0.8;
+    const th=inShot?0.165+Math.pow(Math.random(),0.8)*0.2:0.37+Math.random()*0.55;   /* elevation: upper sky, not the skyline */
+    const phi=inShot?(Math.random()*2-1)*0.6:(Math.random()*2-1)*1.55;
+    d.set(Math.cos(th)*Math.sin(phi),Math.sin(th),-Math.cos(th)*Math.cos(phi));
+    if(d.angleTo(SUN_DIR)<0.15)continue;
+    pos.push(STAR_C.x+d.x*STAR_R,STAR_C.y+d.y*STAR_R,STAR_C.z+d.z*STAR_R);
+    const k=Math.random(),c=k<0.6?[1,1,1]:k<0.8?[0.78,0.85,1]:k<0.94?[1,0.93,0.8]:[1,0.78,0.6];
+    hue.push(c[0],c[1],c[2]);base.push(bright*(0.5+Math.random()*0.5));ph.push(Math.random()*6.283);sp.push(0.7+Math.random()*2.8);made++;}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(made*3),3));
+  const mat=new THREE.PointsMaterial({size,map:starDot,vertexColors:true,transparent:true,opacity:0,depthWrite:false,fog:false,blending:THREE.AdditiveBlending});
+  const pts=new THREE.Points(geo,mat);pts.frustumCulled=false;amb.add(pts);
+  const L={geo,mat,hue,base,ph,sp,tw,n:made};starLayers.push(L);return L;}
+starLayer(330,0.42,0.75,0.35);                       /* the faint ones: most of the sky */
+const starMid=starLayer(115,0.62,1.0,0.45);
+starLayer(26,1.05,1.0,0.55);                         /* a handful of bright ones */
+const starMat=starMid.mat;                           /* the day/night code drives this one; the rest follow it */
+/* SHOOTING STARS: a streak with a white head and a fading blue-white tail, out on the same dome as
+   the stars -- so one that crosses behind a tower goes behind it -- drawn face-on to the lens every
+   frame and running along the sky rather than across the glass. Now and then two come together. */
+const meteorT=bake(256,16,(g,w,h)=>{g.clearRect(0,0,w,h);const gr=g.createLinearGradient(0,0,w,0);
+  gr.addColorStop(0,'rgba(170,200,255,0)');gr.addColorStop(0.65,'rgba(200,220,255,.30)');gr.addColorStop(0.93,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-in';const vg=g.createLinearGradient(0,0,0,h);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(0.5,'rgba(0,0,0,1)');vg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=vg;g.fillRect(0,0,w,h);});
+const meteors=[];
+for(let i=0;i<3;i++){const m=new M(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:meteorT,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}));
+  m.matrixAutoUpdate=false;m.visible=false;m.frustumCulled=false;amb.add(m);
+  meteors.push({m,life:0,dur:1,len:6,p:new THREE.Vector3(),v:new THREE.Vector3()});}
+let meteorNext=3,starClock=0;
+const _sk1=new THREE.Vector3(),_sk2=new THREE.Vector3(),_sk3=new THREE.Vector3(),_sk4=new THREE.Vector3(),_skC=new THREE.Vector3();
+function meteorSpawn(){
+  const mt=meteors.find(x=>x.life<=0);if(!mt)return;
+  const th=0.21+Math.random()*0.12,phi=(Math.random()*2-1)*0.45;
+  _sk1.set(Math.cos(th)*Math.sin(phi),Math.sin(th),-Math.cos(th)*Math.cos(phi));
+  mt.p.copy(STAR_C).addScaledVector(_sk1,74);
+  const right=_sk2.set(Math.cos(phi),0,Math.sin(phi)),up=_sk3.set(-Math.sin(th)*Math.sin(phi),Math.cos(th),Math.sin(th)*Math.cos(phi));
+  const sd=Math.random()<0.5?-1:1,a=0.32+Math.random()*0.6;               /* falling, at a slant */
+  mt.v.copy(right).multiplyScalar(sd*Math.cos(a)).addScaledVector(up,-Math.sin(a)).normalize().multiplyScalar(24+Math.random()*18);
+  mt.len=5+Math.random()*5;mt.dur=0.45+Math.random()*0.55;mt.life=mt.dur;mt.m.visible=true;}
+/* the lit towers' windows, which come and go one at a time (filled in by the arena below) */
+const rTowers=[];
+function skyTick(dt){
+  starClock+=dt;
+  const op=starMat.opacity;
+  for(const L of starLayers){
+    if(L.mat!==starMat)L.mat.opacity=op;
+    if(op<=0.01)continue;
+    const ca=L.geo.attributes.color,arr=ca.array;
+    for(let i=0;i<L.n;i++){const k=L.base[i]*(1-L.tw*(0.5+0.5*Math.sin(starClock*L.sp[i]+L.ph[i])));
+      arr[i*3]=L.hue[i*3]*k;arr[i*3+1]=L.hue[i*3+1]*k;arr[i*3+2]=L.hue[i*3+2]*k;}
+    ca.needsUpdate=true;}
+  meteorNext-=dt;
+  if(meteorNext<=0){if(op>0.3)meteorSpawn();meteorNext=Math.random()<0.15?0.35:3.5+Math.random()*7;}
+  cam.getWorldPosition(_skC);
+  for(const mt of meteors){
+    if(mt.life<=0)continue;
+    mt.life-=dt;if(mt.life<=0){mt.m.visible=false;continue;}
+    mt.p.addScaledVector(mt.v,dt);
+    const u=1-mt.life/mt.dur;
+    mt.m.material.opacity=Math.min(1,u/0.15)*Math.min(1,(1-u)/0.35)*Math.min(1,op*1.2);
+    const fwd=_sk2.copy(mt.v).normalize();
+    const ctr=_sk1.copy(mt.p).addScaledVector(fwd,-mt.len*0.5);
+    const zA=_sk3.copy(_skC).sub(ctr).normalize();
+    fwd.addScaledVector(zA,-fwd.dot(zA)).normalize();
+    const yA=_sk4.crossVectors(zA,fwd);
+    mt.m.matrix.makeBasis(fwd.multiplyScalar(mt.len),yA.multiplyScalar(0.36),zA).setPosition(ctr);
+    mt.m.matrixWorldNeedsUpdate=true;}
+  /* a light goes on or off somewhere in the city, now and then */
+  if(rTowers.length&&Math.random()<dt*3.2){
+    const T=rTowers[Math.floor(Math.random()*rTowers.length)],cl=T.cells[Math.floor(Math.random()*T.cells.length)];
+    cl.on=cl.on?Math.random()<0.25:Math.random()<0.3;towerPaint(T.g,cl);T.t.needsUpdate=true;}
+}
 const birdT=bake(64,32,(g,w,h)=>{g.clearRect(0,0,w,h);g.strokeStyle=RETRO?'#9fc6ff':'#161920';g.lineWidth=5;g.lineCap='round';
   g.beginPath();g.moveTo(6,20);g.quadraticCurveTo(18,7,32,17);g.quadraticCurveTo(46,7,58,20);g.stroke();});
 const birds=[];
@@ -3543,6 +3688,29 @@ function drawBillboard(t){
   }
   bbT.needsUpdate=true;
 }
+function towerRand(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const TOWER_WARM=['#ffd9a0','#ffcb85','#ffe6bd','#ffbf70'],TOWER_COOL=['#e9f1ff','#d7e6ff'];
+function towerPaint(g,cl){
+  g.shadowBlur=0;g.fillStyle='#05030a';g.fillRect(cl.x-2,cl.y-2,cl.w+4,cl.h+4);
+  if(cl.on){g.shadowColor=cl.col;g.shadowBlur=5;
+    const gr=g.createLinearGradient(0,cl.y,0,cl.y+cl.h);gr.addColorStop(0,cl.col);gr.addColorStop(1,cl.dim);g.fillStyle=gr;g.fillRect(cl.x,cl.y,cl.w,cl.h);g.shadowBlur=0;
+    if(cl.blind>0){g.fillStyle='rgba(10,8,14,.55)';g.fillRect(cl.x,cl.y,cl.w,cl.h*cl.blind);}}
+  else{g.fillStyle=cl.glass;g.fillRect(cl.x,cl.y,cl.w,cl.h);g.fillStyle='rgba(120,140,190,.07)';g.fillRect(cl.x,cl.y,cl.w,2);}}
+function towerSheet(seed){
+  const r=towerRand(seed),W=96,H=384,cols=6,rows=24,cw=W/cols,rh=H/rows;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#07040f';g.fillRect(0,0,W,H);
+  g.fillStyle='#0b0716';for(let rr2=0;rr2<rows;rr2++)g.fillRect(0,rr2*rh+rh-3,W,2);   /* floor slabs */
+  const cells=[];
+  for(let rr2=0;rr2<rows;rr2++){const office=r()<0.09;
+    for(let k=0;k<cols;k++){
+      const on=office?r()<0.9:r()<0.27,tv=r()<0.05,warm=r()<0.72;
+      const col=tv?'#8fb6ff':warm?TOWER_WARM[Math.floor(r()*4)]:TOWER_COOL[Math.floor(r()*2)];
+      const cl={x:k*cw+cw*0.2,y:rr2*rh+rh*0.2,w:cw*0.6,h:rh*0.58,on,col,dim:tv?'#5a7fd6':warm?'#d9893a':'#a9b9d9',
+        blind:on&&r()<0.3?0.25+r()*0.45:0,glass:r()<0.5?'#0d0b18':'#100d1c'};
+      cells.push(cl);towerPaint(g,cl);}}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;
+  return {t,g,cells};}
 if(RETRO){
   const keep=new Set([planeGrp,stPlane,stPlane2,btvFrame,btvLip,btv,bill,shoot,road].concat(birds.map(b=>b.g),teslas.map(t=>t.grp)));
   amb.children.forEach(o=>{if(!keep.has(o)&&!o.isPoints)o.visible=false;});
@@ -3559,11 +3727,21 @@ if(RETRO){
     g.fillStyle=gr;g.beginPath();g.arc(128,128,122,0,7);g.fill();g.globalCompositeOperation='destination-out';for(let y=140;y<256;y+=(y-100)/4){g.fillRect(0,y,w,3+(y-140)/12);}});
   const rsun=new M(new THREE.PlaneGeometry(22,22),new THREE.MeshBasicMaterial({map:sunT,transparent:true,depthWrite:false}));rsun.position.set(-24,10.5,-92);amb.add(rsun);
   const sunGl=new M(new THREE.PlaneGeometry(40,40),new THREE.MeshBasicMaterial({color:0xff4fa0,transparent:true,opacity:0.16,blending:THREE.AdditiveBlending,depthWrite:false}));sunGl.position.set(-24,10.5,-93);amb.add(sunGl);
-  /* neon wireframe towers on both flanks */
+  /* neon wireframe towers on both flanks -- and now people live in them. Each tower gets its own
+     sheet of windows: most dark glass, a quarter or so lit, warm tungsten more than cool LED, the odd
+     blue of a television, and now and then a whole office floor left on. The fog thins them with
+     distance the way haze does over a real city, and the tallest carry red aviation lights. */
+  const towerTall=[];
   for(let i=0;i<14;i++){const tw=1.2+Math.random()*2.2,th=3+Math.random()*9,tx=(i<7?-1:1)*(6+Math.random()*16),tz=-26-Math.random()*22;
     const geo=new THREE.BoxGeometry(tw,th,tw);
-    const bx=new M(geo,new THREE.MeshBasicMaterial({color:0x07040f}));bx.position.set(tx,th/2+1.3,tz);amb.add(bx);
+    const T=towerSheet(i*7919+13);T.t.repeat.set(Math.max(1,Math.round(tw/0.95)),th/5.6);   /* finer: a tower of this height is thirty-odd storeys, not twelve */rTowers.push(T);
+    const bx=new M(geo,new THREE.MeshBasicMaterial({map:T.t}));bx.position.set(tx,th/2+1.3,tz);amb.add(bx);
+    towerTall.push({x:tx,y:th+1.3,z:tz,h:th});
     const ed=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:i%2?0x3df2ff:0xff3df2,transparent:true,opacity:0.9}));ed.position.copy(bx.position);amb.add(ed);}
+  towerTall.sort((a,b)=>b.h-a.h).slice(0,5).forEach(tt=>{
+    const bc=new M(new THREE.SphereGeometry(0.08,8,6),new THREE.MeshBasicMaterial({color:0xff2a2a,fog:false}));bc.position.set(tt.x,tt.y+0.08,tt.z);
+    const halo=new M(new THREE.SphereGeometry(0.26,10,8),new THREE.MeshBasicMaterial({color:0xff3a2a,transparent:true,opacity:0.32,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));bc.add(halo);
+    amb.add(bc);beacons.push(bc);});
   const nl1=new THREE.PointLight(0xff3df2,4,30,1.2);nl1.position.set(-8,3,-20);amb.add(nl1);
   const nl2=new THREE.PointLight(0x3df2ff,4,30,1.2);nl2.position.set(8,3,-20);amb.add(nl2);
 }
@@ -3619,7 +3797,7 @@ function ambient(dt,gs){
   } else car.visible=false;
   /* shooting stars at night */
   shootT-=dt;
-  if(shootT<0&&day<0.2){shootT=4+Math.random()*8;shoot.userData.life=0.7;shoot.position.set(-9+Math.random()*10,6.8-Math.random()*1.6,-22.2);}
+  /* (random shooting stars now live on the star dome -- see skyTick) */
   /* the stars line up: a shooting star writes the socials across the sky every ~15s at night */
   stT+=dt;
   if(stT>15&&day<0.25){stT=0;stIdx=(stIdx+1)%stMsgs.length;
@@ -6724,7 +6902,7 @@ function render(gs){
       ballShadow.scale.setScalar(SHAD.dk);ballShadow.material.opacity=0.46*SHAD.da;}}
   if(!RPL.on)rplSnap(nw);
   qualWatch(dt,nw);shadowSchedule(gs);
-  ambient(dt,gs);cosmicApply(dt,gs);tickPuddles(dt);
+  ambient(dt,gs);cosmicApply(dt,gs);skyTick(dt);tickPuddles(dt);
   renderer.setViewport(0,0,LW,VH);renderer.setScissor(0,0,LW,VH);
   renderer.render(scene,cam);
   if(!RPL.on)renderBowler(gs,dt,nw);   /* his overlay would paste itself over the replay */
@@ -6982,6 +7160,8 @@ __bots:function(){return nlLanes.map(L=>({cx:L.cx,z:+L.bot.position.z.toFixed(3)
   return Math.abs(v.x)*(LW/2);},camZ:function(){return camP.z;},__pins:function(){return pins.map(function(pn){return pn&&pn.alive?[+pn.body.position.x.toFixed(3),+pn.body.position.y.toFixed(3),+pn.body.position.z.toFixed(3),pn.wasUp]:null;});},__dbg:function(){return pins.map(function(pn,i){if(!pn||!pn.alive)return null;var p=pn.body.position;return [i,+p.x.toFixed(2),+p.z.toFixed(2),+p.y.toFixed(2)];});},update:function(dt,gs){step(dt);return mirror();},settled,preview,render,
   resize:function(){renderer.setSize(LW,LH,false);},setRatio:function(r){if(Math.abs(renderer.getPixelRatio()-r)<0.01)return;renderer.setPixelRatio(r);renderer.setSize(LW,LH,false);}};
 B3D.nlOcc=nlOcc;
+B3D.__meteor=function(){meteorNext=0.0001;starMat.opacity=Math.max(starMat.opacity,0.9);return meteors.map(m=>+m.life.toFixed(2));};
+B3D.__sky=function(){return {layers:starLayers.map(L=>L.n),op:+starMat.opacity.toFixed(2),towers:rTowers.length,lit:rTowers.reduce((a,T)=>a+T.cells.filter(c=>c.on).length,0),cells:rTowers.reduce((a,T)=>a+T.cells.length,0),meteorsLive:meteors.filter(m=>m.life>0).length};};
 B3D.__clamp=function(){return {on:CFX.on,park:CFX.park,t:+CFX.t.toFixed(3),open:+clampCurve(CFX.t).toFixed(4),press:+clampPress(CFX.t).toFixed(4),armed:clampArmed};};
 B3D.__clampFire=function(){CFX.on=false;clampArmed=true;return clampFire();};
 B3D.__clampPark=function(t){CFX.on=true;CFX.park=true;CFX.t=t;return true;};
