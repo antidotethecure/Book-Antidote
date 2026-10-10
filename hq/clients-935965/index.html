@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clients">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Clients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Second Shift AI clients: totals, then one card per client (next payment countdown, contacts w/ call + text, history). Dark, phone-first. */
+:root{
+  --bg:#07102a;--panel:#0e1a3f;--panel2:#13224f;--ink:#eef1fb;--muted:#9aa5c4;--line:#223063;--chip:#16245a;
+  --blue:#7d99ff;--hero:#0b1a4a;--yellow:#ffd43b;--red:#ff6b6b;--green:#4cd69a;--orange:#ffa94d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);overflow-x:hidden;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font:800 30px/1.05 var(--f-display);margin:0;letter-spacing:-.01em}
+h1 small{display:block;font:600 12px/1.4 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin-bottom:4px}
+h2{font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h3{font:700 11px/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.fresh{font-size:12px;color:var(--muted);text-align:right}
+button,.btn{font:600 14px/1 var(--f-body);border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px}
+button.primary{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+#gate{max-width:380px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
+#gate input[type=password]{padding:14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:16px}
+.rm{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.err{color:var(--red);font-size:14px;min-height:1.3em}
+.note{font-size:13px;color:var(--muted)}
+/* totals */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font:700 20px/1.25 var(--f-num);margin-top:4px;overflow-wrap:anywhere}
+.tile.out .v{color:var(--yellow)}.tile.in .v{color:var(--green)}
+/* client card */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ch b{font:800 21px/1.15 var(--f-display);display:block}
+.tier{font-size:13px;color:var(--muted);margin-top:3px}
+.chip{flex:none;font:700 11px/1 var(--f-body);letter-spacing:.05em;text-transform:uppercase;padding:6px 9px;border-radius:99px;white-space:nowrap}
+.chip.paid{background:rgba(76,214,154,.16);color:var(--green)}
+.chip.soon{background:rgba(255,212,59,.18);color:var(--yellow)}
+.chip.overdue{background:rgba(255,107,107,.18);color:var(--red)}
+.chip.prospect{background:var(--chip);color:var(--blue)}
+.next{margin-top:14px;background:var(--hero);border:1px solid var(--line);border-radius:12px;padding:14px}
+.next .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#b9c6ff}
+.next .v{font:800 28px/1.15 var(--f-display);margin-top:4px}
+.next .v .amt{color:var(--yellow);font-family:var(--f-num);font-weight:700}
+.next.overdue{border-color:var(--red)}.next.overdue .v{color:var(--red)}
+.next.soon .v{color:var(--yellow)}
+.next p{margin:4px 0 0;font-size:13px;color:#dfe6ff}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:14px 0 0;font-size:14px}
+.facts dt{color:var(--muted)}.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.facts a{color:var(--blue)}
+.svc{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.svc span{font-size:12px;background:var(--chip);border-radius:99px;padding:5px 9px;color:var(--ink)}
+.person{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.person:first-of-type{border-top:0}
+.person b{display:block;font-weight:600}
+.person .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.acts{display:flex;gap:6px}
+.acts .btn{padding:8px 12px;font-size:13px}
+.acts .btn.text{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+.acts .btn[aria-disabled=true]{opacity:.4;pointer-events:none}
+.bell{font-size:11px;color:var(--green);font-weight:600}
+.hist{display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:14px}
+.hrow:first-child{border-top:0}
+.hrow small{display:block;color:var(--muted);font-size:12px}
+.hrow .a{font:700 15px/1.2 var(--f-num);text-align:right;white-space:nowrap}
+.hrow .a small{text-align:right}
+.ok{color:var(--green)}.bad{color:var(--red)}.wait{color:var(--yellow)}
+.notes{margin-top:12px;font-size:13px;color:#dfe6ff;background:var(--chip);border-left:3px solid var(--red);border-radius:8px;padding:9px 11px}
+.lock{background:none;border:0;color:var(--muted);padding:6px 0;font-weight:500;min-height:0;text-decoration:underline}
+.tierlist{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.tierlist .hrow{border-top-style:solid}
+</style></head><body>
+<div id="gate">
+  <h1><small>Second Shift AI</small>Clients</h1>
+  <p class="note">Private. Enter your password to unlock.</p>
+  <form id="f"><div style="display:flex;flex-direction:column;gap:12px">
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <label class="rm"><input type="checkbox" id="rem" checked> Remember on this phone</label>
+    <button class="primary" type="submit">Unlock</button>
+    <div class="err" id="err"></div></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top"><h1><small>Second Shift AI</small>Clients</h1><div class="fresh" id="fresh"></div></div>
+  <section class="tiles" aria-label="Totals">
+    <div class="tile"><div class="k">Monthly (MRR)</div><div class="v" id="tMrr">—</div></div>
+    <div class="tile in"><div class="k">Collected</div><div class="v" id="tIn">—</div></div>
+    <div class="tile out"><div class="k">Outstanding</div><div class="v" id="tOut">—</div></div>
+  </section>
+  <section id="clients" style="display:flex;flex-direction:column;gap:14px"></section>
+  <section><h2>Price list</h2><div class="tierlist" id="tiers"></div></section>
+  <p class="note">To change anything, tell Claude: “Melody paid”, “add contact Christian 310-555-1234 to Melody”, “Melody monthly is $400”. Reminders reach you on Telegram 3 days before, on the day, and 1 / 3 / 7 days late. <button class="lock" id="lk" type="button">Lock this phone</button></p>
+</div>
+
+<script>
+"use strict";
+const K="antidote.clients.pw", DATA_URL="data.enc.json";
+const $=id=>document.getElementById(id);
+const usd=n=>n==null||isNaN(n)?"TBD":(+n).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:Number.isInteger(+n)?0:2});
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DAY=864e5;
+let PW=null,D=null;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw,E){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c))));
+}
+async function loadData(){
+  const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("data "+r.status);
+  D=await decrypt(PW,await r.json());
+  render();
+}
+const parseD=s=>{if(!s)return null;const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
+const daysTo=s=>Math.round((parseD(s)-today())/DAY);
+const fmt=(d,o)=>d.toLocaleDateString("en-US",o||{weekday:"short",month:"short",day:"numeric"});
+const ago=iso=>{if(!iso)return"";const m=Math.round((Date.now()-Date.parse(iso))/6e4);return m<1?"just now":m<60?`${m} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+const pending=c=>(c.purchases||[]).filter(p=>p.status==="pending").sort((a,b)=>a.due<b.due?-1:1);
+const when=n=>n>1?`due in ${n} days`:n===1?"due in 1 day":n===0?"due today":`${-n} day${n<-1?"s":""} overdue`;
+function status(c){
+  if(c.status==="prospect")return["prospect","Prospect"];
+  const p=pending(c)[0];if(!p)return["paid","Paid up"];
+  const n=daysTo(p.due);
+  return n<0?["overdue","Overdue"]:n<=7?["soon","Due soon"]:["paid","Paid up"];
+}
+/* same wording as billing.py client_text() */
+function clientText(c,p,name){
+  const n=daysTo(p.due),d=fmt(parseD(p.due));
+  const w=n>1?`is due ${d}`:n===1?`is due tomorrow (${d})`:n===0?"is due today":`was due ${d}`;
+  return `Hi ${(name||"there").split(" ")[0]}, it's Antidote from Second Shift AI. Quick friendly reminder: the ${usd(p.amount)} ${p.item} for ${c.name} ${w}. Thank you, appreciate you!`;
+}
+const digits=s=>{const d=String(s||"").replace(/[^\d+]/g,"");return d&&!d.startsWith("+")&&d.length===10?"+1"+d:d};
+function person(c,k){
+  const tel=digits(k.phone),p=pending(c)[0];
+  const body=p?clientText(c,p,k.name):`Hi ${(k.name||"there").split(" ")[0]}, it's Antidote from Second Shift AI. Just checking in!`;
+  const dis=tel?"":' aria-disabled="true" tabindex="-1"';
+  return `<div class="person"><div><b>${esc(k.name)}</b><div class="meta">${esc(k.role||"")}${k.phone?" · "+esc(k.phone):" · number not added yet"}${k.notify?' · <span class="bell">gets reminders</span>':""}</div></div>
+    <div class="acts"><a class="btn" href="${tel?"tel:"+esc(tel):"#"}"${dis} aria-label="Call ${esc(k.name)}">Call</a><a class="btn text" href="${tel?`sms:${esc(tel)}?&body=${encodeURIComponent(body)}`:"#"}"${dis} aria-label="Text ${esc(k.name)} a reminder">Text</a></div></div>`;
+}
+function card(c){
+  const [cls,label]=status(c),p=pending(c)[0];
+  let next="";
+  if(p){const n=daysTo(p.due),k=n<0?"overdue":n<=3?"soon":"";
+    next=`<div class="next ${k}"><div class="k">Next payment · ${esc(p.item)}</div><div class="v">${n<0?"⚠ ":""}${when(n)} — <span class="amt">${usd(p.amount)}</span></div><p>${fmt(parseD(p.due),{weekday:"long",month:"long",day:"numeric"})}</p></div>`}
+  else if(c.status==="prospect") next=`<div class="next"><div class="k">Prospect</div><div class="v" style="font-size:20px">Not signed yet</div></div>`;
+  else next=`<div class="next"><div class="k">Next payment</div><div class="v" style="font-size:20px">Nothing open</div></div>`;
+  const hist=(c.purchases||[]).slice().sort((a,b)=>a.due<b.due?1:-1).map(p=>{
+    const paid=p.status==="paid",late=!paid&&daysTo(p.due)<0;
+    return `<div class="hrow"><span>${esc(p.item)}<small>${paid?`Paid ${fmt(parseD(p.paid_date))}`:`Due ${fmt(parseD(p.due))}`}</small></span><span class="a">${usd(paid?(p.paid_amount??p.amount):p.amount)}<small class="${paid?"ok":late?"bad":"wait"}">${paid?"paid":late?"overdue":"pending"}</small></span></div>`}).join("");
+  const tel=digits(c.phone);
+  return `<article class="card"><div class="ch"><div><b>${esc(c.name)}</b><div class="tier">${esc(c.tier||"No tier yet")}</div></div><span class="chip ${cls}">${label}</span></div>
+    ${next}
+    <dl class="facts"><dt>Monthly</dt><dd class="num">${c.monthly_amount!=null?usd(c.monthly_amount)+"/mo":`<span class="wait">${esc(c.monthly_note||"Not set")}</span>`}</dd>
+      ${c.address?`<dt>Address</dt><dd><a href="https://maps.apple.com/?q=${encodeURIComponent(c.address)}">${esc(c.address)}</a></dd>`:""}
+      ${c.phone?`<dt>Restaurant</dt><dd><a href="tel:${esc(tel)}">${esc(c.phone)}</a></dd>`:""}
+      ${c.email?`<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>`:""}
+      <dt>Auto-text</dt><dd>${c.auto_send_to_client?'<span class="ok">On</span>':"Off — reminders come to you first"}</dd></dl>
+    ${(c.services||[]).length?`<div class="svc">${c.services.map(s=>`<span>${esc(s)}</span>`).join("")}</div>`:""}
+    ${c.notes?`<div class="notes">${esc(c.notes)}</div>`:""}
+    <h3>Their people</h3>${(c.contacts||[]).length?c.contacts.map(k=>person(c,k)).join(""):'<div class="note">No contacts yet.</div>'}
+    ${hist?`<h3>Purchases</h3><div class="hist">${hist}</div>`:""}
+  </article>`;
+}
+function render(){
+  if(!D)return;
+  $("fresh").textContent="Updated "+ago(D.generatedAt);
+  const cs=D.clients||[],act=cs.filter(c=>c.status!=="prospect");
+  const all=cs.flatMap(c=>c.purchases||[]);
+  $("tMrr").textContent=usd(act.reduce((s,c)=>s+(+c.monthly_amount||0),0));
+  $("tIn").textContent=usd(all.filter(p=>p.status==="paid").reduce((s,p)=>s+(+(p.paid_amount??p.amount)||0),0));
+  $("tOut").textContent=usd(all.filter(p=>p.status==="pending").reduce((s,p)=>s+(+p.amount||0),0));
+  const rank=c=>{const s=status(c)[0];return {overdue:0,soon:1,paid:2,prospect:3}[s]};
+  $("clients").innerHTML=cs.slice().sort((a,b)=>rank(a)-rank(b)).map(card).join("");
+  $("tiers").innerHTML=(D.tiers||[]).map(t=>`<div class="hrow"><span><b>${esc(t.name)}</b><small>${esc(t.note||"")}</small></span><span class="a">${t.setup!=null?usd(t.setup)+" setup":"Custom"}${t.monthly!=null?`<small>+ ${usd(t.monthly)}/mo</small>`:""}</span></div>`).join("");
+}
+async function unlock(pw,remember){
+  PW=pw; await loadData();
+  $("gate").hidden=true;$("app").hidden=false;
+  try{if(remember)localStorage.setItem(K,pw)}catch(e){}
+  setInterval(()=>loadData().catch(()=>{}),120000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadData().catch(()=>{})});
+}
+$("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err.textContent="Unlocking…";
+  unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load your data. Check your connection.":"Wrong password."})});
+$("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
+(()=>{let s=null;try{s=localStorage.getItem(K)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
+</script>
+<!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
+     Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
+     The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
+<button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
+<button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
+<div id="biomsg" style="font-size:13px;margin-top:8px"></div></div>
+<script>
+(function(){
+var NAME="Clients",PK="clientsBio1",REM="antidote.clients.pw";
+var SALT=new TextEncoder().encode("antidote-"+PK+"-prf-v1");
+var form=document.getElementById("f"),pwEl=document.getElementById("pw"),gate=document.getElementById("gate");
+if(!form||!pwEl||!gate)return;
+function u8(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
+function b64(a){return btoa(String.fromCharCode.apply(null,new Uint8Array(a)))}
+function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function saved(){try{return JSON.parse(get(PK)||"null")}catch(e){return null}}
+var ok=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function prfKey(id){
+  var a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),userVerification:"required",
+    allowCredentials:[{type:"public-key",id:u8(id)}],extensions:{prf:{eval:{first:SALT}}}}});
+  var r=a.getClientExtensionResults().prf;if(!r||!r.results||!r.results.first)throw new Error("noprf");
+  return crypto.subtle.importKey("raw",r.results.first,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function enroll(pw){
+  var c=await navigator.credentials.create({publicKey:{rp:{name:NAME},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:NAME,displayName:NAME+" (Anthony Suggs)"},
+    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{residentKey:"preferred",userVerification:"required"},extensions:{prf:{eval:{first:SALT}}}}});
+  var ext=c.getClientExtensionResults().prf;if(ext&&ext.enabled===false)throw new Error("noprf");
+  var id=b64(c.rawId),key;
+  if(ext&&ext.results&&ext.results.first)key=await crypto.subtle.importKey("raw",ext.results.first,"AES-GCM",false,["encrypt"]);
+  else key=await prfKey(id);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(pw));
+  set(PK,JSON.stringify({id:id,iv:b64(iv),ct:b64(ct)}));
+  if(REM)del(REM);            /* Face ID replaces the plain "remember" copy of the password */
+}
+/* Remember what was typed; after the page hides #gate (= unlocked), offer Face ID. */
+var typed=null;
+form.addEventListener("submit",function(){typed=pwEl.value},true);
+function unlocked(){return gate.hidden||gate.style.display==="none"}
+function offer(){
+  var pw=typed||(REM?get(REM):null);
+  if(!ok||saved()||get(PK+"no")==="1"||!pw)return;
+  var box=document.getElementById("bioask");box.hidden=false;
+  document.getElementById("biono").onclick=function(){box.hidden=true;set(PK+"no","1")};
+  document.getElementById("bioyes").onclick=async function(){var m=document.getElementById("biomsg");m.textContent="Follow the Face ID / fingerprint prompt…";
+    try{await enroll(pw);m.textContent="Done. Next time tap “Unlock with Face ID / fingerprint”.";setTimeout(function(){box.hidden=true},2500)}
+    catch(e){m.textContent=e&&e.message==="noprf"?"This browser can't do it yet. Update iOS / Chrome, or let your phone save the password (it fills with Face ID).":"Didn't finish. You can try again next time.";
+      setTimeout(function(){box.hidden=true},6000)}};
+}
+new MutationObserver(function(){if(unlocked())offer()}).observe(gate,{attributes:true,attributeFilter:["hidden","style"]});
+if(unlocked())offer();
+/* Unlock button on the lock screen once a passkey is saved */
+if(ok&&saved()){
+  var b=document.createElement("button");b.type="button";b.textContent="Unlock with Face ID / fingerprint";
+  b.style.cssText="display:block;width:100%;margin:0 0 12px;padding:13px;border-radius:11px;border:0;background:#2f6fed;color:#fff;font-weight:600;font-size:16px";
+  form.insertBefore(b,form.firstChild);
+  b.onclick=async function(){
+    try{var s=saved(),key=await prfKey(s.id);
+      pwEl.value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(s.iv)},key,u8(s.ct)));
+      var rem=document.getElementById("rem");if(rem)rem.checked=false;
+      typed=pwEl.value;form.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true}));}
+    catch(e){var err=document.getElementById("err");if(err)err.textContent="Face ID / fingerprint didn't work. Use the password (you can turn it on again after).";
+      if(e&&(e.name==="OperationError"||e.message==="noprf")){del(PK);b.remove()}}};
+}
+})();
+</script>
+<!--BIO-END-->
+</body></html>
