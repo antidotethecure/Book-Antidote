@@ -148,7 +148,8 @@ try{muted=localStorage.getItem('capslam_mute')==='1'}catch(_){}
 function au(){
   if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);crowdStart()}catch(_){return}}
   if(AC.state==='suspended')AC.resume();
-  if(song&&!seq)playMusic(song);
+  if(wantTrack&&(!trackEl||trackEl.paused)&&trackOK){const w=wantTrack;playTrack(w.file,w.vol,w.at)}
+  else if(song&&!seq)playMusic(song);
 }
 function toggleMute(){muted=!muted;if(trackGain)trackGain.gain.value=muted?0:trackVol;try{localStorage.setItem('capslam_mute',muted?'1':'0')}catch(_){}
   document.getElementById('mute').textContent=muted?'MUTED':'MUSIC'}
@@ -217,15 +218,15 @@ function crowdVox(v,n=7,when=0,vol=.05,dur=.32,glide=-.05){for(let i=0;i<n;i++)v
 function chant(){const pt=pick([['oo','eh','ah'],['eh','oh','ah','ah'],['ah','ah','eh']]);for(let r=0;r<2;r++)pt.forEach((v,i)=>{crowdVox(v,6,r*1.3+i*.33,.04,.26);noise(.05,.06,r*1.3+i*.33+.17,2600,.6)})}
 /* Antidote's own songs (hosted on antidotethefoodie.com/audio) play under the crowd. Chiptune is the fallback. */
 const SONG_DIR='../audio/',MATCH_SONGS=['energy.mp3','boom.mp3','bounce.mp3','cheat-code.mp3'],TRUMP_SONG='believe-me.m4a';
-let trackEl=null,trackGain=null,trackVol=.3,trackOK=location.protocol!=='file:';
+let trackEl=null,trackGain=null,trackVol=.3,trackOK=location.protocol!=='file:',wantTrack=null;
 function playTrack(file,vol=.3,at=0){
-  stopMusic();song=null;stopTrack();if(!trackOK||!AC)return false;
+  stopMusic();song=null;stopTrack();wantTrack=trackOK?{file,vol,at}:null;if(!trackOK)return false;if(!AC)return true;
   try{if(!trackEl){trackEl=new Audio();trackEl.preload='auto';trackEl.setAttribute('playsinline','');const src=AC.createMediaElementSource(trackEl);trackGain=AC.createGain();src.connect(trackGain).connect(master)}
     trackVol=vol;trackGain.gain.value=muted?0:vol;trackEl.src=SONG_DIR+file;trackEl.loop=true;
     trackEl.onloadedmetadata=()=>{try{if(at&&trackEl.duration>at+30)trackEl.currentTime=at}catch(_){}};
     trackEl.onerror=()=>{trackOK=false;if(scene==='fight')playMusic('fight');else if(scene==='entrance')playMusic('entrance')};
     const pr=trackEl.play();if(pr)pr.catch(()=>{});return true}catch(_){trackOK=false;return false}}
-function stopTrack(){if(trackEl){try{trackEl.pause()}catch(_){}}}
+function stopTrack(){wantTrack=null;if(trackEl){try{trackEl.pause()}catch(_){}}}
 const SONGS={
   title:{bpm:132,lead:[67,0,67,72,0,72,76,0,74,72,71,72,74,0,0,0,67,0,67,72,0,72,76,79,77,76,74,72,72,0,0,0],
          bass:[48,0,55,0,48,0,55,0,43,0,50,0,43,0,50,0,48,0,55,0,48,0,55,0,43,0,50,0,48,0,48,0]},
