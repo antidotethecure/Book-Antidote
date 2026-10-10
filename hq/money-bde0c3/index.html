@@ -277,4 +277,77 @@ $("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err
   unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load your data. Check your connection.":"Wrong password."})});
 $("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
 (()=>{let s=null;try{s=localStorage.getItem(K)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
-</script></body></html>
+</script><!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
+     Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
+     The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
+<button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
+<button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
+<div id="biomsg" style="font-size:13px;margin-top:8px"></div></div>
+<script>
+(function(){
+var NAME="Money",PK="moneyBio1",REM="antidote.money.pw";
+var SALT=new TextEncoder().encode("antidote-"+PK+"-prf-v1");
+var form=document.getElementById("f"),pwEl=document.getElementById("pw"),gate=document.getElementById("gate");
+if(!form||!pwEl||!gate)return;
+function u8(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
+function b64(a){return btoa(String.fromCharCode.apply(null,new Uint8Array(a)))}
+function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function saved(){try{return JSON.parse(get(PK)||"null")}catch(e){return null}}
+var ok=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function prfKey(id){
+  var a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),userVerification:"required",
+    allowCredentials:[{type:"public-key",id:u8(id)}],extensions:{prf:{eval:{first:SALT}}}}});
+  var r=a.getClientExtensionResults().prf;if(!r||!r.results||!r.results.first)throw new Error("noprf");
+  return crypto.subtle.importKey("raw",r.results.first,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function enroll(pw){
+  var c=await navigator.credentials.create({publicKey:{rp:{name:NAME},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:NAME,displayName:NAME+" (Anthony Suggs)"},
+    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{residentKey:"preferred",userVerification:"required"},extensions:{prf:{eval:{first:SALT}}}}});
+  var ext=c.getClientExtensionResults().prf;if(ext&&ext.enabled===false)throw new Error("noprf");
+  var id=b64(c.rawId),key;
+  if(ext&&ext.results&&ext.results.first)key=await crypto.subtle.importKey("raw",ext.results.first,"AES-GCM",false,["encrypt"]);
+  else key=await prfKey(id);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(pw));
+  set(PK,JSON.stringify({id:id,iv:b64(iv),ct:b64(ct)}));
+  if(REM)del(REM);            /* Face ID replaces the plain "remember" copy of the password */
+}
+/* Remember what was typed; after the page hides #gate (= unlocked), offer Face ID. */
+var typed=null;
+form.addEventListener("submit",function(){typed=pwEl.value},true);
+function unlocked(){return gate.hidden||gate.style.display==="none"}
+function offer(){
+  var pw=typed||(REM?get(REM):null);
+  if(!ok||saved()||get(PK+"no")==="1"||!pw)return;
+  var box=document.getElementById("bioask");box.hidden=false;
+  document.getElementById("biono").onclick=function(){box.hidden=true;set(PK+"no","1")};
+  document.getElementById("bioyes").onclick=async function(){var m=document.getElementById("biomsg");m.textContent="Follow the Face ID / fingerprint prompt…";
+    try{await enroll(pw);m.textContent="Done. Next time tap “Unlock with Face ID / fingerprint”.";setTimeout(function(){box.hidden=true},2500)}
+    catch(e){m.textContent=e&&e.message==="noprf"?"This browser can't do it yet. Update iOS / Chrome, or let your phone save the password (it fills with Face ID).":"Didn't finish. You can try again next time.";
+      setTimeout(function(){box.hidden=true},6000)}};
+}
+new MutationObserver(function(){if(unlocked())offer()}).observe(gate,{attributes:true,attributeFilter:["hidden","style"]});
+if(unlocked())offer();
+/* Unlock button on the lock screen once a passkey is saved */
+if(ok&&saved()){
+  var b=document.createElement("button");b.type="button";b.textContent="Unlock with Face ID / fingerprint";
+  b.style.cssText="display:block;width:100%;margin:0 0 12px;padding:13px;border-radius:11px;border:0;background:#2f6fed;color:#fff;font-weight:600;font-size:16px";
+  form.insertBefore(b,form.firstChild);
+  b.onclick=async function(){
+    try{var s=saved(),key=await prfKey(s.id);
+      pwEl.value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(s.iv)},key,u8(s.ct)));
+      var rem=document.getElementById("rem");if(rem)rem.checked=false;
+      typed=pwEl.value;form.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true}));}
+    catch(e){var err=document.getElementById("err");if(err)err.textContent="Face ID / fingerprint didn't work. Use the password (you can turn it on again after).";
+      if(e&&(e.name==="OperationError"||e.message==="noprf")){del(PK);b.remove()}}};
+}
+})();
+</script>
+<!--BIO-END-->
+</body></html>
