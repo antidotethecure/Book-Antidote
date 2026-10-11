@@ -157,6 +157,7 @@ function render(){
   const R=D.runway||{};
   const yt=lanes.find(l=>l.id==="yt")||{}, fb=lanes.find(l=>l.id==="fb")||{};
   $("runway").innerHTML=[
+    ["Cloud vault (Instagram)",D.cloud&&D.cloud.live?(D.cloud.days+" days"):"not live",D.cloud&&D.cloud.live?`${D.cloud.reels} reels + ${D.cloud.stories} stories parked · ${D.cloud.used_gb}/${D.cloud.max_gb} GB`:"posts with the Mac off once Railway is on Hobby"],
     ["YouTube scheduled",yt.ahead,"go live even with the Mac off"],
     ["Facebook reels scheduled",fb.ahead,"go live even with the Mac off"],
     ["Unused moments in your old streams",R.unused_moments,"verified kills, crashes and chases ready to cut"],
