@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Second Shift AI clients: totals, then one card per client (next payment countdown, contacts w/ call + text, history). Dark, phone-first. */
+/* SousShift AI clients: totals, then one card per client (next payment countdown, contacts w/ call + text, history). Dark, phone-first. */
 :root{
   --bg:#07102a;--panel:#0e1a3f;--panel2:#13224f;--ink:#eef1fb;--muted:#9aa5c4;--line:#223063;--chip:#16245a;
   --blue:#7d99ff;--hero:#0b1a4a;--yellow:#ffd43b;--red:#ff6b6b;--green:#4cd69a;--orange:#ffa94d;
@@ -98,7 +98,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
 .tierlist .hrow{border-top-style:solid}
 </style></head><body>
 <div id="gate">
-  <h1><small>Second Shift AI</small>Clients</h1>
+  <h1><small>SousShift AI</small>Clients</h1>
   <p class="note">Private. Enter your password to unlock.</p>
   <form id="f"><div style="display:flex;flex-direction:column;gap:12px">
     <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
@@ -108,7 +108,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
 </div>
 
 <div class="wrap" id="app" hidden>
-  <div class="top"><h1><small>Second Shift AI</small>Clients</h1><div class="fresh" id="fresh"></div></div>
+  <div class="top"><h1><small>SousShift AI</small>Clients</h1><div class="fresh" id="fresh"></div></div>
   <section class="tiles" aria-label="Totals">
     <div class="tile"><div class="k">Monthly (MRR)</div><div class="v" id="tMrr">—</div></div>
     <div class="tile in"><div class="k">Collected</div><div class="v" id="tIn">—</div></div>
@@ -157,12 +157,12 @@ function status(c){
 function clientText(c,p,name){
   const n=daysTo(p.due),d=fmt(parseD(p.due));
   const w=n>1?`is due ${d}`:n===1?`is due tomorrow (${d})`:n===0?"is due today":`was due ${d}`;
-  return `Hi ${(name||"there").split(" ")[0]}, it's Antidote from Second Shift AI. Quick friendly reminder: the ${usd(p.amount)} ${p.item} for ${c.name} ${w}. Thank you, appreciate you!`;
+  return `Hi ${(name||"there").split(" ")[0]}, it's Antidote from SousShift AI. Quick friendly reminder: the ${usd(p.amount)} ${p.item} for ${c.name} ${w}. Thank you, appreciate you!`;
 }
 const digits=s=>{const d=String(s||"").replace(/[^\d+]/g,"");return d&&!d.startsWith("+")&&d.length===10?"+1"+d:d};
 function person(c,k){
   const tel=digits(k.phone),p=pending(c)[0];
-  const body=p?clientText(c,p,k.name):`Hi ${(k.name||"there").split(" ")[0]}, it's Antidote from Second Shift AI. Just checking in!`;
+  const body=p?clientText(c,p,k.name):`Hi ${(k.name||"there").split(" ")[0]}, it's Antidote from SousShift AI. Just checking in!`;
   const dis=tel?"":' aria-disabled="true" tabindex="-1"';
   return `<div class="person"><div><b>${esc(k.name)}</b><div class="meta">${esc(k.role||"")}${k.phone?" · "+esc(k.phone):" · number not added yet"}${k.notify?' · <span class="bell">gets reminders</span>':""}</div></div>
     <div class="acts"><a class="btn" href="${tel?"tel:"+esc(tel):"#"}"${dis} aria-label="Call ${esc(k.name)}">Call</a><a class="btn text" href="${tel?`sms:${esc(tel)}?&body=${encodeURIComponent(body)}`:"#"}"${dis} aria-label="Text ${esc(k.name)} a reminder">Text</a></div></div>`;
@@ -181,6 +181,7 @@ function card(c){
   return `<article class="card"><div class="ch"><div><b>${esc(c.name)}</b><div class="tier">${esc(c.tier||"No tier yet")}</div></div><span class="chip ${cls}">${label}</span></div>
     ${next}
     <dl class="facts"><dt>Monthly</dt><dd class="num">${c.monthly_amount!=null?usd(c.monthly_amount)+"/mo":`<span class="wait">${esc(c.monthly_note||"Not set")}</span>`}</dd>
+      <dt>Perf. share</dt><dd>${c.perf_share?esc((c.perf_share.pct||10)+"% of app sales in a month over "+usd(c.perf_share.threshold||3000)):'<span class="wait">Off (only with a signed clause)</span>'}</dd>
       ${c.address?`<dt>Address</dt><dd><a href="https://maps.apple.com/?q=${encodeURIComponent(c.address)}">${esc(c.address)}</a></dd>`:""}
       ${c.phone?`<dt>Restaurant</dt><dd><a href="tel:${esc(tel)}">${esc(c.phone)}</a></dd>`:""}
       ${c.email?`<dt>Email</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>`:""}
