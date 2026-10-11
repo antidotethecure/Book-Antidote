@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Posts">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Posting HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one column. Health banner → "you do this" fixes → every platform today → rewards → runway → auto-handled. */
+:root{
+  --bg:#f3f5fb;--panel:#fff;--ink:#0e1a3a;--muted:#56607a;--line:#dde2ee;--chip:#e9edf8;
+  --blue:#1740c8;--hero:#0b1a4a;--yellow:#f5c400;--red:#d42a2a;--green:#127a4a;--amber:#a86400;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#07102a;--panel:#0e1a3f;--ink:#eef1fb;--muted:#9aa5c4;--line:#223063;--chip:#16245a;
+  --blue:#7d99ff;--yellow:#ffd43b;--red:#ff6b6b;--green:#4cd69a;--amber:#ffb547;color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1{font:800 30px/1.05 var(--f-display);margin:0;letter-spacing:-.01em}
+h2{font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fresh{font-size:12px;color:var(--muted);text-align:right}
+button{font:600 14px/1 var(--f-body);border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 14px;cursor:pointer}
+button.primary{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+#gate{max-width:380px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
+#gate input[type=password]{padding:14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:16px}
+.rm{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.err{color:var(--red);font-size:14px;min-height:1.3em}
+.note{font-size:13px;color:var(--muted)}
+.hero{background:var(--hero);color:#fff;border-radius:14px;padding:18px;display:grid;gap:6px}
+.hero .k{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#b9c6ff}
+.hero .v{font:800 30px/1.1 var(--f-display);color:var(--yellow)}
+.hero .s{font-size:14px;color:#dfe6ff}
+.hero.bad{background:#5a0f14}.hero.bad .k{color:#ffc9c9}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.list{display:flex;flex-direction:column;gap:10px}
+.fix{border-left:4px solid var(--red)}
+.fix.warn{border-left-color:var(--amber)}
+.fix b{display:block;margin-bottom:4px}
+.fix .how{font-size:14px}
+.lane{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+.lane .n{font-weight:700}
+.lane .c{font:700 22px/1 var(--f-num);text-align:right}
+.lane .meta{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.lane ul{grid-column:1/-1;margin:4px 0 0;padding-left:18px;font-size:13px}
+.bar{grid-column:1/-1;height:8px;border-radius:5px;background:var(--chip);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green)}
+.s-low .bar i{background:var(--amber)}.s-none .bar i{background:var(--red)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--chip)}
+.p-good{background:rgba(18,122,74,.15);color:var(--green)}.p-low{background:rgba(168,100,0,.15);color:var(--amber)}
+.p-none{background:rgba(212,42,42,.14);color:var(--red)}
+.per{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.per:first-of-type{border-top:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.big{font:800 26px/1.1 var(--f-num)}
+details summary{cursor:pointer;font-weight:600}
+.lock{background:none;border:0;color:var(--muted);padding:6px 0;font-weight:500}
+a{color:var(--blue)}
+</style></head><body>
+<div id="gate">
+  <h1>Posting HQ</h1>
+  <p class="note">Private. Enter your password to unlock (same as Money).</p>
+  <form id="f"><div style="display:flex;flex-direction:column;gap:12px">
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <label class="rm"><input type="checkbox" id="rem" checked> Remember on this phone</label>
+    <button class="primary" type="submit">Unlock</button>
+    <div class="err" id="err"></div></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top"><h1>Posting HQ</h1><div class="fresh" id="fresh"></div></div>
+  <section class="hero" id="hero"></section>
+  <section><h2>You do this</h2><div class="list" id="you"></div></section>
+  <section><h2>Every platform today</h2><div class="list" id="lanes"></div></section>
+  <section><h2>Rewards &amp; payouts</h2><div class="list" id="rewards"></div></section>
+  <section><h2>Content runway</h2><div class="grid2" id="runway"></div></section>
+  <section><h2>Handled automatically</h2><div class="card"><details><summary id="autoSum"></summary><div class="list" id="auto" style="margin-top:10px"></div></details></div></section>
+  <button class="lock" id="lk">Lock this phone</button>
+</div>
+
+<script>
+const K="antidote.posts.pw", K2="antidote.money.pw", DATA_URL="data.enc.json";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const usd=n=>n==null||isNaN(n)?"—":(+n).toLocaleString("en-US",{style:"currency",currency:"USD"});
+let PW=null,D=null;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw,E){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c))));
+}
+async function loadData(){
+  const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("data "+r.status);
+  D=await decrypt(PW,await r.json()); render();
+}
+function ago(iso){if(!iso)return "never";const h=(Date.now()-new Date(iso))/36e5;
+  if(h<1)return Math.max(1,Math.round(h*60))+" min ago";if(h<48)return Math.round(h)+" h ago";return (h/24).toFixed(1)+" days ago"}
+function day(s){return s?new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—"}
+function render(){
+  const age=(Date.now()-new Date(D.generatedAt))/36e5;
+  $("fresh").textContent="Checked "+ago(D.generatedAt);
+  const you=D.issues.filter(i=>i.who==="you"), auto=D.issues.filter(i=>i.who!=="you");
+  const lanes=D.lanes, dark=lanes.filter(l=>l.state==="none");
+  const hero=$("hero");
+  if(age>2){
+    hero.className="hero bad";
+    hero.innerHTML=`<span class="k">Mac offline</span><div class="v">Last check ${esc(ago(D.generatedAt))}</div>
+    <div class="s">Your Mac hasn't reported in. YouTube and Facebook posts that are already scheduled still go out. Instagram and new uploads are paused until the Mac is on, plugged in and online.</div>`;
+  }else if(you.length){
+    hero.className="hero bad";
+    hero.innerHTML=`<span class="k">Needs you</span><div class="v">${you.length} thing${you.length>1?"s":""} to do</div><div class="s">Everything else is handled automatically.</div>`;
+  }else{
+    hero.className="hero";
+    hero.innerHTML=`<span class="k">All good</span><div class="v">Posting on every platform</div><div class="s">${dark.length?dark.length+" platform(s) haven't posted yet today, which is normal before their time slots.":"Every platform has posted today."}</div>`;
+  }
+  $("you").innerHTML=you.length?you.map(i=>`<div class="card fix ${i.level==="fail"?"":"warn"}"><b>${esc(i.msg)}</b><div class="how">👉 ${esc(i.fix)}</div></div>`).join(""):`<div class="card">Nothing. You're all set ✅</div>`;
+  $("lanes").innerHTML=lanes.map(l=>{
+    const pct=l.posted==null?0:Math.min(100,Math.round(l.posted/l.target*100));
+    const lab={good:"On target",low:"Behind",none:"Nothing yet",unknown:"Can't check"}[l.state];
+    return `<div class="card lane s-${l.state}"><span class="n">${esc(l.name)}</span><span class="c">${l.posted??"?"}<span class="note">/${l.target}</span></span>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="meta"><span class="pill p-${l.state==="unknown"?"low":l.state}">${lab}</span> · last post ${esc(ago(l.last))}${l.ahead!=null?` · <b>${l.ahead}</b> ${esc(l.ahead_label||"queued")}`:""}${l.note?`<br>${esc(l.note)}`:""}</div>
+    ${l.items&&l.items.length?`<ul>${l.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`}).join("");
+  const ft=D.fast_track; let rw="";
+  if(ft){
+    rw+=`<div class="card"><b>${esc(ft.name)}</b> · ${esc(ft.pays)}<div class="note">${esc(ft.rule)}</div>`+
+      ft.periods.map(p=>{
+        const st={met:["p-good","✅ Met"],active:["p-low","In progress"],upcoming:["","Not started"],missed:["p-none","Missed"],done:["","Done"]}[p.state];
+        let extra="";
+        if(p.state==="active"){
+          extra=`Need ${p.need_reels} more reels on ${p.need_days} more days · ${p.days_left} days left.`;
+          if(p.scheduled_reels!=null) extra+=` <b>${p.scheduled_reels} reels already scheduled</b>`+(p.projected_met_on?` → met on <b>${day(p.projected_met_on)}</b> ✅`:` → still short, more reels needed`);
+        }
+        return `<div class="per"><span class="num">${p.n}/3</span><span>${day(p.from)} – ${day(p.to)}<div class="note">${p.reels} reels on ${p.days} days. ${extra}</div></span><span class="pill ${st[0]}">${st[1]}</span></div>`}).join("")+`</div>`;
+  }
+  rw+=(D.payouts||[]).map(p=>`<div class="card"><b>${esc(p.platform)}</b> · ${esc(p.label||"")} <span class="num">${usd(p.earned)}</span>
+    <div class="note">Next payout: ${p.next!=null?usd(p.next):"—"} ${p.next_date?"around "+day(p.next_date):""}. ${esc(p.note)}</div></div>`).join("");
+  $("rewards").innerHTML=rw;
+  const R=D.runway||{};
+  const yt=lanes.find(l=>l.id==="yt")||{}, fb=lanes.find(l=>l.id==="fb")||{};
+  $("runway").innerHTML=[
+    ["YouTube scheduled",yt.ahead,"go live even with the Mac off"],
+    ["Facebook reels scheduled",fb.ahead,"go live even with the Mac off"],
+    ["Unused moments in your old streams",R.unused_moments,"verified kills, crashes and chases ready to cut"],
+    ["TikTok clips handed off",R.tiktok_queued,"waiting on the cloud routine"],
+    ["Disk free on the Mac",D.disk_free_gb+" GB",D.disk_free_gb<15?"too low, renders fail under 15 GB":"OK"],
+  ].map(([k,v,n])=>`<div class="card"><div class="note">${esc(k)}</div><div class="big">${esc(v??"—")}</div><div class="note">${esc(n)}</div></div>`).join("");
+  $("autoSum").textContent=auto.length+" item(s) Claude and the jobs are handling";
+  $("auto").innerHTML=auto.map(i=>`<div class="fix ${i.level==="fail"?"":"warn"}" style="padding-left:10px"><b>${esc(i.msg)}</b><div class="how note">${esc(i.fix)}</div></div>`).join("")||"Nothing.";
+}
+async function unlock(pw,remember){
+  PW=pw; await loadData();
+  $("gate").hidden=true;$("app").hidden=false;
+  try{if(remember)localStorage.setItem(K,pw)}catch(e){}
+  setInterval(()=>loadData().catch(()=>{}),120000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadData().catch(()=>{})});
+}
+$("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err.textContent="Unlocking…";
+  unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load the data. Check your connection.":"Wrong password."})});
+$("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
+(()=>{let s=null;try{s=localStorage.getItem(K)||localStorage.getItem(K2)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
+</script>
+</body></html>
