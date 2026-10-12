@@ -115,6 +115,8 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
     <div class="tile out"><div class="k">Outstanding</div><div class="v" id="tOut">—</div></div>
   </section>
   <section id="launchsec" hidden><h2>Launch progress</h2><div id="launch" style="display:flex;flex-direction:column;gap:10px"></div></section>
+  <section id="photosec" hidden><h2>📸 Menu photos needed</h2><div id="photos" style="display:flex;flex-direction:column;gap:10px"></div>
+    <p class="note" style="margin-top:8px">Tap <b>📷 Add</b> to take or pick a photo. It saves already named for that dish (on the Mac it lands in Downloads). Then tell Claude <b>"install menu photos"</b> and it goes into the app. Owners can send theirs from their own app the same way.</p></section>
   <section id="clients" style="display:flex;flex-direction:column;gap:14px"></section>
   <section><h2>Price list</h2><div class="tierlist" id="tiers"></div></section>
   <p class="note">To change anything, tell Claude: “Melody paid”, “add contact Christian 310-555-1234 to Melody”, “Melody monthly is $400”. Reminders reach you on Telegram 3 days before, on the day, and 1 / 3 / 7 days late. <button class="lock" id="lk" type="button">Lock this phone</button></p>
@@ -210,6 +212,10 @@ function render(){
     <div class="bar"><i style="width:${r.overall}%"></i></div>
     <details><summary>${left.length?left.length+" owner step"+(left.length>1?"s":"")+" left":"Owner done"}${miss.length?" · "+miss.length+" build item"+(miss.length>1?"s":"")+" left":" · build complete"}</summary>
     <ul>${miss.map(x=>`<li>Build: ${esc(x[0])}</li>`).join("")}${left.map(t=>`<li>Owner: ${esc(t[1])}</li>`).join("")}</ul></details></div>`;}).join("");
+  const P=D.photos||{},pk=Object.keys(P);$("photosec").hidden=!pk.length;
+  $("photos").innerHTML=pk.map(k=>{const r=P[k],need=r.items.filter(i=>!i.has);
+    return `<div class="lp"><div class="row"><b>${esc(r.name)}</b><span><b class="num">${r.total-need.length}/${r.total}</b> have photos</span></div><div class="bar"><i style="width:${Math.round(100*(r.total-need.length)/r.total)}%"></i></div>
+    ${need.length?`<details><summary>${need.length} item${need.length>1?"s":""} need a photo</summary>${need.map(i=>`<div class="hrow phr" data-k="${k}__${esc(i.slug)}"><span>${esc(i.name)}<small>${esc(i.section)}</small></span><label class="pill" style="cursor:pointer">📷 Add<input type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>`).join("")}</details>`:"<small>✅ All items have photos</small>"}</div>`;}).join("");
   $("tiers").innerHTML=(D.tiers||[]).map(t=>`<div class="hrow"><span><b>${esc(t.name)}</b><small>${esc(t.note||"")}</small></span><span class="a">${t.setup!=null?usd(t.setup)+" setup":"Custom"}${t.monthly!=null?`<small>+ ${usd(t.monthly)}/mo</small>`:""}</span></div>`).join("");
 }
 async function unlock(pw,remember){
@@ -221,6 +227,11 @@ async function unlock(pw,remember){
 }
 $("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err.textContent="Unlocking…";
   unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load your data. Check your connection.":"Wrong password."})});
+document.addEventListener("change",e=>{const inp=e.target;if(inp.type!=="file"||!inp.closest(".phr")||!inp.files[0])return;const row=inp.closest(".phr"),k=row.dataset.k,f=inp.files[0];
+  const ext=(f.name.split(".").pop()||"jpg").toLowerCase().replace("jpeg","jpg"),nf=new File([f],k+"."+ext,{type:f.type||"image/jpeg"});
+  const done=()=>{inp.parentElement.firstChild.nodeValue="✅ Saved ";};
+  if(navigator.canShare&&navigator.canShare({files:[nf]})&&/iPhone|iPad|Android/.test(navigator.userAgent)){navigator.share({files:[nf],title:k}).then(done).catch(()=>{});}
+  else{const a=document.createElement("a");a.href=URL.createObjectURL(nf);a.download=nf.name;document.body.appendChild(a);a.click();a.remove();done();}inp.value="";});
 $("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
 (()=>{let s=null;try{s=localStorage.getItem(K)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
 </script>
