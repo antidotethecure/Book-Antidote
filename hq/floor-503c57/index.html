@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#080B16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Floor">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="../posts-98df19/icon.png">
+<title>Agent Floor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#080B16;--panel:#10172C;--panel2:#152040;--edge:#243155;--ink:#EEF1F8;--dim:#8D97B3;--ki:#F59A2C;--scout:#3FD3E0;
+  --ok:#3EE07A;--warn:#F2C14E;--err:#F0605A;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Archivo",system-ui,-apple-system,sans-serif;padding:0 16px 64px;
+  background-image:radial-gradient(900px 500px at 90% -10%,#F59A2C22,transparent 60%),radial-gradient(800px 500px at -10% 0%,#3FD3E01c,transparent 60%)}
+#gate{max-width:360px;margin:18vh auto 0;display:grid;gap:12px;text-align:center}
+#gate h1{font:700 30px "Chakra Petch",sans-serif;margin:0}#gate h1 span{color:var(--ki)}
+#gate input[type=password]{font:inherit;font-size:16px;background:#0b1124;color:var(--ink);border:1px solid var(--edge);border-radius:10px;padding:12px;width:100%}
+#gate button{font:600 15px "Archivo",sans-serif;background:var(--ki);color:#1a0d00;border:0;border-radius:10px;padding:12px;cursor:pointer}
+#gate label{font-size:13px;color:var(--dim)}#err{color:var(--err);font-size:13px;min-height:1em}
+#lk{background:none;border:1px solid var(--edge);color:var(--dim);border-radius:8px;padding:6px 10px;font:12px "IBM Plex Mono",monospace;cursor:pointer}
+</style>
+</head><body>
+<div id="gate"><form id="f" style="display:grid;gap:12px"><h1>AGENT <span>FLOOR</span></h1><div style="color:var(--dim);font-size:14px">Same password as Posting HQ.</div>
+<input id="pw" type="password" autocomplete="current-password" placeholder="Password" required>
+<label><input type="checkbox" id="rem" checked> Remember on this phone</label>
+<button type="submit">Unlock</button><div id="err"></div></form></div>
+<div id="app" hidden>
+
+<!--UI-START-->
+<style>
+/* Agent Floor: departments are rooms; each DBZ agent is a figure that walks + glows while its real job works,
+   dims when idle, shakes red on an error. Tap one for Today / Failed / Next. */
+.fl{max-width:1100px;margin:0 auto;min-width:0;overflow-wrap:anywhere;--ok:#3EE07A;--err:#F0605A;--warn:#F2C14E;--dim:#8D97B3;--edge:#243155;--panel:#10172C;--panel2:#152040;--ink:#EEF1F8;--ki:#F59A2C;--scout:#3FD3E0}
+.fl-head{display:grid;gap:10px;padding:22px 0 8px}
+.fl-eyebrow{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ki);margin:0}
+.fl h1{font:700 clamp(30px,7vw,48px)/1 "Chakra Petch",sans-serif;margin:0}.fl h1 span{color:var(--ki)}
+.fl-fresh{font:12px "IBM Plex Mono",monospace;color:var(--dim)}.fl-fresh.stale{color:var(--err);font-weight:600}
+.fl-stats{display:flex;flex-wrap:wrap;gap:8px}
+.fl-stat{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:8px 12px;min-width:92px}
+.fl-stat b{display:block;font:700 22px/1.1 "Chakra Petch",sans-serif;font-variant-numeric:tabular-nums}
+.fl-stat span{font:10.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.fl-stat.w b{color:var(--ok)}.fl-stat.e b{color:var(--err)}
+.fl-links{display:flex;flex-wrap:wrap;gap:8px}
+.fl-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px "Archivo",sans-serif;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:9px 12px;min-height:40px}
+.fl-btn.pri{background:var(--ki);color:#1a0d00;border-color:var(--ki)}
+.fl-room{min-width:0;margin-top:20px;background:linear-gradient(180deg,#0e1530,#0b1226);border:1px solid var(--edge);border-radius:16px;padding:14px 12px 10px;position:relative;overflow:hidden}
+.fl-room::before{content:"";position:absolute;inset:auto 0 0 0;height:38%;background:repeating-linear-gradient(90deg,#ffffff06 0 1px,transparent 1px 44px),linear-gradient(180deg,transparent,#3FD3E00d);pointer-events:none}
+.fl-rh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;position:relative}
+.fl-rh h2{font:700 19px "Chakra Petch",sans-serif;margin:0;letter-spacing:.02em}
+.fl-rh .cnt{font:11px "IBM Plex Mono",monospace;color:var(--dim)}
+.fl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,45%),1fr));gap:6px;position:relative}
+.ch{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);width:100%;justify-items:center;gap:2px;padding:6px 4px 8px;border-radius:12px;min-width:0;text-align:center;position:relative}
+.ch:focus-visible{outline:2px solid var(--scout);outline-offset:2px}
+.ch:hover{background:#ffffff08}
+.bub{position:relative;max-width:100%;min-height:38px;font:12px/1.3 "Archivo",sans-serif;color:#dfe6f7;background:#1a2547;border:1px solid #2c3b6b;border-radius:10px;padding:5px 8px;word-break:break-word}
+.bub .tx{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bub::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:inherit;border-right:1px solid #2c3b6b;border-bottom:1px solid #2c3b6b;transform:translateX(-50%) rotate(45deg)}
+.fig{position:relative;width:64px;height:78px;margin-top:6px}
+.aura{position:absolute;left:50%;top:6px;width:58px;height:70px;transform:translateX(-50%);border-radius:50% 50% 40% 40%;opacity:0;
+  background:radial-gradient(closest-side,var(--c) 0,transparent 75%)}
+.head{position:absolute;left:50%;top:0;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;background:var(--c);display:grid;place-items:center;
+  font:700 12px "Chakra Petch",sans-serif;color:#0b0b12;box-shadow:0 0 0 2px #00000066;z-index:2}
+.torso{position:absolute;left:50%;top:32px;transform:translateX(-50%);width:28px;height:26px;border-radius:9px 9px 6px 6px;background:linear-gradient(180deg,var(--c),#0b0b1299);z-index:1}
+.leg{position:absolute;top:56px;width:8px;height:18px;border-radius:4px;background:#2b3961;transform-origin:top center}
+.leg.l{left:24px}.leg.r{left:33px}
+.shadow{position:absolute;left:50%;bottom:0;width:40px;height:6px;border-radius:50%;background:#00000088;transform:translateX(-50%)}
+.nm{font:700 13px "Chakra Petch",sans-serif;letter-spacing:.04em;margin-top:2px}
+.role{font:10.5px "IBM Plex Mono",monospace;color:var(--scout);letter-spacing:.04em;text-transform:uppercase;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:1px 7px;margin-top:2px}
+.s-working .tag{background:#123b25;color:var(--ok)}.s-idle .tag{background:#1b2440;color:var(--dim)}
+.s-error .tag{background:#4a1616;color:#ffb4b0}.s-nojob .tag{background:transparent;color:#6c7590;border:1px dashed #3a4566}
+.s-idle .fig,.s-idle .nm{opacity:.55}.s-idle .bub{opacity:.7}
+.s-nojob .fig{opacity:.25;filter:grayscale(1)}.s-nojob .nm,.s-nojob .bub{opacity:.45}
+.s-error .bub{background:#3a1416;border-color:#7a2a2a;color:#ffd6d3}
+.s-error .head{box-shadow:0 0 0 3px var(--err),0 0 16px var(--err)}
+.s-working .head{box-shadow:0 0 0 2px #00000066,0 0 18px var(--c)}
+.dots{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}.dots i{width:4px;height:4px;border-radius:50%;background:var(--ok)}
+@media (prefers-reduced-motion:no-preference){
+  .s-working .fig{animation:walk 2.6s ease-in-out infinite}
+  .s-working .head{animation:bob .45s ease-in-out infinite alternate}
+  .s-working .leg.l{animation:stepA .45s ease-in-out infinite alternate}.s-working .leg.r{animation:stepB .45s ease-in-out infinite alternate}
+  .s-working .aura{animation:aura 1.6s ease-in-out infinite}
+  .s-working .dots i{animation:dot 1s infinite}.s-working .dots i:nth-child(2){animation-delay:.15s}.s-working .dots i:nth-child(3){animation-delay:.3s}
+  .s-error .fig{animation:shake 2.4s ease-in-out infinite}
+  .s-idle .head{animation:breathe 4s ease-in-out infinite}
+}
+@keyframes walk{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
+@keyframes bob{to{transform:translate(-50%,-3px)}}
+@keyframes stepA{from{transform:rotate(18deg)}to{transform:rotate(-18deg)}}
+@keyframes stepB{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
+@keyframes aura{0%,100%{opacity:.25;transform:translateX(-50%) scale(.9)}50%{opacity:.75;transform:translateX(-50%) scale(1.15)}}
+@keyframes dot{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes shake{0%,88%,100%{transform:none}90%{transform:translateX(-3px)}94%{transform:translateX(3px)}97%{transform:translateX(-2px)}}
+@keyframes breathe{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,1px)}}
+.fl-gaps{margin-top:22px;background:var(--panel);border:1px dashed #3a4566;border-radius:14px;padding:12px 14px;font-size:14px;color:#CBD2E4}
+.fl-gaps b{color:var(--warn)}
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:640px;max-height:86vh;background:#0f1630;border:1px solid var(--edge);border-radius:18px 18px 0 0;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom,0)}
+.sh-top{display:flex;gap:12px;align-items:center;padding:14px 16px 8px}
+.sh-top .head{position:static;transform:none;width:44px;height:44px;font-size:15px;flex:none}
+.sh-top h3{margin:0;font:700 20px "Chakra Petch",sans-serif}.sh-top .role{white-space:normal}
+.sh-x{margin-left:auto;all:unset;cursor:pointer;font-size:22px;line-height:1;padding:6px 10px;color:var(--dim)}
+.sh-now{margin:0 16px 8px;padding:8px 10px;border-radius:10px;background:#1a2547;font-size:14px}
+.sh-tabs{display:flex;gap:6px;padding:0 16px 8px;border-bottom:1px solid var(--edge)}
+.sh-tabs button{all:unset;cursor:pointer;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:999px;background:var(--panel);color:var(--dim);border:1px solid var(--edge)}
+.sh-tabs button[aria-selected=true]{background:var(--ki);color:#1a0d00;border-color:var(--ki)}
+.sh-body{overflow:auto;padding:8px 16px 18px;-webkit-overflow-scrolling:touch}
+.it{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid #1a2442;font-size:14px}
+.it time{font:12px "IBM Plex Mono",monospace;color:var(--dim);padding-top:2px}
+.it a{color:var(--scout);word-break:break-word}.it .src{font:10.5px "IBM Plex Mono",monospace;color:#6c7590}
+.it.f{color:#ffd6d3}.it.b{color:#d9c79a}
+.empty{color:var(--dim);font-size:14px;padding:12px 0}
+.jobs{margin-top:10px;font:12px "IBM Plex Mono",monospace;color:var(--dim)}
+.jobs div{padding:3px 0}
+</style>
+<div class="fl" id="floor">
+  <header class="fl-head">
+    <p class="fl-eyebrow">Antidote HQ · live from your Mac's real jobs</p>
+    <h1>AGENT <span>FLOOR</span></h1>
+    <div class="fl-fresh" id="fl-fresh"></div>
+    <div class="fl-stats" id="fl-stats"></div>
+    <div class="fl-links" id="fl-links"></div>
+  </header>
+  <div id="fl-rooms"></div>
+  <div class="fl-gaps" id="fl-gaps"></div>
+</div>
+<script>
+window.FLOOR=(function(){
+ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ const q=id=>document.getElementById(id);
+ let D=null, LIVE=null, open=null, tab="today";
+ const tm=t=>t?new Date(t).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"today";
+ function ago(t){if(!t)return"never";const m=(Date.now()-new Date(t))/6e4;
+   if(m<1)return"just now";if(m<60)return Math.round(m)+" min ago";if(m<2880)return Math.round(m/60)+" h ago";return Math.round(m/1440)+" days ago"}
+ function until(t){if(!t)return"";const m=(new Date(t)-Date.now())/6e4;if(m<0)return"due";if(m<60)return"in "+Math.max(1,Math.round(m))+" min";
+   if(m<1440)return"in "+Math.round(m/60)+" h";return"in "+Math.round(m/1440)+" d"}
+ const ini=n=>n.replace(/[^A-Z0-9 ]/g,"").split(" ").map(w=>w[0]).join("").slice(0,2)||n.slice(0,2);
+ const LBL={working:"Working",idle:"Idle",error:"Error",nojob:"No job"};
+ function fig(){return`<div class="fig"><div class="aura"></div><div class="head"></div><div class="torso"></div><i class="leg l"></i><i class="leg r"></i><div class="shadow"></div></div>`}
+ function render(data,opts){
+  D=data; LIVE=opts||{};
+  const age=(Date.now()-new Date(D.generatedAt))/36e5, f=q("fl-fresh");
+  f.className="fl-fresh"+(age>1.5?" stale":"");
+  f.textContent=(LIVE.snapshot?"Snapshot from ":"Checked ")+ago(D.generatedAt)+(age>1.5&&!LIVE.snapshot?" — your Mac hasn't reported in (asleep or offline)":"")+(LIVE.snapshot?" · open the live floor for real-time":" · refreshes every minute");
+  const C=D.counts;
+  q("fl-stats").innerHTML=[["w",C.working,"Working"],["",C.idle,"Idle"],["e",C.error,"Errors"],["",C.nojob,"No job"]].map(([c,v,l])=>`<div class="fl-stat ${c}"><b>${v}</b><span>${l}</span></div>`).join("");
+  q("fl-links").innerHTML=(LIVE.liveUrl?`<a class="fl-btn pri" href="${esc(LIVE.liveUrl)}" target="_blank" rel="noopener">● Open the live floor</a>`:"")+
+   `<a class="fl-btn ${LIVE.liveUrl?"":"pri"}" href="${esc(D.manage)}" target="_blank" rel="noopener">🍽️ SousShift AI Management</a>`+
+   `<a class="fl-btn" href="${esc(LIVE.postsUrl||D.posts)}" target="_blank" rel="noopener">📊 Posting HQ</a>`;
+  q("fl-rooms").innerHTML=D.depts.map(d=>{const cs=D.chars.filter(c=>c.d===d.id);if(!cs.length)return"";
+   const w=cs.filter(c=>c.state==="working").length,e=cs.filter(c=>c.state==="error").length;
+   const extra=d.id==="clients"?`<a class="fl-btn pri" href="${esc(D.manage)}" target="_blank" rel="noopener">Open SousShift AI Management ↗</a>`:"";
+   return`<section class="fl-room"><div class="fl-rh"><h2>${d.emoji} ${esc(d.name)}</h2><span class="cnt">${w} working${e?` · ${e} error`:""} · ${cs.length} agents</span>${extra}</div>
+   <div class="fl-grid">${cs.map(c=>`<button class="ch s-${c.state}" style="--c:${c.c}" data-n="${esc(c.n)}" aria-label="${esc(c.n)}: ${esc(LBL[c.state])}. ${esc(c.bubble)}">
+     <div class="bub"><span class="tx">${c.state==="working"?'<span class="dots"><i></i><i></i><i></i></span> ':""}${esc(c.bubble)}</span></div>${fig()}
+     <div class="nm">${esc(c.n)}</div><div class="role">${esc(c.job)}</div><span class="tag">${LBL[c.state]}</span></button>`).join("")}</div></section>`}).join("");
+  document.querySelectorAll("#fl-rooms .ch").forEach(b=>{const c=D.chars.find(x=>x.n===b.dataset.n);b.querySelector(".head").textContent=ini(c.n)});
+  const gaps=D.chars.filter(c=>c.state==="nojob");
+  q("fl-gaps").innerHTML=`<b>Gaps:</b> ${gaps.length?gaps.map(c=>esc(c.n)+" ("+esc(c.job)+")").join(", ")+" have no scheduled job yet, so they stand still. Give one a job and it comes alive here.":"every agent has a job."}`;
+  if(open){const c=D.chars.find(x=>x.n===open);if(c)sheet(c,true)}
+ }
+ function items(list,cls){if(!list.length)return`<div class="empty">Nothing here.</div>`;
+  return list.map(e=>`<div class="it ${cls||""}"><time>${e.t?esc(cls==="n"?(until(e.t)||tm(e.t)):tm(e.t)):(cls==="n"?"open":"today")}</time><div>${e.link?`<a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.text)}</a>`:esc(e.text)}
+   <div class="src">${esc(e.src||"")}${cls==="n"&&e.t?" · "+esc(tm(e.t)):""}</div></div></div>`).join("")}
+ function sheet(c,keep){
+  open=c.n; if(!keep)tab=c.state==="error"?"failed":"today";
+  let bg=q("fl-sheet"); if(!bg){bg=document.createElement("div");bg.id="fl-sheet";bg.className="sheet-bg fl";document.body.appendChild(bg);
+   bg.addEventListener("click",e=>{if(e.target===bg)close()})}
+  const fails=c.fails.length+c.blocked.length;
+  const body=tab==="today"?items(c.done):tab==="failed"?(items(c.fails,"f")+(c.blocked.length?`<div class="src" style="margin-top:10px">Blocked by a gate on purpose (dead air / no action / policy) — not broken:</div>`+items(c.blocked,"b"):"")):items(c.next,"n");
+  bg.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(c.n)}"><div class="sh-top" style="--c:${c.c}"><div class="head">${esc(ini(c.n))}</div><div><h3>${esc(c.n)}</h3><div class="role">${esc(c.job)}</div></div><button class="sh-x" aria-label="Close">✕</button></div>
+   <div class="sh-now"><b>${esc(LBL[c.state])}</b> · ${esc(c.bubble)}${c.last?` <span class="src">· last activity ${esc(ago(c.last))}</span>`:""}</div>
+   <div class="sh-tabs" role="tablist">${[["today","Today ("+c.done.length+")"],["failed","Failed ("+fails+")"],["next","Next ("+c.next.length+")"]].map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" data-t="${k}">${l}</button>`).join("")}</div>
+   <div class="sh-body">${body}${c.jobs.length?`<div class="jobs"><b>Jobs behind ${esc(c.n)}:</b>${c.jobs.map(j=>`<div>${j.running?"🟢":j.loaded?"⚪":"🔴"} ${esc(j.id)} — last ${esc(ago(j.last))}${j.next&&j.next!=="always on"?" · next "+esc(until(j.next)):j.next?" · always on":""}</div>`).join("")}</div>`:""}
+   ${c.primary==="manage"?`<p><a class="fl-btn pri" href="${esc(D.manage)}" target="_blank" rel="noopener">Open SousShift AI Management ↗</a></p>`:""}</div></div>`;
+  bg.querySelector(".sh-x").onclick=close;
+  bg.querySelectorAll(".sh-tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;sheet(c,true)});
+ }
+ function close(){open=null;const bg=q("fl-sheet");if(bg)bg.remove()}
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+ document.addEventListener("click",e=>{const b=e.target.closest("#fl-rooms .ch");if(b&&D)sheet(D.chars.find(x=>x.n===b.dataset.n))});
+ setInterval(()=>{if(D)render(D,LIVE)},60000);
+ return {render};
+})();
+</script>
+<!--UI-END-->
+<div style="max-width:1100px;margin:24px auto 0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+  <span style="font:12px 'IBM Plex Mono',monospace;color:#8D97B3">Business, content and posting activity only. Encrypted; only your password opens it.</span>
+  <button id="lk" type="button">Lock</button></div>
+</div>
+<script>
+const K="antidote.floor.pw",KS=["antidote.posts.pw","antidote.money.pw"],DATA_URL="data.enc.json";
+const $=id=>document.getElementById(id);
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let PW=null;
+async function decrypt(pw,E){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c))));
+}
+async function loadData(){
+  const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok)throw new Error("data "+r.status);
+  FLOOR.render(await decrypt(PW,await r.json()),{});
+}
+async function unlock(pw,remember){
+  PW=pw; await loadData();
+  $("gate").hidden=true;$("app").hidden=false;
+  try{if(remember)localStorage.setItem(K,pw)}catch(e){}
+  setInterval(()=>loadData().catch(()=>{}),60000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadData().catch(()=>{})});
+}
+$("f").addEventListener("submit",ev=>{ev.preventDefault();const err=$("err");err.textContent="Unlocking…";
+  unlock($("pw").value,$("rem").checked).catch(e=>{PW=null;err.textContent=/data \d/.test(e.message)?"Couldn't load the data. Check your connection.":"Wrong password."})});
+$("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
+(()=>{let s=null;try{s=localStorage.getItem(K)||KS.map(k=>localStorage.getItem(k)).find(Boolean)}catch(e){}
+  if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
+</script>
+<!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
+     Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
+     The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
+<button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
+<button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
+<div id="biomsg" style="font-size:13px;margin-top:8px"></div></div>
+<script>
+(function(){
+var NAME="Agent Floor",PK="floorBio1",REM="antidote.floor.pw";
+var SALT=new TextEncoder().encode("antidote-"+PK+"-prf-v1");
+var form=document.getElementById("f"),pwEl=document.getElementById("pw"),gate=document.getElementById("gate");
+if(!form||!pwEl||!gate)return;
+function u8(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
+function b64(a){return btoa(String.fromCharCode.apply(null,new Uint8Array(a)))}
+function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function saved(){try{return JSON.parse(get(PK)||"null")}catch(e){return null}}
+var ok=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function prfKey(id){
+  var a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),userVerification:"required",
+    allowCredentials:[{type:"public-key",id:u8(id)}],extensions:{prf:{eval:{first:SALT}}}}});
+  var r=a.getClientExtensionResults().prf;if(!r||!r.results||!r.results.first)throw new Error("noprf");
+  return crypto.subtle.importKey("raw",r.results.first,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function enroll(pw){
+  var c=await navigator.credentials.create({publicKey:{rp:{name:NAME},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:NAME,displayName:NAME+" (Anthony Suggs)"},
+    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{residentKey:"preferred",userVerification:"required"},extensions:{prf:{eval:{first:SALT}}}}});
+  var ext=c.getClientExtensionResults().prf;if(ext&&ext.enabled===false)throw new Error("noprf");
+  var id=b64(c.rawId),key;
+  if(ext&&ext.results&&ext.results.first)key=await crypto.subtle.importKey("raw",ext.results.first,"AES-GCM",false,["encrypt"]);
+  else key=await prfKey(id);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(pw));
+  set(PK,JSON.stringify({id:id,iv:b64(iv),ct:b64(ct)}));
+  if(REM)del(REM);            /* Face ID replaces the plain "remember" copy of the password */
+}
+/* Remember what was typed; after the page hides #gate (= unlocked), offer Face ID. */
+var typed=null;
+form.addEventListener("submit",function(){typed=pwEl.value},true);
+function unlocked(){return gate.hidden||gate.style.display==="none"}
+function offer(){
+  var pw=typed||(REM?get(REM):null);
+  if(!ok||saved()||get(PK+"no")==="1"||!pw)return;
+  var box=document.getElementById("bioask");box.hidden=false;
+  document.getElementById("biono").onclick=function(){box.hidden=true;set(PK+"no","1")};
+  document.getElementById("bioyes").onclick=async function(){var m=document.getElementById("biomsg");m.textContent="Follow the Face ID / fingerprint prompt…";
+    try{await enroll(pw);m.textContent="Done. Next time tap “Unlock with Face ID / fingerprint”.";setTimeout(function(){box.hidden=true},2500)}
+    catch(e){m.textContent=e&&e.message==="noprf"?"This browser can't do it yet. Update iOS / Chrome, or let your phone save the password (it fills with Face ID).":"Didn't finish. You can try again next time.";
+      setTimeout(function(){box.hidden=true},6000)}};
+}
+new MutationObserver(function(){if(unlocked())offer()}).observe(gate,{attributes:true,attributeFilter:["hidden","style"]});
+if(unlocked())offer();
+/* Unlock button on the lock screen once a passkey is saved */
+if(ok&&saved()){
+  var b=document.createElement("button");b.type="button";b.textContent="Unlock with Face ID / fingerprint";
+  b.style.cssText="display:block;width:100%;margin:0 0 12px;padding:13px;border-radius:11px;border:0;background:#2f6fed;color:#fff;font-weight:600;font-size:16px";
+  form.insertBefore(b,form.firstChild);
+  b.onclick=async function(){
+    try{var s=saved(),key=await prfKey(s.id);
+      pwEl.value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(s.iv)},key,u8(s.ct)));
+      var rem=document.getElementById("rem");if(rem)rem.checked=false;
+      typed=pwEl.value;form.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true}));}
+    catch(e){var err=document.getElementById("err");if(err)err.textContent="Face ID / fingerprint didn't work. Use the password (you can turn it on again after).";
+      if(e&&(e.name==="OperationError"||e.message==="noprf")){del(PK);b.remove()}}};
+}
+})();
+</script>
+<!--BIO-END-->
+</body></html>

@@ -1,0 +1,1 @@
+{"name": "Antidote Agent Floor", "short_name": "Floor", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#080B16", "theme_color": "#080B16", "icons": [{"src": "../posts-98df19/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}
