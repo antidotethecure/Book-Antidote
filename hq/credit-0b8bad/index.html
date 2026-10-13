@@ -341,7 +341,7 @@ function stageInfo(st){
 }
 function renderNow(){
   const S=D.stages,ci=S.findIndex(s=>!ST.stages[s.id]),cur=ci<0?null:S[ci];
-  let h=`<div class="card hero saybox">`;
+  let h=handoffCard()+`<div class="card hero saybox">`;
   if(cur){h+=`<div class="row nosay" style="justify-content:flex-end;margin-bottom:4px"><span style="flex:1"></span>${sayBtn()}</div><div class="kicker">Step ${ci+1} of ${S.length} · next thing to do</div><h3>${esc(cur.title)}</h3><p>${esc(cur.next)}</p>
     <ul>${cur.how.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${stageInfo(cur)?`<p class="small" style="color:#d7def7;margin-bottom:12px">${esc(stageInfo(cur))}</p>`:""}
     <div class="row">${goBtn(cur.id)}<button class="primary" data-stage="${cur.id}">Mark step ${ci+1} done</button></div>`}
@@ -355,6 +355,14 @@ function renderNow(){
   h+=`<h2>Never pay these</h2><div class="card warn">${D.neverPay.map(x=>`<p style="margin:4px 0"><b>✕</b> ${esc(x)}</p>`).join("")}</div>`;
   $("v-now").innerHTML=h;
 }
+function handoffCard(){const H=D.handoff;if(!H)return "";const done=SX.handoff||{},n=H.items.filter(x=>done[x.id]).length;
+  return `<details class="card saybox" id="handoff" style="margin-bottom:10px;border-color:var(--yellow)"${SX.handoffClosed?"":" open"}><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center"><span><span class="kicker">Start here</span><br><b style="font:800 20px/1.2 var(--f-display)">${esc(H.title)}</b></span><span class="pill yellow nosay">${n}/${H.items.length}</span></summary>
+  <div class="nosay" style="display:flex;justify-content:flex-end;margin:8px 0 4px">${sayBtn()}</div>
+  <div class="list" style="margin-top:6px">${H.items.map(x=>`<label class="step${done[x.id]?" on":""}" style="padding:12px"><input type="checkbox" data-hstep="${esc(x.id)}"${done[x.id]?" checked":""}><div><b style="font-weight:600">${esc(x.t)}</b>${x.go?`<div class="nosay"><button type="button" class="lock" data-goto="${esc(x.go)}" style="min-height:32px">Open ›</button></div>`:""}</div></label>`).join("")}</div>
+  <h2 style="margin-top:16px">Talk to Claude</h2><p class="small">Open a new Claude Code chat, paste this, then add your update:</p>
+  <div class="tpl nosay" style="max-height:none">${esc(H.prompt)}</div>
+  <button type="button" class="primary nosay" data-copy="${esc(H.prompt)}" style="width:100%;margin-top:10px">Copy prompt for Claude</button>
+  <p class="small muted" style="margin-top:12px">What to tell Claude, for example:</p><ul class="bullets small">${H.examples.map(e=>`<li>“${esc(e)}”</li>`).join("")}</ul></details>`}
 function goBtn(id){const m={print:"print",sign:"print",stuff:"mail",post:"mail",track:"mail",wait:"mail",cfpb:"dates",responses:"credit"}[id];
   const lab={print:"Open print files",mail:"Open envelopes",dates:"Open deadlines",credit:"Open my credit"}[m];return m?`<button data-go="${m}">${lab}</button>`:""}
 function deadlines(){
@@ -738,8 +746,10 @@ document.addEventListener("click",ev=>{
   if(t.dataset.b&&t.closest(".seg")){CUR_B=t.dataset.b;try{sessionStorage.setItem("credit.bureau",CUR_B)}catch(e){}renderCredit();return}
 });
 document.addEventListener("click",ev=>{const a=ev.target.closest("[data-jump]");if(!a)return;ev.preventDefault();const el=$(a.dataset.jump);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
-document.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bstep){SX.build[t.dataset.bstep]=t.checked;saveX();t.closest(".step").classList.toggle("on",t.checked);return}if(t.dataset&&t.dataset.todo){ST.todos[t.dataset.todo]=t.checked;save();t.closest(".check").classList.toggle("on",t.checked)}});
+document.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.hstep){SX.handoff=SX.handoff||{};SX.handoff[t.dataset.hstep]=t.checked;saveX();t.closest(".step").classList.toggle("on",t.checked);const H=D.handoff,pl=$("handoff").querySelector(".pill");if(pl)pl.textContent=H.items.filter(x=>SX.handoff[x.id]).length+"/"+H.items.length;return}
+  if(t.dataset&&t.dataset.bstep){SX.build[t.dataset.bstep]=t.checked;saveX();t.closest(".step").classList.toggle("on",t.checked);return}if(t.dataset&&t.dataset.todo){ST.todos[t.dataset.todo]=t.checked;save();t.closest(".check").classList.toggle("on",t.checked)}});
 $("sx").onclick=()=>closeSheet(false);
+document.addEventListener("toggle",e=>{if(e.target&&e.target.id==="handoff"){SX.handoffClosed=!e.target.open;saveX()}},true);
 let QT=0;$("q").addEventListener("input",()=>{clearTimeout(QT);QT=setTimeout(renderAnswers,120)});
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();renderAnswers();$("q").blur()}});
 window.addEventListener("popstate",()=>closeSheet(true));
