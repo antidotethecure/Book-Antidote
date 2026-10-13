@@ -47,6 +47,13 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
 /* totals */
 .lp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.lp .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .lp .bar{height:8px;border-radius:9px;background:rgba(255,255,255,.08);margin:8px 0 4px;overflow:hidden}.lp .bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#f5c400,#2fbf71)}
+/* 📈 performance share: bar to the threshold with 80% / 95% ticks */
+.ps .track{position:relative;height:10px;border-radius:9px;background:rgba(255,255,255,.08);margin:8px 0 4px}.ps .track i{display:block;height:100%;border-radius:9px;background:var(--blue)}
+.ps .track.s80 i{background:var(--yellow)}.ps .track.s95 i{background:var(--orange)}.ps .track.over i{background:linear-gradient(90deg,var(--yellow),var(--green))}
+.ps .tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted);opacity:.7}
+.ps .pill.s80{background:rgba(255,212,59,.16);color:var(--yellow)}.ps .pill.s95{background:rgba(255,169,77,.18);color:var(--orange)}.ps .pill.under{background:rgba(255,255,255,.08);color:var(--muted)}
+.ps .cut{display:flex;justify-content:space-between;gap:10px;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(76,214,154,.10);border:1px solid rgba(76,214,154,.35)}.ps .cut b{color:var(--green)}
+.pstot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 10px}.pstot b{font:800 22px var(--f-num);color:var(--green)}
 .lp .pill{font-size:11px;font-weight:700;border-radius:99px;padding:3px 8px;background:rgba(47,191,113,.18);color:#5fe39a}.lp .pill.p{background:rgba(255,255,255,.08);color:var(--muted)}
 .lp ul{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}.lp details summary{cursor:pointer;font-size:13px;color:var(--muted);margin-top:4px}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -149,6 +156,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
     <div class="tile out"><div class="k">Outstanding</div><div class="v" id="tOut">—</div></div>
   </section>
   <section id="earnings" class="earn" aria-label="Earnings"><h2 style="margin-bottom:0">💰 Earnings</h2><div id="earn"></div></section>
+  <section id="perfsec" hidden aria-label="Performance share"><h2>📈 Performance share</h2><div id="perf" style="display:flex;flex-direction:column;gap:10px"></div></section>
   <section id="launchsec" hidden><h2>Launch progress</h2><div id="launch" style="display:flex;flex-direction:column;gap:10px"></div></section>
   <section id="photosec" hidden><h2>📸 Menu photos needed</h2><div id="photos" style="display:flex;flex-direction:column;gap:10px"></div>
     <p class="note" style="margin-top:8px">Tap <b>📷 Add</b> to take or pick a photo. It saves already named for that dish (on the Mac it lands in Downloads). Then tell Claude <b>"install menu photos"</b> and it goes into the app. Owners can send theirs from their own app the same way.</p></section>
@@ -252,7 +260,24 @@ function render(){
     return `<div class="lp"><div class="row"><b>${esc(r.name)}</b><span><b class="num">${r.total-need.length}/${r.total}</b> have photos</span></div><div class="bar"><i style="width:${Math.round(100*(r.total-need.length)/r.total)}%"></i></div>
     ${need.length?`<details><summary>${need.length} item${need.length>1?"s":""} need a photo</summary>${need.map(i=>`<div class="hrow phr" data-k="${k}__${esc(i.slug)}"><span>${esc(i.name)}<small>${esc(i.section)}</small></span><label class="pill" style="cursor:pointer">📷 Add<input type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>`).join("")}</details>`:"<small>✅ All items have photos</small>"}</div>`;}).join("");
   $("tiers").innerHTML=(D.tiers||[]).map(t=>`<div class="hrow"><span><b>${esc(t.name)}</b><small>${esc(t.note||"")}</small></span><span class="a">${t.setup!=null?usd(t.setup)+" setup":"Custom"}${t.monthly!=null?`<small>+ ${usd(t.monthly)}/mo</small>`:""}</span></div>`).join("");
-  renderEarn();jumpToHash();
+  renderPerf();renderEarn();jumpToHash();
+}
+/* 📈 Performance share (perf_watch.py → D.perf): this month's app sales per restaurant vs the $3,000 line.
+   Rule (2026-10-13): 10% of ONLY the amount over $3,000 ($5,000 → $200). Alerts at 80% / 95% / over go to Telegram. */
+function renderPerf(){
+  const P=D.perf;$("perfsec").hidden=!P;if(!P)return;
+  const lab={under:"On its way","80":"Getting close · 80%","95":"Almost there · 95%",over:"OVER · earning"};
+  const rs=P.restaurants||[];
+  $("perf").innerHTML=`<div class="pstot"><span>${esc(P.label)} · your share so far</span><b>${usd(P.total_share||0)}</b></div>`+
+    (P.problem?`<p class="note" style="margin:0 0 6px;color:var(--orange)">⚠️ ${esc(P.problem)}</p>`:"")+
+    (rs.length?rs.map(r=>{const w=Math.min(100,r.progress||0),st=r.stage==='80'?'s80':r.stage==='95'?'s95':r.stage;
+      return `<div class="lp ps"><div class="row"><b>${esc(r.name)}</b><span class="pill ${st}">${lab[r.stage]||esc(r.stage)}</span></div>
+      <div class="track ${st}"><i style="width:${w}%"></i><span class="tick" style="left:80%"></span><span class="tick" style="left:95%"></span></div>
+      <div class="row note"><span><b class="num" style="color:var(--ink)">${usd(r.food)}</b> of ${usd(r.threshold)} · ${r.n} sale${r.n===1?"":"s"}</span><span class="num">${r.stage==="over"?"+"+usd(r.excess)+" over":usd(r.to_go)+" to go"}</span></div>
+      ${r.stage==="over"?`<div class="cut"><span>Your ${r.pct}% of the ${usd(r.excess)} over</span><b class="num">${usd(r.share)}</b></div>`:""}
+      ${r.perf_on?"":`<p class="note" style="margin:6px 0 0">2A not switched on in billing yet: billable only if the signed agreement has it.</p>`}</div>`;}).join("")
+      :`<p class="note">No app sales recorded yet this month.</p>`)+
+    `<p class="note" style="margin:4px 0 0">${esc(P.rule||"")}. Food + non-alcoholic only, each restaurant on its own. Telegram alerts at 80%, 95% and over, once each per month.</p>`;
 }
 /* ---------- 💰 Earnings: everything below comes from clients.json (D.clients) + billing.py earnings() (D.earnings) ---------- */
 const TBD='<span class="tbd">TBD — set in clients.json</span>';
