@@ -96,6 +96,40 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
 .lock{background:none;border:0;color:var(--muted);padding:6px 0;font-weight:500;min-height:0;text-decoration:underline}
 .tierlist{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
 .tierlist .hrow{border-top-style:solid}
+
+/* earnings: MRR headline, collected vs expected, month chart (collected / billed / projected), share by client, per-business tables */
+.earn{display:flex;flex-direction:column;gap:12px}
+.ehero{background:var(--hero);border:1px solid var(--line);border-radius:16px;padding:16px}
+.ehero .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#b9c6ff}
+.ehero .v{font:700 40px/1.1 var(--f-num);margin-top:4px}.ehero .v small{font:600 15px var(--f-body);color:var(--muted)}
+.ehero p{margin:6px 0 0;font-size:13px;color:#dfe6ff}
+.cvx .bar{height:10px;border-radius:9px;background:rgba(255,255,255,.08);margin:8px 0 4px;overflow:hidden}.cvx .bar i{display:block;height:100%;border-radius:9px;background:#3987e5}
+.vz{--c1:#3987e5;--c2:#d95926;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;position:relative}
+.vz .ttl{font:700 15px var(--f-body);margin:0}.vz .sub{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-bottom:6px}.lg span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.vz svg{display:block;width:100%;height:auto;overflow:visible}
+.vz svg text{fill:var(--muted);font:500 11px var(--f-body)}.vz svg text.tot{fill:var(--ink);font:700 11px var(--f-num)}
+.vz svg .grid{stroke:rgba(255,255,255,.08)}.vz svg .hit{fill:transparent;cursor:pointer}
+.vz svg .hit:focus{outline:none}.vz svg g.on .hl{stroke:var(--ink);stroke-width:1}
+.tip{position:absolute;z-index:5;pointer-events:none;background:#050b1f;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.45;min-width:170px;max-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.tip b{font-size:13px}.tip .r{display:flex;justify-content:space-between;gap:10px}.tip .r span:last-child{font-family:var(--f-num)}
+.sh{display:grid;grid-template-columns:minmax(0,92px) 1fr auto;gap:8px 10px;align-items:center;font-size:14px}
+.sh .track{height:14px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}.sh .track i{display:block;height:100%;background:var(--c1);border-radius:0 4px 4px 0}
+.sh .amt{font:700 13px var(--f-num);text-align:right;white-space:nowrap}.sh small{color:var(--muted)}
+.acct{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;scroll-margin-top:12px}
+.acct.flash{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,212,59,.3)}
+.acct>.ch b{font-size:19px}
+.biz{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.biz:first-of-type{border-top:0;padding-top:0}
+.biz .bn{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+.et{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px}
+.et th{text-align:left;font-weight:500;color:var(--muted);padding:6px 10px 6px 0;vertical-align:top;width:38%}
+.et td{padding:6px 0;vertical-align:top;overflow-wrap:anywhere}.et tr+tr th,.et tr+tr td{border-top:1px dashed var(--line)}
+.et td small{display:block;color:var(--muted);font-size:12px}
+.tbd{color:var(--orange)}
+.mt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}.mt th,.mt td{padding:5px 4px;text-align:right;border-top:1px solid var(--line)}.mt th:first-child,.mt td:first-child{text-align:left}
+.mt td{font-family:var(--f-num)}
 </style></head><body>
 <div id="gate">
   <h1><small>SousShift AI</small>Clients</h1>
@@ -114,6 +148,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visibl
     <div class="tile in"><div class="k">Collected</div><div class="v" id="tIn">—</div></div>
     <div class="tile out"><div class="k">Outstanding</div><div class="v" id="tOut">—</div></div>
   </section>
+  <section id="earnings" class="earn" aria-label="Earnings"><h2 style="margin-bottom:0">💰 Earnings</h2><div id="earn"></div></section>
   <section id="launchsec" hidden><h2>Launch progress</h2><div id="launch" style="display:flex;flex-direction:column;gap:10px"></div></section>
   <section id="photosec" hidden><h2>📸 Menu photos needed</h2><div id="photos" style="display:flex;flex-direction:column;gap:10px"></div>
     <p class="note" style="margin-top:8px">Tap <b>📷 Add</b> to take or pick a photo. It saves already named for that dish (on the Mac it lands in Downloads). Then tell Claude <b>"install menu photos"</b> and it goes into the app. Owners can send theirs from their own app the same way.</p></section>
@@ -217,6 +252,110 @@ function render(){
     return `<div class="lp"><div class="row"><b>${esc(r.name)}</b><span><b class="num">${r.total-need.length}/${r.total}</b> have photos</span></div><div class="bar"><i style="width:${Math.round(100*(r.total-need.length)/r.total)}%"></i></div>
     ${need.length?`<details><summary>${need.length} item${need.length>1?"s":""} need a photo</summary>${need.map(i=>`<div class="hrow phr" data-k="${k}__${esc(i.slug)}"><span>${esc(i.name)}<small>${esc(i.section)}</small></span><label class="pill" style="cursor:pointer">📷 Add<input type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>`).join("")}</details>`:"<small>✅ All items have photos</small>"}</div>`;}).join("");
   $("tiers").innerHTML=(D.tiers||[]).map(t=>`<div class="hrow"><span><b>${esc(t.name)}</b><small>${esc(t.note||"")}</small></span><span class="a">${t.setup!=null?usd(t.setup)+" setup":"Custom"}${t.monthly!=null?`<small>+ ${usd(t.monthly)}/mo</small>`:""}</span></div>`).join("");
+  renderEarn();jumpToHash();
+}
+/* ---------- 💰 Earnings: everything below comes from clients.json (D.clients) + billing.py earnings() (D.earnings) ---------- */
+const TBD='<span class="tbd">TBD — set in clients.json</span>';
+const MON=k=>{const[y,m]=k.split("-").map(Number);return new Date(y,m-1,1)};
+const monLbl=(k,y)=>MON(k).toLocaleDateString("en-US",y?{month:"long",year:"numeric"}:{month:"short"});
+const isMonthly=p=>!!p.monthly||/^(monthly|month \d)/i.test(p.item||"");
+function bizStatus(c){
+  if(c.status==="prospect")return["prospect","Not signed"];
+  const pe=pending(c),late=pe.filter(p=>daysTo(p.due)<0);
+  if(late.length)return["overdue","Overdue"];
+  if(pe[0]&&daysTo(pe[0].due)<=7)return["soon","Due soon"];
+  return["paid","Paid up"];
+}
+function bizTable(c){
+  const P=c.purchases||[],setup=P.filter(p=>/setup/i.test(p.item||"")),pe=pending(c);
+  const owed=pe.filter(p=>daysTo(p.due)<=0).reduce((s,p)=>s+(+p.amount||0),0);
+  const firstMon=P.filter(isMonthly).sort((a,b)=>a.due<b.due?-1:1)[0];
+  const setupTd=setup.length?setup.map(p=>p.status==="paid"?`${usd(p.paid_amount??p.amount)} <span class="ok">paid</span><small>${fmt(parseD(p.paid_date||p.due))}</small>`:`${usd(p.amount)} <span class="${daysTo(p.due)<0?"bad":"wait"}">unpaid</span><small>due ${fmt(parseD(p.due))}</small>`).join("<br>")
+    :c.setup_fee===0?"None (monthly plan only)":TBD;
+  const monTd=c.monthly_amount!=null?`<span class="num">${usd(c.monthly_amount)}/mo</span><small>${firstMon?"since "+fmt(parseD(firstMon.due),{month:"short",day:"numeric",year:"numeric"}):esc(c.monthly_starts||"Start date TBD")}</small>`:TBD;
+  const disc=c.discount?`${esc(c.discount.label)}<small>Ends: ${esc(c.discount.ends||"TBD")}</small>`:c.status==="prospect"?"—":"None";
+  const nx=pe[0]?`<span class="num">${usd(pe[0].amount)}</span> · ${fmt(parseD(pe[0].due))}<small>${esc(pe[0].item)} (${when(daysTo(pe[0].due))})</small>`
+    :c.status==="prospect"?"—":c.monthly_amount!=null&&!firstMon?`Nothing billed yet<small>first monthly charge: date TBD (see Monthly)</small>`:"Nothing open";
+  const [cls,lab]=bizStatus(c);
+  return `<div class="biz"><div class="bn"><span>${esc(c.name)}</span><span class="chip ${cls}">${lab}</span></div>
+  <table class="et"><tbody>
+  <tr><th>Plan</th><td>${c.tier?esc(c.tier):TBD}${c.plan_note?`<small>${esc(c.plan_note)}</small>`:""}</td></tr>
+  <tr><th>Setup fee</th><td>${setupTd}</td></tr>
+  <tr><th>Monthly</th><td>${monTd}</td></tr>
+  <tr><th>Discount</th><td>${disc}</td></tr>
+  <tr><th>Owed now</th><td class="num ${owed>0?"bad":""}">${usd(owed)}</td></tr>
+  <tr><th>Next due</th><td>${nx}</td></tr>
+  </tbody></table></div>`;
+}
+let EM=[];
+function monthChart(){
+  const M=(D.earnings&&D.earnings.months)||[],now=D.earnings.thisMonth;EM=M;
+  if(!M.length)return"";
+  const W=340,H=210,L=40,R=6,T=18,B=34,iw=W-L-R,ih=H-T-B;
+  const tot=m=>m.collected+m.billed+m.projected,mx=Math.max(100,...M.map(tot));
+  const step=mx<=1000?250:mx<=2500?500:1000,top=Math.ceil(mx/step)*step,y=v=>T+ih-(v/top)*ih;
+  const bw=Math.min(34,iw/M.length*0.56),gx=i=>L+iw/M.length*(i+.5);
+  let g="";
+  for(let v=0;v<=top;v+=step)g+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${v>=1000?"$"+v/1000+"k":"$"+v}</text>`;
+  const fi=M.findIndex(m=>m.m>now);
+  if(fi>0){const x=(gx(fi-1)+gx(fi))/2;g+=`<line x1="${x}" x2="${x}" y1="${T-8}" y2="${T+ih}" stroke="rgba(255,255,255,.35)" stroke-dasharray="3 3"/><text x="${x+4}" y="${T-6}">Upcoming →</text>`}
+  const seg=(x,y0,h,cls,top_)=>{if(h<=0)return"";const r=top_?Math.min(4,h):0,x1=x+bw;
+    const d=`M${x},${y0+h}V${y0+r}${r?`Q${x},${y0} ${x+r},${y0}H${x1-r}Q${x1},${y0} ${x1},${y0+r}`:`H${x1}`}V${y0+h}Z`;
+    return cls==="pr"?`<path class="hl" d="${d}" fill="url(#hatch)" stroke="var(--c1)" stroke-width="1.5" stroke-dasharray="4 2"/>`:`<path class="hl" d="${d}" fill="var(${cls==="co"?"--c1":"--c2"})"/>`};
+  M.forEach((m,i)=>{const x=gx(i)-bw/2;let base=T+ih,parts=[["co",m.collected],["bi",m.billed],["pr",m.projected]].filter(p=>p[1]>0),out="";
+    parts.forEach((p,j)=>{const h=(p[1]/top)*ih,gap=j?2:0;base-=h;out+=seg(x,base+gap,h-gap,p[0],j===parts.length-1)});
+    const t=tot(m);
+    g+=`<g data-i="${i}">${out}${t?`<text class="tot" x="${gx(i)}" y="${base-5}" text-anchor="middle">${usd(t)}</text>`:""}<text x="${gx(i)}" y="${H-B+16}" text-anchor="middle" style="${m.m===now?"fill:var(--ink);font-weight:700":""}">${monLbl(m.m)}</text>${m.m===now?`<text x="${gx(i)}" y="${H-B+29}" text-anchor="middle" style="font-size:10px">now</text>`:""}
+    <rect class="hit" tabindex="0" role="button" aria-label="${monLbl(m.m,1)}: ${usd(t)}" x="${gx(i)-iw/M.length/2}" y="${T-10}" width="${iw/M.length}" height="${ih+10}"/></g>`});
+  return `<div class="vz" id="mchart"><p class="ttl">Money by month</p><p class="sub">Solid = real money in or real invoices. Hatched = projection from each client's monthly plan (not billed yet).</p>
+  <div class="lg"><span><i class="sw" style="background:var(--c1)"></i>Collected</span><span><i class="sw" style="background:var(--c2)"></i>Billed, not paid yet</span><span><i class="sw" style="border:1.5px dashed var(--c1);background:repeating-linear-gradient(45deg,rgba(57,135,229,.55) 0 2px,transparent 2px 5px)"></i>Projected</span></div>
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly earnings, collected, billed and projected"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(57,135,229,.12)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#3987e5" stroke-width="2"/></pattern></defs>${g}</svg>
+  <div class="tip" id="mtip" hidden></div>
+  <details><summary class="note" style="cursor:pointer;margin-top:6px">Show as a table</summary><table class="mt"><thead><tr><th>Month</th><th>Collected</th><th>Billed</th><th>Projected</th><th>Total</th></tr></thead><tbody>
+  ${M.map(m=>`<tr><td>${monLbl(m.m,1)}</td><td>${usd(m.collected)}</td><td>${usd(m.billed)}</td><td>${usd(m.projected)}</td><td>${usd(tot(m))}</td></tr>`).join("")}</tbody></table></details></div>`;
+}
+function showTip(i,anchor){
+  const m=EM[i],tip=$("mtip"),box=$("mchart");if(!m||!tip)return;
+  box.querySelectorAll("g.on").forEach(x=>x.classList.remove("on"));anchor.closest("g").classList.add("on");
+  const A=(D.earnings.accounts)||{},nm=s=>{const c=(D.clients||[]).find(c=>c.slug===s);return c?c.name.split(" (")[0]:s};
+  const lab={collected:"collected",billed:"billed, unpaid",projected:"projected"};
+  tip.innerHTML=`<b>${monLbl(m.m,1)}</b>${m.items.length?m.items.map(it=>`<div class="r"><span>${esc(nm(it.slug))} · ${lab[it.kind]}</span><span>${usd(it.amt)}</span></div>`).join(""):'<div class="note">Nothing yet</div>'}<div class="r" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>Total</span><span>${usd(m.collected+m.billed+m.projected)}</span></div>`;
+  tip.hidden=false;
+  const br=box.getBoundingClientRect(),ar=anchor.getBoundingClientRect();
+  let x=ar.left-br.left+ar.width/2-tip.offsetWidth/2;x=Math.max(6,Math.min(x,br.width-tip.offsetWidth-6));
+  tip.style.left=x+"px";tip.style.top=Math.max(4,ar.top-br.top+20)+"px";
+}
+function shareChart(groups,mrr){
+  const rows=groups.map(g=>{const amt=g.cs.reduce((s,c)=>s+(c.status!=="prospect"&&c.monthly_amount!=null?+c.monthly_amount:0),0),tbd=g.cs.some(c=>c.monthly_amount==null);return{g,amt,tbd}}).sort((a,b)=>b.amt-a.amt);
+  return `<div class="vz"><p class="ttl">Share of monthly (MRR) by client</p><p class="sub">Each client's monthly charge as a share of the ${usd(mrr)}/mo total.</p>
+  <div class="sh">${rows.map(r=>`<span>${esc(r.g.owner)}</span><span class="track" title="${esc(r.g.owner)} ${usd(r.amt)}/mo">${r.amt?`<i style="width:${Math.max(2,100*r.amt/Math.max(1,mrr))}%"></i>`:""}</span><span class="amt">${r.amt?`${usd(r.amt)} <small>${Math.round(100*r.amt/Math.max(1,mrr))}%</small>`:r.tbd?'<span class="tbd">TBD</span>':"$0"}</span>`).join("")}</div></div>`;
+}
+function renderEarn(){
+  const cs=D.clients||[],E=D.earnings||{months:[],unscheduled:[],accounts:{}},now=E.thisMonth||new Date().toISOString().slice(0,7);
+  const act=cs.filter(c=>c.status!=="prospect"),mrr=act.reduce((s,c)=>s+(+c.monthly_amount||0),0);
+  const unsch=new Set((E.unscheduled||[]).map(u=>u.slug)),live=act.filter(c=>!unsch.has(c.slug)).reduce((s,c)=>s+(+c.monthly_amount||0),0);
+  const tbd=cs.filter(c=>c.monthly_amount==null).map(c=>c.name.split(" (")[0]);
+  const all=cs.flatMap(c=>c.purchases||[]);
+  const coll=all.filter(p=>p.status==="paid"&&(p.paid_date||p.due).slice(0,7)===now).reduce((s,p)=>s+(+(p.paid_amount??p.amount)||0),0);
+  const exp=coll+all.filter(p=>p.status==="pending"&&p.due.slice(0,7)===now).reduce((s,p)=>s+(+p.amount||0),0);
+  const owedNow=all.filter(p=>p.status==="pending"&&daysTo(p.due)<=0).reduce((s,p)=>s+(+p.amount||0),0);
+  const groups=[];cs.forEach(c=>{const a=(E.accounts||{})[c.slug]||[c.slug,c.name];let g=groups.find(x=>x.key===a[0]);if(!g)groups.push(g={key:a[0],owner:a[1],cs:[]});g.cs.push(c)});
+  const rank=g=>Math.min(...g.cs.map(c=>({overdue:0,soon:1,paid:2,prospect:3})[bizStatus(c)[0]]));
+  $("earn").innerHTML=`<div class="ehero"><div class="k">Total monthly recurring (MRR)</div><div class="v">${usd(mrr)}<small> /mo</small></div>
+    <p>${usd(live)}/mo billing now${mrr-live?` · ${usd(mrr-live)}/mo signed but not started (${[...unsch].map(s=>esc((cs.find(c=>c.slug===s)||{}).name||s)).join(", ")}: starts at Toast approval)`:""}${tbd.length?` · TBD: ${tbd.map(esc).join(", ")}`:""}</p></div>
+  <div class="tiles"><div class="tile in"><div class="k">Collected ${monLbl(now)}</div><div class="v">${usd(coll)}</div></div><div class="tile"><div class="k">Expected ${monLbl(now)}</div><div class="v">${usd(exp)}</div></div><div class="tile out"><div class="k">Owed now</div><div class="v">${usd(owedNow)}</div></div></div>
+  <div class="lp cvx"><div class="row"><span>Collected vs expected · ${monLbl(now,1)}</span><b class="num">${exp?Math.round(100*coll/exp):0}%</b></div><div class="bar"><i style="width:${exp?Math.min(100,100*coll/exp):0}%"></i></div><small class="note">Expected = paid this month + still due this month (setup fees included). Owed now = anything due today or earlier and unpaid.</small></div>
+  ${monthChart()}${shareChart(groups,mrr)}
+  ${groups.sort((a,b)=>rank(a)-rank(b)).map(g=>`<div class="acct" id="earn-${esc(g.key)}"><div class="ch"><div><b>${esc(g.owner)}</b><div class="tier">${g.cs.length} business${g.cs.length>1?"es":""} · ${g.cs.some(c=>c.monthly_amount==null)?"monthly TBD":usd(g.cs.reduce((s,c)=>s+(+c.monthly_amount||0),0))+"/mo"}</div></div></div>${g.cs.map(bizTable).join("")}</div>`).join("")}`;
+  const box=$("mchart");
+  if(box){box.querySelectorAll(".hit").forEach(h=>{const i=+h.closest("g").dataset.i;h.addEventListener("mouseenter",()=>showTip(i,h));h.addEventListener("focus",()=>showTip(i,h));h.addEventListener("click",()=>showTip(i,h))});
+    box.addEventListener("mouseleave",()=>{$("mtip").hidden=true;box.querySelectorAll("g.on").forEach(x=>x.classList.remove("on"))})}
+}
+let jumped=false;
+function jumpToHash(){
+  if(jumped)return;const h=decodeURIComponent(location.hash.slice(1));if(!/^earn/.test(h))return;jumped=true;
+  const el=document.getElementById(h)||$("earnings");if(!el)return;
+  requestAnimationFrame(()=>{el.scrollIntoView({block:"start"});if(el.classList.contains("acct")){el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),2400)}});
 }
 async function unlock(pw,remember){
   PW=pw; await loadData();
