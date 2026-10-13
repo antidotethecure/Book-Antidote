@@ -166,6 +166,15 @@ nav.tabs button[aria-current=page]{color:var(--yellow)}
 .sc .none{font:600 14px/1.25 var(--f-body);color:var(--muted);font-style:italic;margin:4px 0}
 .sc .m{font-size:11px;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
 .sc button{min-height:36px;font-size:12px;padding:0 6px;margin-top:auto;border-radius:10px}
+.free{font-size:11px;line-height:1.35}
+.free summary{cursor:pointer;color:var(--yellow);font-weight:700;list-style:none;padding:4px 0}
+.free summary::-webkit-details-marker{display:none}
+.free summary::after{content:" ▾"}
+.free[open] summary::after{content:" ▴"}
+.free ul{margin:2px 0 6px;padding-left:14px}
+.free li{margin:4px 0;overflow-wrap:anywhere}
+.free a{font-weight:700;color:var(--ink)}
+.free li span{color:var(--muted)}
 .hist{display:flex;flex-wrap:wrap;gap:4px}
 .hist span{font:600 11px var(--f-num);padding:3px 6px;border-radius:6px;background:var(--panel2);color:var(--ink)}
 select{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#0a1534;color:var(--ink);font:500 16px var(--f-body)}
@@ -465,8 +474,11 @@ function renderScores(){
     else h+=`<div class="none">No score yet</div>`;
     if(last)h+=`<div class="m" style="margin-top:4px">You entered <b class="num" style="color:var(--ink)">${esc(last.score)}</b> · ${esc(last.model)} · ${esc(last.date)}</div>`;
     if(mine.length>1)h+=`<div class="hist">${mine.slice(0,5).map(x=>`<span title="${esc(x.model)}">${esc(x.score)}</span>`).join("")}</div>`;
+    const FS=((D.lib||{}).freeScores||{})[b.id];
+    if(!(f&&f.score)&&!last&&FS&&FS.length)h+=`<details class="free"><summary>Get your score free</summary><ul>${FS.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a> <span>${esc(x.model)}${x.who?" · "+esc(x.who):""}</span></li>`).join("")}</ul></details>`;
     h+=`<button type="button" data-score="${b.id}">Enter a score I saw</button></div>`});
-  h+=`</div><p class="small muted" style="margin-top:8px">${esc(S.note||"")} Scores refresh when you sign in at annualcreditreport.com or Experian and tell Claude what you see. Claude can't log in for you.</p>`;
+  const FN=((D.lib||{}).freeScores||{}).note;
+  h+=`</div>${FN?`<p class="small muted" style="margin-top:8px">${esc(FN)}</p>`:""}<p class="small muted" style="margin-top:8px">${esc(S.note||"")} Scores refresh when you sign in at annualcreditreport.com or Experian and tell Claude what you see. Claude can't log in for you.</p>`;
   return h;
 }
 function openScore(bid){
