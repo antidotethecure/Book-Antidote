@@ -573,9 +573,14 @@ function bankCard(x){
   <dl class="kv">${[["Minimum deposit",x.minDeposit],["Annual fee",x.annualFee],["Moves to unsecured?",x.graduates],["Reports to bureaus",x.reports],["Who can join / apply",x.membership]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
   ${x.note?`<p class="small" style="margin-top:8px;color:#d7def7">${esc(x.note)}</p>`:""}${srcLine({url:x.url,label:x.urlLabel||"official page",checked:x.checked})}</div>`;
 }
+function appCard(x){const pt=x.points||{},none=!pt.claim||/^no published/i.test(pt.claim);
+  return `<div class="bank"><div class="h"><div style="min-width:0"><b style="font-size:16px">${esc(x.name)}</b><div class="small muted">${esc(x.adds)}</div></div>${pill(x.type,"blue")}</div>
+  <dl class="kv">${[["Reports to",x.bureaus],["Cost",x.cost],["Hard pull?",x.hardPull]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
+  <div class="due" style="margin-top:10px"><div class="small muted">Points it can add</div>${none?`<div class="small" style="margin-top:4px">No published average</div>`:`<div style="margin-top:4px">“${esc(pt.claim)}”</div>${pt.fine?`<div class="small muted" style="margin-top:4px">Fine print: ${esc(pt.fine)}</div>`:""}${srcLine({url:pt.url,label:"where they say it",checked:x.checked})}`}</div>
+  ${x.note?`<p class="small" style="margin-top:8px;color:#d7def7">${esc(x.note)}</p>`:""}${srcLine({url:x.url,label:"official site",checked:x.checked})}</div>`}
 function renderBuild(){
   const B=D.build||{},L=D.lib||{};
-  const secs=[["plan",B.title?"My plan":null],["banks","Banks"],["au","Authorized user"],["llc","LLC funding"],["watch","Watch & learn"],["rules","Rules"]].filter(s=>s[1]);
+  const secs=[["plan",B.title?"My plan":null],["banks","Banks"],["apps","Apps"],["au","Authorized user"],["llc","LLC funding"],["watch","Watch & learn"],["rules","Rules"]].filter(s=>s[1]);
   let h=`<div class="card hero"><div class="kicker">Build credit &amp; funding</div><h3>Fix first, then build, then fund</h3><p>${esc(L.buildIntro||"")}</p></div>
   <nav class="jump" aria-label="Jump to">${secs.map(s=>`<a href="#sec-${s[0]}" data-jump="sec-${s[0]}">${esc(s[1])}</a>`).join("")}</nav>`;
   if(B.title){
@@ -586,6 +591,7 @@ function renderBuild(){
     if(B.alt)h+=`<div class="card" style="margin-top:10px"><div class="kicker">${esc(B.alt.kicker||"Other options")}</div>${para(B.alt.body)}${(B.alt.items||[]).map(a=>`<p style="margin:8px 0 0"><b>${esc(a.t)}</b><br><span class="small" style="color:#d7def7">${esc(a.d)}</span></p>${srcLine(a.src)}`).join("")}</div>`;
   }
   if(L.banks){h+=`<h2 id="sec-banks">Banks &amp; credit unions to build with</h2><p class="small muted">${esc(L.banksIntro||"")}</p>${L.banks.map(bankCard).join("")}`}
+  if(L.apps&&L.apps.items){const P=L.apps;h+=`<h2 id="sec-apps">Credit-builder apps</h2><div class="card caution"><div class="kicker">Read first</div>${para(P.caveat)}${B.appsNote?`<p style="margin-top:8px"><b style="color:var(--orange)">You:</b> ${esc(B.appsNote)}</p>`:""}</div>${P.items.map(appCard).join("")}`}
   if(L.au){const A=L.au;h+=`<h2 id="sec-au">Authorized-user tradelines</h2><div class="card">${para(A.what)}</div>
     ${A.blocks.map(b=>`<div class="card ${b.tone||""}" style="margin-top:10px"><div class="kicker">${esc(b.t)}</div>${para(b.d)}${srcList(b.src)}</div>`).join("")}`}
   if(L.business){const Bz=L.business;h+=`<h2 id="sec-llc">LLC funding ladder</h2><div class="card caution" style="margin-bottom:10px"><div class="kicker">Personal credit comes first</div>${para(Bz.note)}${srcList(Bz.noteSrc)}</div>${stepList(Bz.steps,"llc")}`;
