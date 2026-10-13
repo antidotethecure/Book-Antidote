@@ -1,0 +1,1 @@
+{"name": "Credit", "short_name": "Credit", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#071029", "theme_color": "#0a1636", "icons": [{"src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}

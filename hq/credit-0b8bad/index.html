@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a1636">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Credit">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Credit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Private credit-repair app. Generic shell: every word about the client comes from the encrypted data file. */
+:root{
+  --bg:#071029;--panel:#0e1b45;--panel2:#13245a;--ink:#eef1fb;--muted:#9aa7c9;--line:#22336d;
+  --yellow:#ffd23f;--yellow-ink:#1b1500;--red:#ff6b6b;--green:#4cd69a;--blue:#7d99ff;--orange:#ffab4c;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 96px)}
+.wrap{max-width:760px;margin:0 auto}
+h1{font:800 30px/1.05 var(--f-display);margin:0;letter-spacing:-.01em}
+h2{font:700 12px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+h3{font:800 20px/1.2 var(--f-display);margin:0}
+p{margin:0}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:13px}
+a{color:var(--yellow)}
+button,.btn{font:700 15px/1 var(--f-body);border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+  padding:0 16px;min-height:48px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn.primary,button.primary{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink)}
+.btn.ghost{background:transparent}
+button:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+button[disabled]{opacity:.6}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 0;min-width:0}
+input[type=text],input[type=date],input[type=password]{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+  background:#0a1534;color:var(--ink);font:500 16px var(--f-body)}
+input[type=date]{font-family:var(--f-num)}
+label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+/* gate */
+#gate{max-width:380px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
+.rm{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.err{color:var(--red);font-size:14px;min-height:1.3em}
+/* header */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:6px}
+.sub{font-size:13px;color:var(--muted)}
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card+.card{margin-top:10px}
+.hero{background:linear-gradient(160deg,#16307f,#0e1b45);border-color:#2d47a0}
+.kicker{font:700 11px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--yellow)}
+.hero h3{margin:8px 0 6px;font-size:22px}
+.hero ul{margin:10px 0 14px;padding-left:20px;color:#d7def7}.hero li{margin:4px 0}
+/* stage tracker */
+.stages{list-style:none;margin:0;padding:0;position:relative}
+.stage{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;padding:8px 0;position:relative}
+.stage:not(:last-child)::after{content:"";position:absolute;left:21px;top:46px;bottom:-10px;width:2px;background:var(--line)}
+.dotx{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:grid;place-items:center;
+  font:800 16px var(--f-num);color:var(--muted);cursor:pointer;z-index:1;padding:0;min-height:0}
+.stage.done .dotx{background:var(--green);border-color:var(--green);color:#04210f}
+.stage.cur .dotx{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink);box-shadow:0 0 0 5px rgba(255,210,63,.18)}
+.stage .t{font-weight:700}.stage.done .t{color:var(--muted);text-decoration:line-through}
+.stage.cur .t{color:var(--yellow)}
+.stage .s{font-size:13px;color:var(--muted)}
+/* lists */
+.list{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px 16px;border-top:1px solid var(--line);
+  width:100%;background:none;border-left:0;border-right:0;border-bottom:0;border-radius:0;text-align:left;font:inherit;color:inherit;min-height:64px;cursor:pointer}
+.item:first-child{border-top:0}
+.item .what{min-width:0}.item b{display:block;font-weight:700}
+.item .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.chev{color:var(--muted);font-size:22px}
+.badge{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font:800 15px var(--f-num);background:var(--panel2);color:var(--ink)}
+.badge.cert{background:var(--yellow);color:var(--yellow-ink)}
+.pill{display:inline-block;font:700 11px/1 var(--f-body);letter-spacing:.03em;padding:5px 8px;border-radius:99px;background:var(--panel2);color:var(--muted);white-space:nowrap;margin:2px 4px 2px 0}
+.pill.red{background:rgba(255,107,107,.16);color:var(--red)}
+.pill.green{background:rgba(76,214,154,.16);color:var(--green)}
+.pill.yellow{background:rgba(255,210,63,.18);color:var(--yellow)}
+.pill.blue{background:rgba(125,153,255,.18);color:var(--blue)}
+.pill.orange{background:rgba(255,171,76,.18);color:var(--orange)}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font:700 20px/1.25 var(--f-num);margin-top:2px;overflow-wrap:anywhere}
+.tile.bad .v{color:var(--red)}
+/* segmented tabs */
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin:14px 0}
+.seg button{flex:1;min-height:42px;border:0;background:transparent;color:var(--muted);border-radius:10px;padding:0 6px;font-size:14px}
+.seg button[aria-selected=true]{background:var(--yellow);color:var(--yellow-ink)}
+/* account cards */
+.acct{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:inherit;font:inherit;cursor:pointer;margin-top:10px}
+.acct.neg{border-left:4px solid var(--red)}
+.acct .h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.acct .h b{font-size:16px}
+.acct .bal{font:700 20px/1.1 var(--f-num);white-space:nowrap}
+.acct .l4{font:500 13px var(--f-num);color:var(--muted)}
+dl.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:6px 12px;margin:10px 0 0;font-size:14px}
+dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;text-align:right;overflow-wrap:anywhere}dl.kv dd .num{font-weight:700}
+.unk{color:var(--muted);font-family:var(--f-body);font-style:italic;font-size:13px}
+.lates{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.late{font:700 12px var(--f-num);padding:4px 7px;border-radius:7px;background:rgba(255,107,107,.15);color:var(--red)}
+.bullets{margin:6px 0 0;padding-left:20px}.bullets li{margin:6px 0}
+.fixhead{font:800 16px var(--f-display);margin:18px 0 8px;color:var(--yellow)}
+.fix{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.fix:first-child{border-top:0}
+.cmp{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.cmp th,.cmp td{padding:7px 6px;border-top:1px solid var(--line);text-align:right;font-family:var(--f-num)}
+.cmp th:first-child,.cmp td:first-child{text-align:left;font-family:var(--f-body);color:var(--muted)}
+.cmp thead th{border-top:0;color:var(--yellow);font-family:var(--f-body)}
+/* address block */
+.addr{background:#fff;color:#0a1636;border-radius:14px;padding:18px;font:700 22px/1.35 var(--f-body);margin:12px 0;user-select:text;-webkit-user-select:text}
+.ret{font-size:14px;color:var(--muted);margin-top:8px}
+.big{font:800 26px/1.1 var(--f-display)}
+.due{background:var(--panel2);border-radius:12px;padding:12px 14px;margin-top:12px}
+.due .v{font:700 18px var(--f-num);color:var(--yellow)}
+/* sheet */
+#sheet{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+#sheet[hidden]{display:none}
+.sheetbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--bg);padding:6px 0 10px;z-index:2}
+/* bottom tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(10,22,54,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px)}
+nav.tabs button{border:0;background:none;min-height:54px;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:var(--muted);padding:0 2px}
+nav.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current=page]{color:var(--yellow)}
+.view[hidden]{display:none}
+.check{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;padding:14px 16px;border-top:1px solid var(--line);cursor:pointer}
+.check:first-child{border-top:0}
+.check input{width:24px;height:24px;margin:1px 0 0;accent-color:var(--yellow)}
+.check.on span{color:var(--muted);text-decoration:line-through}
+.warn{border:1px solid rgba(255,107,107,.5);background:rgba(255,107,107,.08)}
+.warn b{color:var(--red)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);background:var(--yellow);color:var(--yellow-ink);
+  font-weight:700;padding:10px 16px;border-radius:99px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.lock{background:none;border:0;color:var(--muted);font-weight:500;min-height:40px;padding:0;text-decoration:underline}
+@media (max-width:380px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.addr{font-size:19px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body>
+<div id="gate">
+  <h1>Credit</h1>
+  <p class="muted">Private. Enter your password to unlock.</p>
+  <form id="f"><div style="display:flex;flex-direction:column;gap:12px">
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <label class="rm"><input type="checkbox" id="rem" checked> Remember on this phone</label>
+    <button class="primary" type="submit" id="ub">Unlock</button>
+    <div class="err" id="err"></div></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top"><div><h1>Credit</h1><div class="sub" id="hsub"></div></div><div class="sub" id="fresh" style="text-align:right"></div></div>
+  <section class="view" id="v-now"></section>
+  <section class="view" id="v-print" hidden></section>
+  <section class="view" id="v-mail" hidden></section>
+  <section class="view" id="v-credit" hidden></section>
+  <section class="view" id="v-dates" hidden></section>
+  <p class="small muted" style="margin-top:28px">Everything here is encrypted; it only opens with your password. Checkmarks, tracking numbers and dates you type stay on this phone. <button class="lock" id="lk" type="button">Lock this phone</button></p>
+</div>
+
+<div id="sheet" hidden role="dialog" aria-modal="true"><div class="wrap"><div class="sheetbar"><button type="button" class="ghost btn" id="sx">‹ Back</button><span class="sub" id="stitle"></span></div><div id="sbody"></div></div></div>
+
+<nav class="tabs" id="tabs" hidden aria-label="Sections">
+  <button data-v="now" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Now</button>
+  <button data-v="print"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>Print</button>
+  <button data-v="mail"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Mail it</button>
+  <button data-v="credit"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>My credit</button>
+  <button data-v="dates"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Deadlines</button>
+</nav>
+
+<script>
+"use strict";
+const K="antidote.credit.pw";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let KEY=null,D=null,ST=null,SK="",CUR_B="tu";
+const NA='<span class="unk">not on report yet</span>';
+
+/* ---------- crypto: key derived once per session; data + each PDF use the same key ---------- */
+async function unlockData(pw){
+  const r=await fetch("data.enc.json",{cache:"no-store"});if(!r.ok)throw new Error("data "+r.status);
+  const E=await r.json();
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c));
+  KEY=key;return JSON.parse(new TextDecoder().decode(pt));
+}
+const BLOBS=new Map();
+async function getPdf(f){
+  if(BLOBS.has(f.m))return BLOBS.get(f.m);
+  const r=await fetch("m/"+f.m);if(!r.ok)throw new Error("file "+r.status);
+  const b=new Uint8Array(await r.arrayBuffer());
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(0,12)},KEY,b.slice(12));
+  const blob=new Blob([pt],{type:"application/pdf"});BLOBS.set(f.m,blob);return blob;
+}
+const FILES={};
+async function fileAct(btn,act){
+  const f=FILES[btn.dataset.f];if(!f)return;
+  const old=btn.innerHTML;btn.disabled=true;btn.textContent=act==="share"?"Preparing…":"Opening…";
+  try{
+    const blob=await getPdf(f);
+    if(act==="share"){
+      const file=new File([blob],f.share,{type:"application/pdf"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:f.share})}catch(e){if(e.name!=="AbortError")throw e}
+      }else{download(blob,f.share);toast("Sharing isn't supported here, so it downloaded instead")}
+    }else if(act==="dl"){download(blob,f.share)}
+    else{const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+  }catch(e){toast("Couldn't open the file. Check your connection.")}
+  finally{btn.disabled=false;btn.innerHTML=old}
+}
+function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+function fileBlock(f,primary){
+  FILES[f.m]=f;
+  return `<div class="card"><b>${esc(f.title)}</b><div class="small muted">${f.pages} page${f.pages>1?"s":""} · ${(f.size/1e6).toFixed(1)} MB</div>
+  <div class="row" style="margin-top:12px"><button class="${primary?"primary":""}" data-f="${f.m}" data-act="open">Open</button><button data-f="${f.m}" data-act="share">Share</button><button data-f="${f.m}" data-act="dl">Download</button></div></div>`;
+}
+
+/* ---------- local state (this phone only) ---------- */
+function loadState(){try{ST=JSON.parse(localStorage.getItem(SK)||"null")}catch(e){ST=null}ST=ST||{stages:{},env:{},todos:{}};ST.stages=ST.stages||{};ST.env=ST.env||{};ST.todos=ST.todos||{}}
+function save(){try{localStorage.setItem(SK,JSON.stringify(ST))}catch(e){}}
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+
+/* ---------- dates ---------- */
+const pd=s=>{if(!s)return null;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?new Date(+m[1],m[2]-1,+m[3]):null};
+const addD=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const today=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+const fmt=d=>d?d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}):"";
+const left=d=>{const n=Math.round((d-today())/864e5);return n===0?"today":n>0?`in ${n} day${n>1?"s":""}`:`${-n} day${n<-1?"s":""} ago`};
+const BLANK='<span class="unk">blank on report</span>';
+const money=v=>v==null?NA:v==="blank"?BLANK:'<span class="num">$'+Number(v).toLocaleString("en-US")+'</span>';
+
+/* ---------- envelopes ---------- */
+function envState(e){return ST.env[e.n]||{}}
+function envDue(e){
+  const s=envState(e),del=pd(s.delivered),mail=pd(s.mailed);
+  if(!e.clock)return null;
+  if(del)return{est:false,due:addD(del,e.clock),mov:e.mov?addD(del,e.mov):null};
+  if(mail)return{est:true,due:addD(mail,e.clock+5),mov:e.mov?addD(mail,e.mov+5):null};
+  return null;
+}
+const certEnv=()=>D.envelopes.filter(e=>e.method==="certified");
+
+/* ---------- NOW ---------- */
+function stageInfo(st){
+  const ce=certEnv();
+  if(st.id==="track"){const n=ce.filter(e=>envState(e).track).length;return `${n} of ${ce.length} tracking numbers logged`}
+  if(st.id==="wait"){const n=ce.filter(e=>envState(e).delivered).length;return `${n} of ${ce.length} delivered`}
+  if(st.id==="post"){const n=D.envelopes.filter(e=>envState(e).mailed).length;return `${n} of ${D.envelopes.length} marked mailed`}
+  if(st.id==="cfpb"){const c=D.cfpb.find(x=>x.due);return c?"Due "+fmt(pd(c.due))+" ("+left(pd(c.due))+")":""}
+  return "";
+}
+function renderNow(){
+  const S=D.stages,ci=S.findIndex(s=>!ST.stages[s.id]),cur=ci<0?null:S[ci];
+  let h=`<div class="card hero">`;
+  if(cur){h+=`<div class="kicker">Step ${ci+1} of ${S.length} · next thing to do</div><h3>${esc(cur.title)}</h3><p>${esc(cur.next)}</p>
+    <ul>${cur.how.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${stageInfo(cur)?`<p class="small" style="color:#d7def7;margin-bottom:12px">${esc(stageInfo(cur))}</p>`:""}
+    <div class="row">${goBtn(cur.id)}<button class="primary" data-stage="${cur.id}">Mark step ${ci+1} done</button></div>`}
+  else h+=`<div class="kicker">All steps done</div><h3>Round complete</h3><p>Send Claude every response that came back and start the next round.</p>`;
+  h+=`</div><h2>Where you are</h2><div class="card"><ol class="stages">`;
+  S.forEach((s,i)=>{const done=!!ST.stages[s.id],isCur=i===ci;
+    h+=`<li class="stage${done?" done":""}${isCur?" cur":""}"><button class="dotx" data-stage="${s.id}" aria-label="${done?"Undo":"Mark done"}: ${esc(s.title)}">${done?"✓":i+1}</button>
+    <div><div class="t">${esc(s.title)}</div>${stageInfo(s)?`<div class="s">${esc(stageInfo(s))}</div>`:isCur?`<div class="s">You are here</div>`:""}</div></li>`});
+  h+=`</ol><p class="small muted" style="margin-top:8px">Tap a circle to check a step off (or undo it).</p></div>`;
+  h+=`<h2>Coming up</h2>${upcoming(4)}`;
+  h+=`<h2>Never pay these</h2><div class="card warn">${D.neverPay.map(x=>`<p style="margin:4px 0"><b>✕</b> ${esc(x)}</p>`).join("")}</div>`;
+  $("v-now").innerHTML=h;
+}
+function goBtn(id){const m={print:"print",sign:"print",stuff:"mail",post:"mail",track:"mail",wait:"mail",cfpb:"dates",responses:"credit"}[id];
+  const lab={print:"Open print files",mail:"Open envelopes",dates:"Open deadlines",credit:"Open my credit"}[m];return m?`<button data-go="${m}">${lab}</button>`:""}
+function deadlines(){
+  const L=[];
+  D.cfpb.filter(c=>c.due).forEach(c=>L.push({d:pd(c.due),t:`CFPB response due: ${c.company}`,s:`Complaint #${c.number}`}));
+  D.envelopes.forEach(e=>{const x=envDue(e);if(!x)return;
+    L.push({d:x.due,t:`${e.company} answer due${x.est?" (estimate)":""}`,s:`${e.clock}-day clock from delivery${x.est?"; enter the delivered date for the exact day":""}`});
+    if(x.mov)L.push({d:x.mov,t:`${e.company}: how-they-verified answer due${x.est?" (estimate)":""}`,s:"15 days from delivery"})});
+  return L.sort((a,b)=>a.d-b.d);
+}
+function upcoming(n){
+  const L=deadlines().filter(x=>x.d>=addD(today(),-3));
+  if(!L.length)return `<div class="card muted">No deadlines yet. Response clocks show up here once you enter mailed or delivered dates.</div>`;
+  return `<div class="list">${L.slice(0,n||99).map(x=>`<div class="item" style="cursor:default"><div class="badge">${x.d.getDate()}</div><div class="what"><b>${esc(x.t)}</b><div class="meta">${esc(fmt(x.d))} · ${esc(left(x.d))}<br>${esc(x.s)}</div></div><span></span></div>`).join("")}</div>`;
+}
+
+/* ---------- PRINT ---------- */
+function renderPrint(){
+  const F=D.print.fedex;
+  let h=`<h2>Files to print</h2>${D.print.files.map((f,i)=>fileBlock(f,i===0)).join("")}
+  <p class="small muted" style="margin-top:8px">Print settings: <b style="color:var(--ink)">${esc(D.print.settings)}</b>. Every envelope's own files are inside its card under Mail it, in case you need to reprint one.</p>
+  <h2>Print at FedEx Office</h2>
+  <div class="card"><div class="kicker">Easiest: email it</div><p style="margin:8px 0">${esc(F.emailHow)}</p>
+    <div class="row"><button class="primary" data-copy="${esc(F.email)}">Copy ${esc(F.email)}</button></div>
+    <p class="small muted" style="margin-top:10px">Tap Share on the file above → Mail → paste the address. Or Share → FedEx Office app if you have it.</p></div>
+  <div class="card"><div class="kicker">Or order online</div><p style="margin:8px 0">${esc(F.onlineHow)}</p><a class="btn" href="${esc(F.online)}" target="_blank" rel="noopener">FedEx print online ↗</a></div>
+  <div class="card"><div class="kicker">FedEx Office near me</div><div class="row" style="margin-top:10px"><a class="btn" href="${esc(F.mapsApple)}" target="_blank" rel="noopener">Apple Maps</a><a class="btn" href="${esc(F.mapsGoogle)}" target="_blank" rel="noopener">Google Maps</a></div>
+  <p class="small muted" style="margin-top:10px">FedEx Print &amp; Go details checked on fedex.com ${esc(F.verified)}.</p></div>`;
+  $("v-print").innerHTML=h;
+}
+
+/* ---------- MAIL ---------- */
+function envRow(e){
+  const s=envState(e),cert=e.method==="certified";
+  const st=s.delivered?`<span class="pill green">Delivered</span>`:s.mailed?`<span class="pill blue">Mailed</span>`:"";
+  return `<button class="item" data-env="${e.n}"><div class="badge${cert?" cert":""}">${e.n}</div><div class="what"><b>${esc(e.company)}</b>
+  <div class="meta">${cert?"Certified Mail":"First-Class stamp"} · ${e.sheets} sheets · ${e.oz} oz ${st}${s.track?` · ${esc(s.track)}`:""}</div></div><span class="chev">›</span></button>`;
+}
+function renderMail(){
+  const M=D.mail;
+  let h=`<h2>Post office near me</h2><div class="row"><a class="btn primary" href="${esc(M.postOfficeApple)}" target="_blank" rel="noopener">Apple Maps</a><a class="btn" href="${esc(M.postOfficeGoogle)}" target="_blank" rel="noopener">Google Maps</a></div>
+  <h2>Certified Mail, how it works</h2><div class="card"><ol class="bullets">${M.certified.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>
+  <h2>Your ${D.envelopes.length} envelopes</h2><p class="small muted" style="margin-bottom:8px">Yellow number = Certified Mail. Tap one for the address, what goes inside and tracking.</p>
+  <div class="list">${D.envelopes.map(envRow).join("")}</div>`;
+  if(D.doneOnline&&D.doneOnline.length)h+=`<h2>Done online, don't mail</h2><div class="list">${D.doneOnline.map(x=>`<div class="item" style="cursor:default"><div class="badge" style="background:var(--green);color:#04210f">✓</div><div class="what"><b>${esc(x.company)}</b><div class="meta">${esc(x.note)}</div></div><span></span></div>`).join("")}</div>`;
+  $("v-mail").innerHTML=h;
+}
+function openEnv(n){
+  const e=D.envelopes.find(x=>x.n==n);if(!e)return;
+  const s=envState(e),cert=e.method==="certified",addr=e.to.join("\n"),q=encodeURIComponent(e.to.slice(-2).join(", "));
+  let h=`<div class="kicker">Envelope ${e.n} of ${D.envelopes.length} · ${e.kind==="freeze"?"Security freeze":"Dispute"}</div><div class="big" style="margin-top:6px">${esc(e.company)}</div>
+  <p class="muted" style="margin-top:6px">${esc(e.why||"")}</p>
+  <div class="addr">${e.to.map(esc).join("<br>")}</div>
+  <div class="row"><button class="primary" data-copy="${esc(addr)}">Copy address</button></div>
+  <div class="row" style="margin-top:10px"><a class="btn" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">Apple Maps</a><a class="btn" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Google Maps</a></div>
+  <p class="ret"><b>From</b> (top-left corner): ${D.client.returnAddress.map(esc).join(", ")} <button class="lock" data-copy="${esc(D.client.returnAddress.join("\n"))}">copy</button></p>
+  <div class="card" style="margin-top:14px;${cert?"border-color:var(--yellow)":""}"><b style="color:${cert?"var(--yellow)":"var(--blue)"}">${cert?"CERTIFIED MAIL (no green card). Keep the receipt.":"Regular First-Class stamp"}</b>
+  <div class="small muted" style="margin-top:4px">${e.sheets} sheets inside · about ${e.oz} oz</div></div>
+  <h2>What goes inside, in this order</h2><div class="card"><ol class="bullets">${e.inside.map(x=>`<li>${esc(x)}</li>`).join("")}</ol><p class="small muted" style="margin-top:8px">The cover sheet from the print-out does NOT go inside.</p></div>
+  <h2>This envelope's files</h2>${e.files.map(f=>fileBlock(f,false)).join("")}`;
+  if(cert){h+=`<h2>Tracking</h2><div class="card"><label class="f" for="tk">Certified tracking number (from the PS 3800 slip)</label>
+    <input type="text" id="tk" inputmode="numeric" autocomplete="off" autocapitalize="characters" value="${esc(s.track||"")}" placeholder="9407 …">
+    <div id="tklink" style="margin-top:10px"></div>`}
+  else h+=`<h2>Dates</h2><div class="card">`;
+  h+=`<label class="f" for="md">Date mailed</label><input type="date" id="md" value="${esc(s.mailed||"")}">
+    ${cert?`<label class="f" for="dd">Date delivered (from USPS tracking)</label><input type="date" id="dd" value="${esc(s.delivered||"")}">`:""}
+    <div id="duebox"></div></div>`;
+  showSheet(e.company,h);
+  const upd=()=>{const s2=envState(e);
+    const tl=$("tklink");if(tl)tl.innerHTML=s2.track?`<a class="btn" href="${esc(D.mail.trackUrl+encodeURIComponent(s2.track.replace(/\s+/g,"")))}" target="_blank" rel="noopener">Track on USPS ↗</a>`:"";
+    const x=envDue(e),db=$("duebox");
+    if(!e.clock)db.innerHTML=e.clockNote?`<div class="due"><div class="small muted">${esc(e.clockNote)}</div></div>`:"";
+    else if(!x)db.innerHTML=`<div class="due small muted">Enter the delivered date and the ${e.clock}-day answer deadline${e.mov?` (and the ${e.mov}-day how-they-verified deadline)`:""} shows here.</div>`;
+    else db.innerHTML=`<div class="due"><div class="small muted">${x.est?"Estimate (delivery assumed 5 days after mailing)":"From the delivered date"}</div>
+      <div class="v">Answer due ${esc(fmt(x.due))}</div><div class="small muted">${esc(left(x.due))} · ${e.clock}-day clock</div>
+      ${x.mov?`<div class="v" style="margin-top:8px">How-they-verified due ${esc(fmt(x.mov))}</div><div class="small muted">${esc(left(x.mov))} · ${e.mov}-day clock</div>`:""}</div>`;};
+  const bind=(id,k)=>{const el=$(id);if(!el)return;el.addEventListener("input",()=>{ST.env[e.n]=Object.assign(envState(e),{[k]:el.value.trim()});save();upd()})};
+  bind("tk","track");bind("md","mailed");bind("dd","delivered");upd();
+}
+
+/* ---------- MY CREDIT ---------- */
+const STATE_PILL={open:["Open","green"],closed:["Closed","blue"],chargeoff:["Charged off","red"],collection:["Collection","red"],deleted:["Deleted","green"],notReported:["Not reported","blue"],unknown:["Not checked yet",""]};
+const RES_PILL={verified:"orange",remains:"orange",updated:"yellow",deleted:"green",skipped:"red",pending:"yellow",watch:"blue",none:""};
+function pill(t,c){return t?`<span class="pill ${c||""}">${esc(t)}</span>`:""}
+function bureau(id){return D.bureaus.find(b=>b.id===id)}
+function tilesFor(bid){
+  const A=D.accounts.map(a=>({a,x:a.b[bid]})).filter(o=>o.x&&!["notReported","unknown","deleted"].includes(o.x.state));
+  const c=k=>A.filter(o=>o.x.state===k).length;
+  const bal=A.reduce((s,o)=>s+(typeof o.x.balance==="number"?o.x.balance:0),0);
+  const disp=A.filter(o=>o.x.r2&&o.x.r2.code==="pending").length;
+  return `<div class="tiles"><div class="tile"><div class="k">Open</div><div class="v">${c("open")}</div></div>
+  <div class="tile bad"><div class="k">Charged off</div><div class="v">${c("chargeoff")}</div></div>
+  <div class="tile"><div class="k">Closed</div><div class="v">${c("closed")}</div></div>
+  <div class="tile${c("collection")?" bad":""}"><div class="k">Collections</div><div class="v">${c("collection")}</div></div>
+  <div class="tile"><div class="k">Balances</div><div class="v">$${bal.toLocaleString("en-US")}</div></div>
+  <div class="tile"><div class="k">In dispute</div><div class="v">${disp}</div></div></div>`;
+}
+function acctCard(a,bid){
+  const x=a.b[bid]||{state:"unknown"},sp=STATE_PILL[x.state]||["",""];
+  const showBal=!["notReported","unknown"].includes(x.state);
+  return `<button class="acct${a.negative?" neg":""}" data-acct="${a.id}" data-b="${bid}"><div class="h"><div style="min-width:0"><b>${esc(a.label)}</b>
+  <div class="small muted">${esc(a.creditor)} ${a.last4?`<span class="l4">· …${esc(a.last4)}</span>`:""}</div></div>
+  <div class="bal">${showBal?(x.balance==null?"<span class='unk'>balance n/a</span>":money(x.balance)):""}</div></div>
+  <div style="margin-top:8px">${pill(sp[0],sp[1])}${a.notMine?pill("NOT YOURS","red"):""}${x.result&&x.result.code!=="none"?pill(x.result.text,RES_PILL[x.result.code]):""}${x.r2&&x.r2.code==="pending"?pill("Round 2 pending","yellow"):""}</div>
+  ${showBal&&x.state!=="deleted"?"":`<div class="small muted" style="margin-top:4px">${esc(x.status||"")}</div>`}</button>`;
+}
+function renderCredit(){
+  const tabs=D.bureaus.map(b=>`<button data-b="${b.id}" aria-selected="${CUR_B===b.id}" role="tab">${esc(b.short)}</button>`).join("")+`<button data-b="fix" aria-selected="${CUR_B==="fix"}" role="tab">Fix list</button>`;
+  let h=`<div class="seg" role="tablist">${tabs}</div>`;
+  if(CUR_B==="fix"){h+=renderFix()}
+  else{
+    const b=bureau(CUR_B);
+    h+=`<div class="card"><div class="kicker">${esc(b.name)} · as of ${esc(fmt(pd(b.asOf)))}</div><p class="small" style="margin-top:6px">${esc(b.source)}</p><p class="small muted" style="margin-top:4px">${esc(b.note)}</p></div>
+    <h2>Summary</h2>${tilesFor(CUR_B)}`;
+    const on=D.accounts.filter(a=>a.b[CUR_B]&&!["notReported","unknown"].includes(a.b[CUR_B].state));
+    const off=D.accounts.filter(a=>!a.b[CUR_B]||["notReported","unknown"].includes(a.b[CUR_B].state));
+    const col=on.filter(a=>a.collection);
+    h+=`<h2>Collections</h2>${col.length?col.map(a=>acctCard(a,CUR_B)).join(""):`<div class="card muted">No collections on ${esc(b.name)}${b.id==="eq"?" that we know of (collections not checked yet)":""}.</div>`}`;
+    const neg=on.filter(a=>a.negative&&!a.collection),pos=on.filter(a=>!a.negative);
+    h+=`<h2>Negative accounts (${neg.length})</h2>${neg.map(a=>acctCard(a,CUR_B)).join("")||`<div class="card muted">None.</div>`}`;
+    h+=`<h2>Good / closed accounts (${pos.length})</h2>${pos.map(a=>acctCard(a,CUR_B)).join("")||`<div class="card muted">${b.id==="eq"?"Not on report yet: the full Equifax report hasn't been pulled.":"None."}</div>`}`;
+    if(off.length)h+=`<h2>Not on ${esc(b.name)}</h2><div class="list">${off.map(a=>`<button class="item" data-acct="${a.id}" data-b="${CUR_B}"><div class="what"><b>${esc(a.label)}</b><div class="meta">${esc(a.creditor)} · ${esc((a.b[CUR_B]||{}).status||"not on report yet")}</div></div><span></span><span class="chev">›</span></button>`).join("")}</div>`;
+  }
+  $("v-credit").innerHTML=h;
+}
+function fixRows(L){return `<div class="list">${L.map(i=>`<div class="fix"><span class="pill ${i.k==="fix"?"red":"blue"}" style="margin:0">${i.k==="fix"?"Fix":"Verify"}</span><div><div class="small muted">${esc(i.a)}</div><div>${esc(i.t)}</div></div></div>`).join("")}</div>`}
+function renderFix(){
+  const groups=new Map(),add=(g,i)=>{if(!groups.has(g))groups.set(g,[]);groups.get(g).push(i)};
+  D.bureaus.forEach(b=>groups.set(b.name,[]));
+  D.accounts.forEach(a=>{
+    const name=a.label+(a.last4?" …"+a.last4:"")+" · "+a.creditor;
+    (a.wrong||[]).forEach(w=>add(w.b==="all"?a.furnisher+" (all bureaus)":bureau(w.b).name,{k:"fix",a:name,t:w.t}));
+    (a.verify||[]).forEach(w=>add(w.b==="all"?a.furnisher+" (all bureaus)":bureau(w.b).name,{k:"verify",a:name,t:w.t}));
+  });
+  (D.fixGeneral||[]).forEach(w=>add(w.b==="all"?"All bureaus":bureau(w.b).name,{k:"verify",a:"General",t:w.t}));
+  const n=[...groups.values()].reduce((s,l)=>s+l.length,0);
+  let h=`<p class="muted">${n} things still need to be fixed or verified. Red = wrong on the report (already in a Round 2 letter). Blue = still needs checking.</p>`;
+  groups.forEach((L,g)=>{if(L.length)h+=`<div class="fixhead">${esc(g)} <span class="small muted">(${L.length})</span></div>${fixRows(L)}`});
+  return h;
+}
+function kv(label,v,isMoney){if(v===undefined)return "";return `<dt>${esc(label)}</dt><dd>${v===null?NA:v==="blank"?BLANK:isMoney?money(v):esc(v)}</dd>`}
+function openAcct(id,bid){
+  const a=D.accounts.find(x=>x.id===id);if(!a)return;
+  const x=a.b[bid]||{state:"unknown",status:"not on report yet"},b=bureau(bid),sp=STATE_PILL[x.state]||["",""];
+  let h=`<div class="kicker">${esc(b.name)} · as of ${esc(fmt(pd(b.asOf)))}</div><div class="big" style="margin-top:6px">${esc(a.label)}</div>
+  <div class="muted">${esc(a.creditor)}${a.last4?` · ending <span class="num">${esc(a.last4)}</span>`:""}</div>
+  ${a.aka?`<p class="small muted" style="margin-top:4px">${esc(a.aka)}</p>`:""}
+  <div style="margin-top:10px">${pill(sp[0],sp[1])}${a.notMine?pill("NOT YOURS","red"):""}${a.neverPay?pill("NEVER PAY","red"):""}</div>
+  ${a.note?`<p style="margin-top:10px">${esc(a.note)}</p>`:""}`;
+  h+=`<h2>${esc(b.name)} shows</h2><div class="card"><dl class="kv">${kv("Status",x.status||null)}${["notReported","unknown"].includes(x.state)?"":
+    kv("Type",a.type)+kv("Opened",a.opened)+kv("Owner",a.owner)+kv("Balance",x.balance,1)+kv("Original amount",x.original,1)+kv("Credit limit",x.limit,1)+kv("High balance",x.high,1)+kv("Charged-off amount",x.chargeOff,1)+kv("Past due",x.pastDue,1)+kv("Last payment",x.lastPay)+kv("Terms",x.terms)+kv("Closed",x.closed)+kv("Last updated",x.updated)}</dl>
+    ${x.lates?`<div class="small muted" style="margin-top:12px">Late payments</div><div class="lates">${x.lates.map(l=>`<span class="late">${esc(l)}</span>`).join("")}</div>`:x.state&&!["notReported","unknown","deleted"].includes(x.state)&&a.negative?`<div class="small muted" style="margin-top:12px">Late payments: ${NA}</div>`:""}
+    ${x.remarks?`<p class="small muted" style="margin-top:12px">${esc(x.remarks)}</p>`:""}</div>`;
+  if(x.result||x.r2)h+=`<h2>Disputes</h2><div class="card">${x.result?`<div><span class="small muted">Last result:</span> ${pill(x.result.text,RES_PILL[x.result.code])}</div>`:""}${x.r2?`<div style="margin-top:6px"><span class="small muted">This round:</span> ${pill(x.r2.text,RES_PILL[x.r2.code])}</div>`:""}</div>`;
+  const W=(a.wrong||[]);if(W.length)h+=`<h2>What's wrong</h2><div class="list">${W.map(w=>`<div class="fix"><span class="pill red" style="margin:0">${esc(w.b==="all"?"All":bureau(w.b).short)}</span><div>${esc(w.t)}</div></div>`).join("")}</div>`;
+  const V=(a.verify||[]);if(V.length)h+=`<h2>Needs verification</h2><div class="list">${V.map(w=>`<div class="fix"><span class="pill blue" style="margin:0">${esc(w.b==="all"?"All":bureau(w.b).short)}</span><div>${esc(w.t)}</div></div>`).join("")}</div>`;
+  const rows=[["Status",o=>o.status?esc(o.status):NA],["Balance",o=>money(o.balance)],["High bal.",o=>money(o.high)],["Past due",o=>money(o.pastDue)]];
+  h+=`<h2>Side by side</h2><div class="card" style="overflow-x:auto"><table class="cmp"><thead><tr><th></th>${D.bureaus.map(bb=>`<th>${esc(bb.short)}</th>`).join("")}</tr></thead><tbody>
+  ${rows.map(([l,f])=>`<tr><td>${l}</td>${D.bureaus.map(bb=>{const o=a.b[bb.id];return `<td>${!o||["notReported","unknown"].includes(o.state)?`<span class="unk">${o&&o.state==="notReported"?"not reported":"n/a"}</span>`:l==="Status"?`<span class="small">${(STATE_PILL[o.state]||[""])[0]}</span>`:f(o)}</td>`}).join("")}</tr>`).join("")}</tbody></table>
+  <p class="small muted" style="margin-top:8px">"n/a" = not on report yet. As of: ${D.bureaus.map(bb=>esc(bb.short)+" "+esc(bb.asOf)).join(" · ")}</p></div>`;
+  showSheet(a.label,h);
+}
+
+/* ---------- DEADLINES ---------- */
+function renderDates(){
+  let h=`<h2>CFPB complaints</h2><div class="list">${D.cfpb.map(c=>`<div class="item" style="cursor:default"><div class="badge${c.number?"":" cert"}">${c.number?"✓":"!"}</div><div class="what"><b>${esc(c.company)}</b>
+    <div class="meta">${c.number?`#<span class="num">${esc(c.number)}</span> · filed ${esc(fmt(pd(c.filed)))}<br>Company response due <b style="color:var(--yellow)">${esc(fmt(pd(c.due)))}</b> (${esc(left(pd(c.due)))})`:`<b style="color:var(--yellow)">${esc(c.status)}</b>`}</div></div>${c.number?`<button class="btn ghost" data-copy="${esc(c.number)}" style="min-height:40px;padding:0 10px">Copy</button>`:"<span></span>"}</div>`).join("")}</div>
+    <div class="row" style="margin-top:10px"><a class="btn" href="${esc(D.cfpbUrl)}" target="_blank" rel="noopener">consumerfinance.gov ↗</a></div>
+  <h2>Response deadlines</h2>${upcoming()}
+  <h2>To do</h2><div class="list">${D.todos.map(t=>`<label class="check${ST.todos[t.id]?" on":""}"><input type="checkbox" data-todo="${t.id}"${ST.todos[t.id]?" checked":""}><span>${esc(t.t)}</span></label>`).join("")}</div>
+  <h2>Never pay these</h2><div class="card warn">${D.neverPay.map(x=>`<p style="margin:4px 0"><b>✕</b> ${esc(x)}</p>`).join("")}</div>
+  <h2>Denials (damages log)</h2><div class="list">${D.denials.map(x=>`<div class="item" style="cursor:default"><div class="badge">✕</div><div class="what"><b>${esc(x.company)}: ${esc(x.what)}</b><div class="meta">${esc(fmt(pd(x.date)))}<br>${esc(x.why)}</div></div><span></span></div>`).join("")}</div>
+  <p class="small muted" style="margin-top:8px">Got a new denial (credit, apartment, insurance, job)? Photograph it and send it to Claude. Denials tied to the disputed accounts are damages.</p>`;
+  $("v-dates").innerHTML=h;
+}
+
+/* ---------- shell ---------- */
+let SCROLL=0;
+function showSheet(title,html){SCROLL=window.scrollY;$("stitle").textContent=title;$("sbody").innerHTML=html;$("sheet").hidden=false;$("sheet").scrollTop=0;document.body.style.overflow="hidden";history.pushState({sheet:1},"")}
+function closeSheet(fromPop){if($("sheet").hidden)return;$("sheet").hidden=true;document.body.style.overflow="";renderAll();window.scrollTo(0,SCROLL);if(!fromPop&&history.state&&history.state.sheet)history.back()}
+function show(v){document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
+  try{sessionStorage.setItem("credit.view",v)}catch(e){}window.scrollTo(0,0)}
+function renderAll(){renderNow();renderPrint();renderMail();renderCredit();renderDates()}
+async function copy(t){try{await navigator.clipboard.writeText(t);toast("Copied")}catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied")}catch(_){toast("Couldn't copy")}ta.remove()}}
+document.addEventListener("click",ev=>{
+  const t=ev.target.closest("button,[data-copy]");if(!t)return;
+  if(t.dataset.v){show(t.dataset.v);return}
+  if(t.dataset.go){show(t.dataset.go);return}
+  if(t.dataset.copy!==undefined){ev.preventDefault();copy(t.dataset.copy);return}
+  if(t.dataset.f){fileAct(t,t.dataset.act);return}
+  if(t.dataset.stage){const id=t.dataset.stage;ST.stages[id]=!ST.stages[id];save();renderNow();return}
+  if(t.dataset.env){openEnv(t.dataset.env);return}
+  if(t.dataset.acct){openAcct(t.dataset.acct,t.dataset.b);return}
+  if(t.dataset.b&&t.closest(".seg")){CUR_B=t.dataset.b;try{sessionStorage.setItem("credit.bureau",CUR_B)}catch(e){}renderCredit();return}
+});
+document.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.todo){ST.todos[t.dataset.todo]=t.checked;save();t.closest(".check").classList.toggle("on",t.checked)}});
+$("sx").onclick=()=>closeSheet(false);
+window.addEventListener("popstate",()=>closeSheet(true));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet(false)});
+$("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
+
+async function unlock(pw,remember){
+  D=await unlockData(pw);
+  SK="credit."+D.client.id+".r"+D.round.n;loadState();
+  try{const b=sessionStorage.getItem("credit.bureau");if(b)CUR_B=b}catch(e){}
+  $("hsub").textContent=`${D.client.greeting} · ${D.round.label} · letters dated ${fmt(pd(D.round.letterDate))}`;
+  $("fresh").textContent="Updated "+new Date(D.built).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  renderAll();
+  $("gate").hidden=true;$("app").hidden=false;$("tabs").hidden=false;
+  let v="now";try{v=sessionStorage.getItem("credit.view")||"now"}catch(e){}show(v);
+  try{if(remember)localStorage.setItem(K,pw)}catch(e){}
+}
+$("f").addEventListener("submit",e=>{e.preventDefault();const err=$("err");err.textContent="";$("ub").textContent="Unlocking…";
+  unlock($("pw").value,$("rem").checked).catch(x=>{err.textContent=/data \d/.test(x.message)?"Couldn't load your data. Check your connection.":"Wrong password."}).finally(()=>{$("ub").textContent="Unlock"})});
+(()=>{let s=null;try{s=localStorage.getItem(K)}catch(e){}if(s)unlock(s,true).catch(()=>{$("pw").focus()});else $("pw").focus()})();
+</script>
+<!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
+     Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
+     The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
+<button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
+<button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
+<div id="biomsg" style="font-size:13px;margin-top:8px"></div></div>
+<script>
+(function(){
+var NAME="Credit",PK="creditBio1",REM="antidote.credit.pw";
+var SALT=new TextEncoder().encode("antidote-"+PK+"-prf-v1");
+var form=document.getElementById("f"),pwEl=document.getElementById("pw"),gate=document.getElementById("gate");
+if(!form||!pwEl||!gate)return;
+function u8(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
+function b64(a){return btoa(String.fromCharCode.apply(null,new Uint8Array(a)))}
+function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function saved(){try{return JSON.parse(get(PK)||"null")}catch(e){return null}}
+var ok=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function prfKey(id){
+  var a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),userVerification:"required",
+    allowCredentials:[{type:"public-key",id:u8(id)}],extensions:{prf:{eval:{first:SALT}}}}});
+  var r=a.getClientExtensionResults().prf;if(!r||!r.results||!r.results.first)throw new Error("noprf");
+  return crypto.subtle.importKey("raw",r.results.first,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function enroll(pw){
+  var c=await navigator.credentials.create({publicKey:{rp:{name:NAME},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:NAME,displayName:NAME},
+    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{residentKey:"preferred",userVerification:"required"},extensions:{prf:{eval:{first:SALT}}}}});
+  var ext=c.getClientExtensionResults().prf;if(ext&&ext.enabled===false)throw new Error("noprf");
+  var id=b64(c.rawId),key;
+  if(ext&&ext.results&&ext.results.first)key=await crypto.subtle.importKey("raw",ext.results.first,"AES-GCM",false,["encrypt"]);
+  else key=await prfKey(id);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(pw));
+  set(PK,JSON.stringify({id:id,iv:b64(iv),ct:b64(ct)}));
+  if(REM)del(REM);            /* Face ID replaces the plain "remember" copy of the password */
+}
+/* Remember what was typed; after the page hides #gate (= unlocked), offer Face ID. */
+var typed=null;
+form.addEventListener("submit",function(){typed=pwEl.value},true);
+function unlocked(){return gate.hidden||gate.style.display==="none"}
+function offer(){
+  var pw=typed||(REM?get(REM):null);
+  if(!ok||saved()||get(PK+"no")==="1"||!pw)return;
+  var box=document.getElementById("bioask");box.hidden=false;
+  document.getElementById("biono").onclick=function(){box.hidden=true;set(PK+"no","1")};
+  document.getElementById("bioyes").onclick=async function(){var m=document.getElementById("biomsg");m.textContent="Follow the Face ID / fingerprint prompt…";
+    try{await enroll(pw);m.textContent="Done. Next time tap “Unlock with Face ID / fingerprint”.";setTimeout(function(){box.hidden=true},2500)}
+    catch(e){m.textContent=e&&e.message==="noprf"?"This browser can't do it yet. Update iOS / Chrome, or let your phone save the password (it fills with Face ID).":"Didn't finish. You can try again next time.";
+      setTimeout(function(){box.hidden=true},6000)}};
+}
+new MutationObserver(function(){if(unlocked())offer()}).observe(gate,{attributes:true,attributeFilter:["hidden","style"]});
+if(unlocked())offer();
+/* Unlock button on the lock screen once a passkey is saved */
+if(ok&&saved()){
+  var b=document.createElement("button");b.type="button";b.textContent="Unlock with Face ID / fingerprint";
+  b.style.cssText="display:block;width:100%;margin:0 0 12px;padding:13px;border-radius:11px;border:0;background:#2f6fed;color:#fff;font-weight:600;font-size:16px";
+  form.insertBefore(b,form.firstChild);
+  b.onclick=async function(){
+    try{var s=saved(),key=await prfKey(s.id);
+      pwEl.value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(s.iv)},key,u8(s.ct)));
+      var rem=document.getElementById("rem");if(rem)rem.checked=false;
+      typed=pwEl.value;form.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true}));}
+    catch(e){var err=document.getElementById("err");if(err)err.textContent="Face ID / fingerprint didn't work. Use the password (you can turn it on again after).";
+      if(e&&(e.name==="OperationError"||e.message==="noprf")){del(PK);b.remove()}}};
+}
+})();
+</script>
+<!--BIO-END-->
+</body></html>
