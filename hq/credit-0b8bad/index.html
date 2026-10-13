@@ -132,8 +132,8 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;text-align:right;overflow-wrap:any
 .sheetbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--bg);padding:6px 0 10px;z-index:2}
 /* bottom tabs */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(10,22,54,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px)}
-nav.tabs button{border:0;background:none;min-height:54px;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:var(--muted);padding:0 2px}
+  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:6px 2px calc(env(safe-area-inset-bottom,0px) + 6px)}
+nav.tabs button{border:0;background:none;min-height:54px;flex-direction:column;gap:3px;font-size:10.5px;font-weight:700;color:var(--muted);padding:0 1px;white-space:nowrap}
 nav.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current=page]{color:var(--yellow)}
 .view[hidden]{display:none}
@@ -146,6 +146,66 @@ nav.tabs button[aria-current=page]{color:var(--yellow)}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);background:var(--yellow);color:var(--yellow-ink);
   font-weight:700;padding:10px 16px;border-radius:99px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .lock{background:none;border:0;color:var(--muted);font-weight:500;min-height:40px;padding:0;text-decoration:underline}
+/* help search */
+.ask{position:relative;margin:12px 0 4px}
+.ask input{-webkit-appearance:none;appearance:none;width:100%;min-height:48px;padding:10px 14px 10px 42px;border-radius:14px;border:1px solid var(--line);background:#0a1534;color:var(--ink);font:500 16px var(--f-body)}
+.ask svg{position:absolute;left:14px;top:14px;width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2.2;stroke-linecap:round}
+.answers{margin-top:8px}
+.qa{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:8px;overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:700;display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"+";color:var(--yellow);font:800 20px/1 var(--f-num)}
+.qa[open] summary::after{content:"–"}
+.qa .ans{padding:0 14px 14px;color:#d7def7;font-size:15px}
+.qa .ans ol,.qa .ans ul{margin:6px 0;padding-left:20px}
+/* scores */
+.scores{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.sc .k{font:700 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
+.sc .v{font:700 26px/1.1 var(--f-num)}
+.sc .none{font:600 14px/1.25 var(--f-body);color:var(--muted);font-style:italic;margin:4px 0}
+.sc .m{font-size:11px;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
+.sc button{min-height:36px;font-size:12px;padding:0 6px;margin-top:auto;border-radius:10px}
+.hist{display:flex;flex-wrap:wrap;gap:4px}
+.hist span{font:600 11px var(--f-num);padding:3px 6px;border-radius:6px;background:var(--panel2);color:var(--ink)}
+select{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#0a1534;color:var(--ink);font:500 16px var(--f-body)}
+input[type=number]{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#0a1534;color:var(--ink);font:500 16px var(--f-num)}
+/* build tab */
+.jump{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;margin:10px 0 0;scrollbar-width:none}
+.jump::-webkit-scrollbar{display:none}
+.jump a{flex:0 0 auto;font:700 13px/1 var(--f-body);padding:9px 12px;border-radius:99px;background:var(--panel2);color:var(--ink);text-decoration:none}
+.src{font-size:12px;color:var(--muted);margin-top:8px;overflow-wrap:anywhere}
+.src a{color:var(--blue)}
+.step{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;padding:14px 16px;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step input{width:24px;height:24px;margin:2px 0 0;accent-color:var(--yellow)}
+.step.on b{color:var(--muted);text-decoration:line-through}
+.step p{font-size:14px;color:#d7def7;margin-top:4px}
+.step .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.step .links a{font-size:13px;font-weight:700;padding:6px 10px;border-radius:9px;background:var(--panel2);text-decoration:none}
+.bank{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:10px}
+.bank .h{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.bank dl.kv{grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr)}
+.bank dl.kv dd{text-align:left}
+.vid{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px}
+.vid b{display:block;color:var(--ink)}
+.vid .ch{font-size:12px;color:var(--yellow);margin-top:2px}
+.vid p{font-size:14px;color:#d7def7;margin-top:6px}
+.ok{border:1px solid rgba(76,214,154,.45);background:rgba(76,214,154,.07)}
+.ok b{color:var(--green)}
+.caution{border:1px solid rgba(255,171,76,.55);background:rgba(255,171,76,.08)}
+.caution .kicker{color:var(--orange)}
+.say{min-height:36px;padding:0 12px;font-size:13px;border-radius:99px;gap:6px}
+.say[aria-pressed=true]{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow)}
+.prog{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:8px 0 4px}
+.prog i{display:block;height:100%;background:var(--yellow);border-radius:99px}
+.wiz .body{color:#d7def7}
+.wiz .body ul,.wiz .body ol{padding-left:20px;margin:6px 0}
+.tpl{white-space:pre-wrap;background:#0a1534;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.45;margin-top:10px;max-height:46vh;overflow-y:auto;user-select:text;-webkit-user-select:text}
+.wiznav{position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px;display:flex;gap:10px}
+.wiznav>*{flex:1}
+.flash{animation:fl 1.6s ease-out}
+@keyframes fl{0%{box-shadow:0 0 0 3px var(--yellow)}100%{box-shadow:0 0 0 0 transparent}}
 @media (max-width:380px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.addr{font-size:19px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style></head><body>
@@ -161,10 +221,14 @@ nav.tabs button[aria-current=page]{color:var(--yellow)}
 
 <div class="wrap" id="app" hidden>
   <div class="top"><div><h1>Credit</h1><div class="sub" id="hsub"></div></div><div class="sub" id="fresh" style="text-align:right"></div></div>
+  <div class="ask" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input type="search" id="q" placeholder="Ask anything: how do I…, what is…" autocomplete="off" aria-label="Search help" enterkeyhint="search"></div>
+  <div class="answers" id="answers" aria-live="polite"></div>
   <section class="view" id="v-now"></section>
   <section class="view" id="v-print" hidden></section>
   <section class="view" id="v-mail" hidden></section>
   <section class="view" id="v-credit" hidden></section>
+  <section class="view" id="v-build" hidden></section>
   <section class="view" id="v-dates" hidden></section>
   <p class="small muted" style="margin-top:28px">Everything here is encrypted; it only opens with your password. Checkmarks, tracking numbers and dates you type stay on this phone. <button class="lock" id="lk" type="button">Lock this phone</button></p>
 </div>
@@ -176,6 +240,7 @@ nav.tabs button[aria-current=page]{color:var(--yellow)}
   <button data-v="print"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>Print</button>
   <button data-v="mail"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Mail it</button>
   <button data-v="credit"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>My credit</button>
+  <button data-v="build"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V11M9.5 21V11M14.5 21V11M19 21V11M2 9l10-6 10 6z"/></svg>Build</button>
   <button data-v="dates"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Deadlines</button>
 </nav>
 
@@ -185,7 +250,7 @@ const K="antidote.credit.pw";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-let KEY=null,D=null,ST=null,SK="",CUR_B="tu";
+let KEY=null,D=null,ST=null,SK="",XK="",SX={},CUR_B="tu";
 const NA='<span class="unk">not on report yet</span>';
 
 /* ---------- crypto: key derived once per session; data + each PDF use the same key ---------- */
@@ -231,6 +296,9 @@ function fileBlock(f,primary){
 /* ---------- local state (this phone only) ---------- */
 function loadState(){try{ST=JSON.parse(localStorage.getItem(SK)||"null")}catch(e){ST=null}ST=ST||{stages:{},env:{},todos:{}};ST.stages=ST.stages||{};ST.env=ST.env||{};ST.todos=ST.todos||{}}
 function save(){try{localStorage.setItem(SK,JSON.stringify(ST))}catch(e){}}
+/* scores + build checklists live across rounds, in their own key */
+function loadX(){try{SX=JSON.parse(localStorage.getItem(XK)||"null")}catch(e){SX=null}SX=SX||{};SX.scores=SX.scores||{};SX.build=SX.build||{}}
+function saveX(){try{localStorage.setItem(XK,JSON.stringify(SX))}catch(e){}}
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
 
 /* ---------- dates ---------- */
@@ -264,12 +332,12 @@ function stageInfo(st){
 }
 function renderNow(){
   const S=D.stages,ci=S.findIndex(s=>!ST.stages[s.id]),cur=ci<0?null:S[ci];
-  let h=`<div class="card hero">`;
-  if(cur){h+=`<div class="kicker">Step ${ci+1} of ${S.length} · next thing to do</div><h3>${esc(cur.title)}</h3><p>${esc(cur.next)}</p>
+  let h=`<div class="card hero saybox">`;
+  if(cur){h+=`<div class="row nosay" style="justify-content:flex-end;margin-bottom:4px"><span style="flex:1"></span>${sayBtn()}</div><div class="kicker">Step ${ci+1} of ${S.length} · next thing to do</div><h3>${esc(cur.title)}</h3><p>${esc(cur.next)}</p>
     <ul>${cur.how.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${stageInfo(cur)?`<p class="small" style="color:#d7def7;margin-bottom:12px">${esc(stageInfo(cur))}</p>`:""}
     <div class="row">${goBtn(cur.id)}<button class="primary" data-stage="${cur.id}">Mark step ${ci+1} done</button></div>`}
   else h+=`<div class="kicker">All steps done</div><h3>Round complete</h3><p>Send Claude every response that came back and start the next round.</p>`;
-  h+=`</div><h2>Where you are</h2><div class="card"><ol class="stages">`;
+  h+=`</div><div class="card" style="margin-top:10px;display:flex;gap:12px;align-items:center"><div style="flex:1;min-width:0"><b>File a CFPB complaint</b><div class="small muted">Step-by-step walkthrough that can read itself to you</div></div><button type="button" data-goto="wizard:cfpb" style="flex:0 0 auto">Open</button></div><h2>Where you are</h2><div class="card"><ol class="stages">`;
   S.forEach((s,i)=>{const done=!!ST.stages[s.id],isCur=i===ci;
     h+=`<li class="stage${done?" done":""}${isCur?" cur":""}"><button class="dotx" data-stage="${s.id}" aria-label="${done?"Undo":"Mark done"}: ${esc(s.title)}">${done?"✓":i+1}</button>
     <div><div class="t">${esc(s.title)}</div>${stageInfo(s)?`<div class="s">${esc(stageInfo(s))}</div>`:isCur?`<div class="s">You are here</div>`:""}</div></li>`});
@@ -384,9 +452,43 @@ function acctCard(a,bid){
   <div style="margin-top:8px">${pill(sp[0],sp[1])}${a.notMine?pill("NOT YOURS","red"):""}${x.result&&x.result.code!=="none"?pill(x.result.text,RES_PILL[x.result.code]):""}${x.r2&&x.r2.code==="pending"?pill("Round 2 pending","yellow"):""}</div>
   ${showBal&&x.state!=="deleted"?"":`<div class="small muted" style="margin-top:4px">${esc(x.status||"")}</div>`}</button>`;
 }
+/* ---------- scores (data.json = found on paper; extra = typed on this phone) ---------- */
+const MODELS=["FICO 8","FICO 9","FICO 10T","FICO Auto 8","FICO Bankcard 8","FICO 2/4/5 (mortgage)","VantageScore 3.0","VantageScore 4.0","Other / not sure"];
+function myScores(bid){return ((SX.scores||{})[bid]||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||b.at-a.at)}
+function renderScores(){
+  const S=D.scores||{};
+  let h=`<h2 id="sec-scores">Credit scores</h2><div class="scores">`;
+  D.bureaus.forEach(b=>{
+    const f=S[b.id],mine=myScores(b.id),last=mine[0];
+    h+=`<div class="sc"><div class="k">${esc(b.name)}</div>`;
+    if(f&&f.score)h+=`<div class="v">${esc(f.score)}</div><div class="m">${esc(f.model)} · ${esc(fmt(pd(f.date)))}<br>${esc(f.source)}</div>`;
+    else h+=`<div class="none">No score yet</div>`;
+    if(last)h+=`<div class="m" style="margin-top:4px">You entered <b class="num" style="color:var(--ink)">${esc(last.score)}</b> · ${esc(last.model)} · ${esc(last.date)}</div>`;
+    if(mine.length>1)h+=`<div class="hist">${mine.slice(0,5).map(x=>`<span title="${esc(x.model)}">${esc(x.score)}</span>`).join("")}</div>`;
+    h+=`<button type="button" data-score="${b.id}">Enter a score I saw</button></div>`});
+  h+=`</div><p class="small muted" style="margin-top:8px">${esc(S.note||"")} Scores refresh when you sign in at annualcreditreport.com or Experian and tell Claude what you see. Claude can't log in for you.</p>`;
+  return h;
+}
+function openScore(bid){
+  const b=bureau(bid),mine=myScores(bid),t=new Date(),iso=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+  let h=`<div class="kicker">${esc(b.name)}</div><div class="big" style="margin-top:6px">Enter a score I saw</div>
+  <p class="muted small" style="margin-top:6px">Saved on this phone only. Write down the model too: FICO 8 and VantageScore 3.0 numbers aren't comparable.</p>
+  <div class="card" style="margin-top:12px"><label class="f" for="scv">Score (300–850)</label><input type="number" id="scv" inputmode="numeric" min="300" max="850" placeholder="e.g. 612">
+  <label class="f" for="scm">Model</label><select id="scm">${MODELS.map(m=>`<option>${esc(m)}</option>`).join("")}</select>
+  <label class="f" for="scd">Date you saw it</label><input type="date" id="scd" value="${iso}">
+  <label class="f" for="scs">Where (optional)</label><input type="text" id="scs" placeholder="Experian app, Credit Karma, NFCU, myFICO…" autocomplete="off">
+  <div class="err" id="scerr"></div><button type="button" class="primary" id="scsave" style="width:100%">Save score</button></div>
+  <h2>Scores you entered</h2>${mine.length?`<div class="list">${mine.map(x=>`<div class="item" style="cursor:default"><div class="badge" style="width:auto;padding:0 8px">${esc(x.score)}</div><div class="what"><b>${esc(x.model)}</b><div class="meta">${esc(fmt(pd(x.date)))}${x.src?" · "+esc(x.src):""}</div></div><button type="button" class="btn ghost" data-delscore="${bid}:${x.at}" style="min-height:40px;padding:0 10px">Delete</button></div>`).join("")}</div>`:`<div class="card muted">None yet.</div>`}`;
+  showSheet(b.name+" score",h);
+  $("scsave").onclick=()=>{const v=parseInt($("scv").value,10);
+    if(!(v>=250&&v<=900)){$("scerr").textContent="Type the 3-digit score (300–850).";return}
+    SX.scores=SX.scores||{};(SX.scores[bid]=SX.scores[bid]||[]).push({score:v,model:$("scm").value,date:$("scd").value||iso,src:$("scs").value.trim(),at:Date.now()});
+    saveX();toast("Score saved");openScore(bid)};
+}
+
 function renderCredit(){
   const tabs=D.bureaus.map(b=>`<button data-b="${b.id}" aria-selected="${CUR_B===b.id}" role="tab">${esc(b.short)}</button>`).join("")+`<button data-b="fix" aria-selected="${CUR_B==="fix"}" role="tab">Fix list</button>`;
-  let h=`<div class="seg" role="tablist">${tabs}</div>`;
+  let h=renderScores()+`<h2>Accounts by bureau</h2><div class="seg" role="tablist" style="margin-top:0">${tabs}</div>`;
   if(CUR_B==="fix"){h+=renderFix()}
   else{
     const b=bureau(CUR_B);
@@ -441,10 +543,149 @@ function openAcct(id,bid){
   showSheet(a.label,h);
 }
 
+/* ---------- BUILD CREDIT & FUNDING ---------- */
+const srcLine=s=>s&&s.url?`<div class="src">Checked ${esc(s.checked||"")} · <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label||"source")} ↗</a></div>`:"";
+const srcList=L=>(L||[]).map(srcLine).join("");
+function para(t){ /* plain text → paragraphs; lines "- x" become bullets, "1. x" numbered */
+  const out=[];let list=null,lt="";
+  String(t||"").split("\n").forEach(l=>{const b=/^- (.*)/.exec(l),n=/^\d+\. (.*)/.exec(l);
+    if(b||n){const tag=b?"ul":"ol";if(!list||lt!==tag){if(list)out.push(`<${lt}>${list.join("")}</${lt}>`);list=[];lt=tag}list.push(`<li>${esc((b||n)[1])}</li>`)}
+    else{if(list){out.push(`<${lt}>${list.join("")}</${lt}>`);list=null}if(l.trim())out.push(`<p style="margin:6px 0">${esc(l)}</p>`)}});
+  if(list)out.push(`<${lt}>${list.join("")}</${lt}>`);return out.join("");
+}
+function linksRow(L){return L&&L.length?`<div class="links">${L.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} ↗</a>`).join("")}</div>`:""}
+function stepList(L,ns){return `<div class="list">${L.map(s=>{const k=ns+"."+s.id,on=!!(SX.build||{})[k];
+  return `<label class="step${on?" on":""}"><input type="checkbox" data-bstep="${esc(k)}"${on?" checked":""}><div><b>${esc(s.t)}</b>${s.d?`<p>${esc(s.d)}</p>`:""}${linksRow(s.links)}${srcLine(s.src)}</div></label>`}).join("")}</div>`}
+function bankCard(x){
+  return `<div class="bank"><div class="h"><div style="min-width:0"><b style="font-size:16px">${esc(x.name)}</b><div class="small muted">${esc(x.open)}</div></div>${pill(x.stageLabel||x.stage,{rebuild:"red",build:"yellow",established:"green",business:"blue"}[x.stage])}</div>
+  <dl class="kv">${[["Minimum deposit",x.minDeposit],["Annual fee",x.annualFee],["Moves to unsecured?",x.graduates],["Reports to bureaus",x.reports],["Who can join / apply",x.membership]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
+  ${x.note?`<p class="small" style="margin-top:8px;color:#d7def7">${esc(x.note)}</p>`:""}${srcLine({url:x.url,label:x.urlLabel||"official page",checked:x.checked})}</div>`;
+}
+function renderBuild(){
+  const B=D.build||{},L=D.lib||{};
+  const secs=[["plan",B.title?"My plan":null],["banks","Banks"],["au","Authorized user"],["llc","LLC funding"],["watch","Watch & learn"],["rules","Rules"]].filter(s=>s[1]);
+  let h=`<div class="card hero"><div class="kicker">Build credit &amp; funding</div><h3>Fix first, then build, then fund</h3><p>${esc(L.buildIntro||"")}</p></div>
+  <nav class="jump" aria-label="Jump to">${secs.map(s=>`<a href="#sec-${s[0]}" data-jump="sec-${s[0]}">${esc(s[1])}</a>`).join("")}</nav>`;
+  if(B.title){
+    h+=`<h2 id="sec-plan">${esc(B.title)}</h2><p class="small muted" style="margin-bottom:8px">${esc(B.intro||"")}</p>`;
+    if(B.caveat)h+=`<div class="card caution" style="margin-bottom:10px"><div class="kicker">${esc(B.caveat.kicker||"Read this first")}</div><h3 style="margin:6px 0">${esc(B.caveat.title)}</h3>${para(B.caveat.body)}${srcList(B.caveat.src)}</div>`;
+    h+=stepList(B.steps||[],"plan");
+    if(B.scoreNote)h+=`<div class="card" style="margin-top:10px"><div class="kicker">Open with a small balance, or paid off?</div>${para(B.scoreNote.body)}${srcList(B.scoreNote.src)}</div>`;
+    if(B.alt)h+=`<div class="card" style="margin-top:10px"><div class="kicker">${esc(B.alt.kicker||"Other options")}</div>${para(B.alt.body)}${(B.alt.items||[]).map(a=>`<p style="margin:8px 0 0"><b>${esc(a.t)}</b><br><span class="small" style="color:#d7def7">${esc(a.d)}</span></p>${srcLine(a.src)}`).join("")}</div>`;
+  }
+  if(L.banks){h+=`<h2 id="sec-banks">Banks &amp; credit unions to build with</h2><p class="small muted">${esc(L.banksIntro||"")}</p>${L.banks.map(bankCard).join("")}`}
+  if(L.au){const A=L.au;h+=`<h2 id="sec-au">Authorized-user tradelines</h2><div class="card">${para(A.what)}</div>
+    ${A.blocks.map(b=>`<div class="card ${b.tone||""}" style="margin-top:10px"><div class="kicker">${esc(b.t)}</div>${para(b.d)}${srcList(b.src)}</div>`).join("")}`}
+  if(L.business){const Bz=L.business;h+=`<h2 id="sec-llc">LLC funding ladder</h2><div class="card caution" style="margin-bottom:10px"><div class="kicker">Personal credit comes first</div>${para(Bz.note)}${srcList(Bz.noteSrc)}</div>${stepList(Bz.steps,"llc")}`;
+    if(Bz.net30&&Bz.net30.length)h+=`<div class="card" style="margin-top:10px"><div class="kicker">Net-30 vendors that say they report</div>${Bz.net30.map(v=>`<p style="margin:8px 0 0"><b>${esc(v.vendor)}</b> <span class="small muted">· ${esc(v.reports)}</span><br><span class="small" style="color:#d7def7">${esc(v.terms||"")}</span></p>${srcLine({url:v.url,label:"vendor page",checked:v.checked})}`).join("")}</div>`;
+    if(B.bizContext)h+=`<div class="card" style="margin-top:10px"><div class="kicker">Your business</div>${para(B.bizContext)}</div>`}
+  if(L.videos&&L.videos.length)h+=`<h2 id="sec-watch">Watch &amp; learn</h2><p class="small muted">${esc(L.videosIntro||"")}</p>${L.videos.map(v=>`<a class="vid" href="${esc(v.url)}" target="_blank" rel="noopener"><b>${esc(v.title)} ↗</b><div class="ch">${esc(v.channel)}${v.year?" · "+esc(v.year):""}</div><p>${esc(v.takeaway)}</p></a>`).join("")}`;
+  if(L.rules){const R=L.rules;h+=`<h2 id="sec-rules">Rules</h2><div class="card ok"><div class="kicker" style="color:var(--green)">Always</div>${R.always.map(x=>`<p style="margin:6px 0"><b>✓</b> ${esc(x)}</p>`).join("")}</div>
+    <div class="card warn" style="margin-top:10px"><div class="kicker" style="color:var(--red)">Never</div>${R.never.map(x=>`<p style="margin:6px 0"><b>✕</b> ${esc(x)}</p>`).join("")}</div>
+    <h2>Skip these (scams and myths)</h2><div class="list">${R.skip.map(x=>`<div class="fix"><span class="pill red" style="margin:0">Skip</span><div><b>${esc(x.t)}</b><div class="small" style="color:#d7def7;margin-top:2px">${esc(x.why)}</div>${srcLine(x.src)}</div></div>`).join("")}</div>`}
+  $("v-build").innerHTML=h;
+}
+
+/* ---------- HELP SEARCH (fuzzy keyword + synonyms) ---------- */
+const STOP=new Set("a an the i my me do does how what is are to of for in on it and or can should when why who where with if at be get got this that from you your will".split(" "));
+const norm=s=>String(s||"").toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9#]+/g," ").trim();
+let IDX=null;
+function stem(w){return w.length>4?w.replace(/(ings|ing|ies|ied|es|ed|s)$/,""):w}
+function lev1(a,b){if(Math.abs(a.length-b.length)>1)return false;let i=0,j=0,e=0;while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;continue}if(++e>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++}}return e+(a.length-i)+(b.length-j)<=1}
+function expand(q){
+  let s=" "+norm(q)+" ";const SY=(D.lib||{}).synonyms||{};
+  Object.keys(SY).forEach(k=>{if(s.includes(" "+k+" "))s+=" "+norm(SY[k])+" "});
+  return s.split(" ").filter(w=>w&&!STOP.has(w)).map(stem);
+}
+function buildIdx(){IDX=((D.lib||{}).faq||[]).map(f=>{const qw=expand(f.q),kw=expand(f.k||""),aw=expand(f.a);return{f,qw:new Set(qw),kw:new Set(kw),aw:new Set(aw),all:[...new Set([...qw,...kw,...aw])]}})}
+function search(q){
+  const T=[...new Set(expand(q))];if(!T.length)return[];
+  if(!IDX)buildIdx();
+  return IDX.map(o=>{let s=0,hit=0;
+    T.forEach(t=>{let w=0;
+      if(o.qw.has(t))w=3;else if(o.kw.has(t))w=2.5;else if(o.aw.has(t))w=1;
+      else if(t.length>=3&&o.all.some(x=>x.startsWith(t)))w=1.2;
+      else if(t.length>=5&&o.all.some(x=>lev1(x,t)))w=.8;
+      if(w){s+=w;hit++}});
+    if(hit)s*=hit/T.length+.5;return{f:o.f,s}}).filter(x=>x.s>=1.5).sort((a,b)=>b.s-a.s).slice(0,6).map(x=>x.f);
+}
+const GOLAB={now:"Now",print:"Print",mail:"Mail it",credit:"My credit",build:"Build",dates:"Deadlines",wizard:"the CFPB walkthrough"};
+function qaCard(f,open){
+  const [v,sec]=String(f.go||"").split("#");
+  return `<details class="qa"${open?" open":""}><summary>${esc(f.q)}</summary><div class="ans saybox"><div class="nosay" style="display:flex;justify-content:flex-end">${sayBtn()}</div>${para(f.a)}${v?`<button type="button" class="primary" data-goto="${esc(f.go)}" style="margin-top:10px;width:100%">Go to ${esc(GOLAB[v.split(":")[0]]||v)}${sec?" › "+esc((f.goLabel||sec)):""}</button>`:""}${srcLine(f.src)}</div></details>`;
+}
+function renderAnswers(){
+  const q=$("q").value,box=$("answers");
+  if(!q.trim()){box.innerHTML="";return}
+  const R=search(q);
+  box.innerHTML=R.length?`<p class="small muted">${R.length} answer${R.length>1?"s":""} · tap one to open</p>${R.map((f,i)=>qaCard(f,i===0&&R.length===1)).join("")}<button type="button" class="lock" id="qclear" style="margin-top:6px">Clear</button>`
+    :`<div class="card muted small">No match yet. Try other words (e.g. "dispute", "secured card", "LLC", "tracking"), or ask Claude.</div>`;
+}
+function goTo(spec){
+  const [vb,sec]=String(spec).split("#"),[v,sub]=vb.split(":");
+  if(v==="wizard"){$("q").value="";renderAnswers();openWizard();return}
+  if(v==="credit"&&sub){CUR_B=sub;renderCredit()}
+  $("q").value="";renderAnswers();show(v);
+  if(sec)setTimeout(()=>{const el=$("sec-"+sec);if(el){el.scrollIntoView({behavior:"smooth",block:"start"});const n=el.nextElementSibling;if(n){n.classList.add("flash");setTimeout(()=>n.classList.remove("flash"),1700)}}},60);
+}
+
+/* ---------- READ IT TO ME (on-device speechSynthesis only; nothing leaves the phone) ---------- */
+const TTS=("speechSynthesis" in window)&&typeof SpeechSynthesisUtterance!=="undefined";
+let SAYING=null;
+function sayBtn(){return TTS?`<button type="button" class="say" data-say="1" aria-pressed="false">🔊 Read it to me</button>`:""}
+function sayText(btn){const box=btn.closest(".saybox");if(!box)return "";const c=box.cloneNode(true);c.querySelectorAll(".nosay,button,input,select,.src,.tpl").forEach(e=>e.remove());
+  return c.innerText.replace(/[↗›✓✕•]/g," ").replace(/\s+\n/g,"\n").trim()}
+function resetSay(){if(SAYING){SAYING.setAttribute("aria-pressed","false");SAYING.textContent="🔊 Read it to me"}SAYING=null}
+function stopSay(){try{speechSynthesis.cancel()}catch(e){}resetSay()}
+function toggleSay(btn){ /* runs synchronously inside the tap handler: iPhone Safari only speaks from a user gesture */
+  if(!TTS)return;
+  if(SAYING===btn){stopSay();return}
+  stopSay();const text=sayText(btn);if(!text)return;
+  const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=1;u.pitch=1;
+  const vs=speechSynthesis.getVoices().filter(v=>/^en(-|_)US/i.test(v.lang));const v=vs.find(v=>v.localService)||vs[0];if(v)u.voice=v;
+  u.onend=u.onerror=()=>{if(SAYING===btn)resetSay()};
+  SAYING=btn;btn.setAttribute("aria-pressed","true");btn.textContent="■ Stop";
+  speechSynthesis.speak(u);
+}
+if(TTS){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}}
+
+/* ---------- CFPB WALKTHROUGH ---------- */
+const isoAdd=(s,n)=>{const d=pd(s);if(!d)return null;const x=addD(d,n);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`};
+function wizCases(){const G=(D.lib||{}).cfpbGuide||{};return [...(D.cfpbCases||[]).map(c=>Object.assign({},c,{label:c.company+" (your case)"})),{id:"generic",label:"Any company (blank template)",what:(G.templates||{}).what,want:(G.templates||{}).want}]}
+function wizState(){SX.cfpb=SX.cfpb||{step:0,case:((D.cfpbCases||[])[0]||{id:"generic"}).id};return SX.cfpb}
+function openWizard(){const G=(D.lib||{}).cfpbGuide;if(!G)return;const W=wizState(),S=G.steps,i=Math.max(0,Math.min(S.length-1,W.step|0)),st=S[i];
+  const CS=wizCases(),cs=CS.find(c=>c.id===W.case)||CS[CS.length-1];
+  let extra="";
+  if(cs.id!=="generic"&&st.id==="product")extra=`<div class="due"><div class="small muted">For your ${esc(cs.company)} complaint</div><div style="margin-top:4px">${esc(cs.product)}</div></div>`;
+  if(cs.id!=="generic"&&st.id==="issue")extra=`<div class="due"><div class="small muted">For your ${esc(cs.company)} complaint</div><div style="margin-top:4px">${esc(cs.issue)}</div></div>`;
+  if(cs.id!=="generic"&&st.id==="tried")extra=`<div class="due"><div class="small muted">Your dates</div><div style="margin-top:4px">${esc(cs.tried)}</div></div>`;
+  if(cs.id!=="generic"&&st.id==="attach")extra=`<div class="due"><div class="small muted">Attach for ${esc(cs.company)}</div><ul class="bullets">${(cs.attach||[]).map(a=>`<li>${esc(a)}</li>`).join("")}</ul></div>`;
+  if(cs.id!=="generic"&&st.id==="company")extra=`<div class="due"><div class="small muted">Pick</div><div class="v" style="font-size:16px">${esc(cs.cfpbName)}</div></div>`;
+  if(st.template){const t=cs[st.template]||"";extra=`<div class="tpl nosay" id="tpl">${esc(t)}</div><div class="row" style="margin-top:10px"><button type="button" class="primary" data-copy="${esc(t)}">Copy ${st.template==="what"?"what happened":"desired fix"}</button></div>${cs.id==="generic"?`<p class="small muted" style="margin-top:6px">Replace every [BRACKET] with your own facts before you submit.</p>`:""}`}
+  if(st.button)extra=`<a class="btn primary" href="${esc(st.button.url)}" target="_blank" rel="noopener" style="width:100%;min-height:60px;font-size:18px;margin-top:12px">${esc(st.button.label)}</a>`;
+  if(st.input==="number"){const n=(SX.cfpbNums||{})[cs.company]||{};extra=`<div class="card nosay" style="margin-top:12px"><label class="f" for="wzn">CFPB complaint number${cs.company?" ("+esc(cs.company)+")":""}</label><input type="text" id="wzn" inputmode="numeric" autocomplete="off" placeholder="e.g. 261012-12345678" value="${esc(n.number||"")}">
+    <label class="f" for="wzd">Date filed</label><input type="date" id="wzd" value="${esc(n.filed||(()=>{const t=today();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`})())}">
+    <button type="button" class="primary" id="wzsave" style="width:100%;margin-top:12px">Save number</button><div class="small muted" id="wzmsg" style="margin-top:8px">${n.number?"Saved. Answer expected by "+esc(fmt(pd(isoAdd(n.filed,15))))+".":""}</div></div>`}
+  const h=`<div class="wiz"><label class="f nosay" for="wzc" style="margin-top:0">Which complaint?</label><select id="wzc">${CS.map(c=>`<option value="${esc(c.id)}"${c.id===cs.id?" selected":""}>${esc(c.label)}</option>`).join("")}</select>
+  <div class="prog" aria-hidden="true"><i style="width:${Math.round((i+1)/S.length*100)}%"></i></div>
+  <div class="small muted">Step ${i+1} of ${S.length}</div>
+  <div class="card saybox" style="margin-top:8px"><div class="nosay" style="display:flex;justify-content:flex-end;margin-bottom:6px">${sayBtn()}</div><h3>${esc(st.t)}</h3><div class="body">${para(st.d)}</div>${extra}</div>
+  ${i===0?`<p class="small muted" style="margin-top:10px">${esc(G.intro)}</p>`:""}${srcList(G.src)}
+  <div class="wiznav"><button type="button" id="wzb"${i===0?" disabled":""}>‹ Back</button><button type="button" class="primary" id="wzf">${i===S.length-1?"Done":"Next ›"}</button></div></div>`;
+  if($("sheet").hidden)showSheet("CFPB walkthrough",h);else{$("stitle").textContent="CFPB walkthrough";$("sbody").innerHTML=h;$("sheet").scrollTop=0}
+  const go=n=>{stopSay();W.step=n;saveX();openWizard()};
+  $("wzb").onclick=()=>go(i-1);
+  $("wzf").onclick=()=>{if(i===S.length-1){stopSay();W.step=0;saveX();closeSheet(false);show("dates");return}go(i+1)};
+  $("wzc").onchange=e=>{W.case=e.target.value;saveX();stopSay();openWizard()};
+  const sv=$("wzsave");if(sv)sv.onclick=()=>{const num=$("wzn").value.trim(),fd=$("wzd").value;if(!num){$("wzmsg").textContent="Type the number first.";return}
+    SX.cfpbNums=SX.cfpbNums||{};SX.cfpbNums[cs.company||"Other"]={number:num,filed:fd};saveX();$("wzmsg").textContent="Saved. Answer expected by "+fmt(pd(isoAdd(fd,15)))+". It's in Deadlines now.";toast("Saved")};
+}
+
 /* ---------- DEADLINES ---------- */
 function renderDates(){
-  let h=`<h2>CFPB complaints</h2><div class="list">${D.cfpb.map(c=>`<div class="item" style="cursor:default"><div class="badge${c.number?"":" cert"}">${c.number?"✓":"!"}</div><div class="what"><b>${esc(c.company)}</b>
-    <div class="meta">${c.number?`#<span class="num">${esc(c.number)}</span> · filed ${esc(fmt(pd(c.filed)))}<br>Company response due <b style="color:var(--yellow)">${esc(fmt(pd(c.due)))}</b> (${esc(left(pd(c.due)))})`:`<b style="color:var(--yellow)">${esc(c.status)}</b>`}</div></div>${c.number?`<button class="btn ghost" data-copy="${esc(c.number)}" style="min-height:40px;padding:0 10px">Copy</button>`:"<span></span>"}</div>`).join("")}</div>
+  const LN=SX.cfpbNums||{};
+  let h=`<h2>CFPB complaints</h2><div class="card" style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><div style="flex:1;min-width:0"><b>File a CFPB complaint</b><div class="small muted">One step per screen, copy-ready text, Read it to me</div></div><button type="button" class="primary" data-goto="wizard:cfpb" style="flex:0 0 auto">Walkthrough</button></div><div class="list">${D.cfpb.map(c0=>{const n=LN[c0.company];const c=(!c0.number&&n)?Object.assign({},c0,{number:n.number,filed:n.filed,due:isoAdd(n.filed,15)}):c0;return `<div class="item" style="cursor:default"><div class="badge${c.number?"":" cert"}">${c.number?"✓":"!"}</div><div class="what"><b>${esc(c.company)}</b>
+    <div class="meta">${c.number?`#<span class="num">${esc(c.number)}</span> · filed ${esc(fmt(pd(c.filed)))}<br>Company response due <b style="color:var(--yellow)">${esc(fmt(pd(c.due)))}</b> (${esc(left(pd(c.due)))})`:`<b style="color:var(--yellow)">${esc(c.status)}</b>`}</div></div>${c.number?`<button class="btn ghost" data-copy="${esc(c.number)}" style="min-height:40px;padding:0 10px">Copy</button>`:"<span></span>"}</div>`}).join("")}</div>
     <div class="row" style="margin-top:10px"><a class="btn" href="${esc(D.cfpbUrl)}" target="_blank" rel="noopener">consumerfinance.gov ↗</a></div>
   <h2>Response deadlines</h2>${upcoming()}
   <h2>To do</h2><div class="list">${D.todos.map(t=>`<label class="check${ST.todos[t.id]?" on":""}"><input type="checkbox" data-todo="${t.id}"${ST.todos[t.id]?" checked":""}><span>${esc(t.t)}</span></label>`).join("")}</div>
@@ -457,10 +698,10 @@ function renderDates(){
 /* ---------- shell ---------- */
 let SCROLL=0;
 function showSheet(title,html){SCROLL=window.scrollY;$("stitle").textContent=title;$("sbody").innerHTML=html;$("sheet").hidden=false;$("sheet").scrollTop=0;document.body.style.overflow="hidden";history.pushState({sheet:1},"")}
-function closeSheet(fromPop){if($("sheet").hidden)return;$("sheet").hidden=true;document.body.style.overflow="";renderAll();window.scrollTo(0,SCROLL);if(!fromPop&&history.state&&history.state.sheet)history.back()}
-function show(v){document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
+function closeSheet(fromPop){stopSay();if($("sheet").hidden)return;$("sheet").hidden=true;document.body.style.overflow="";renderAll();window.scrollTo(0,SCROLL);if(!fromPop&&history.state&&history.state.sheet)history.back()}
+function show(v){stopSay();document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
   try{sessionStorage.setItem("credit.view",v)}catch(e){}window.scrollTo(0,0)}
-function renderAll(){renderNow();renderPrint();renderMail();renderCredit();renderDates()}
+function renderAll(){renderNow();renderPrint();renderMail();renderCredit();renderBuild();renderDates()}
 async function copy(t){try{await navigator.clipboard.writeText(t);toast("Copied")}catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied")}catch(_){toast("Couldn't copy")}ta.remove()}}
 document.addEventListener("click",ev=>{
   const t=ev.target.closest("button,[data-copy]");if(!t)return;
@@ -471,17 +712,25 @@ document.addEventListener("click",ev=>{
   if(t.dataset.stage){const id=t.dataset.stage;ST.stages[id]=!ST.stages[id];save();renderNow();return}
   if(t.dataset.env){openEnv(t.dataset.env);return}
   if(t.dataset.acct){openAcct(t.dataset.acct,t.dataset.b);return}
+  if(t.dataset.say){ev.preventDefault();toggleSay(t);return}
+  if(t.dataset.goto){if(!$("sheet").hidden&&!t.dataset.goto.startsWith("wizard"))closeSheet(false);goTo(t.dataset.goto);return}
+  if(t.dataset.score){openScore(t.dataset.score);return}
+  if(t.dataset.delscore){const [bid,at]=t.dataset.delscore.split(":");SX.scores[bid]=(SX.scores[bid]||[]).filter(x=>String(x.at)!==at);saveX();openScore(bid);return}
+  if(t.id==="qclear"){$("q").value="";renderAnswers();$("q").focus();return}
   if(t.dataset.b&&t.closest(".seg")){CUR_B=t.dataset.b;try{sessionStorage.setItem("credit.bureau",CUR_B)}catch(e){}renderCredit();return}
 });
-document.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.todo){ST.todos[t.dataset.todo]=t.checked;save();t.closest(".check").classList.toggle("on",t.checked)}});
+document.addEventListener("click",ev=>{const a=ev.target.closest("[data-jump]");if(!a)return;ev.preventDefault();const el=$(a.dataset.jump);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
+document.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bstep){SX.build[t.dataset.bstep]=t.checked;saveX();t.closest(".step").classList.toggle("on",t.checked);return}if(t.dataset&&t.dataset.todo){ST.todos[t.dataset.todo]=t.checked;save();t.closest(".check").classList.toggle("on",t.checked)}});
 $("sx").onclick=()=>closeSheet(false);
+let QT=0;$("q").addEventListener("input",()=>{clearTimeout(QT);QT=setTimeout(renderAnswers,120)});
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();renderAnswers();$("q").blur()}});
 window.addEventListener("popstate",()=>closeSheet(true));
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet(false)});
 $("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()};
 
 async function unlock(pw,remember){
   D=await unlockData(pw);
-  SK="credit."+D.client.id+".r"+D.round.n;loadState();
+  SK="credit."+D.client.id+".r"+D.round.n;loadState();XK="credit."+D.client.id+".x";loadX();IDX=null;
   try{const b=sessionStorage.getItem("credit.bureau");if(b)CUR_B=b}catch(e){}
   $("hsub").textContent=`${D.client.greeting} · ${D.round.label} · letters dated ${fmt(pd(D.round.letterDate))}`;
   $("fresh").textContent="Updated "+new Date(D.built).toLocaleDateString("en-US",{month:"short",day:"numeric"});
