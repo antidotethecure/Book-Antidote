@@ -87,6 +87,21 @@ table{width:100%;border-collapse:collapse}td,th{padding:9px 6px;border-bottom:1p
 .agent .l{grid-column:2;color:var(--dim);font:500 12px "JetBrains Mono";overflow-wrap:anywhere}
 .empty{color:var(--dim);padding:20px;text-align:center;border:1px dashed var(--line2);border-radius:12px}
 .goal{display:flex;gap:8px;align-items:center;margin-top:10px}.goal input{width:120px;padding:7px;border-radius:7px;border:1px solid var(--line2);background:#010409;color:var(--txt);font:700 14px Rajdhani}
+.use{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.use div{padding:7px 6px;border-radius:8px;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.15);text-align:center}
+.use b{display:block;font:800 16px Orbitron;color:var(--line)}.use span{font:500 9px "JetBrains Mono";letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.adds{margin-top:10px;border-top:1px solid rgba(0,229,255,.15);padding-top:8px}
+.add{display:flex;align-items:center;gap:10px;padding:6px 0}.add .nm{flex:1;font-size:13px}.add .nm small{display:block;color:var(--dim);font-size:11px}
+.sw{position:relative;width:44px;height:24px;flex:none;border-radius:20px;border:1px solid var(--line2);background:#020a12;cursor:pointer;transition:.2s}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#33536a;transition:.2s}
+.sw.on{border-color:var(--line);box-shadow:var(--glow)}.sw.on:after{left:23px;background:var(--line);box-shadow:0 0 8px var(--line)}
+.newsub{margin-top:8px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,176,32,.45);background:rgba(255,176,32,.08);font-weight:700}
+#orb{position:fixed;right:18px;bottom:22px;z-index:9;width:62px;height:62px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 35% 30%,#7ff5ff,#007a8c 45%,#021018 75%);box-shadow:var(--glow),0 0 30px rgba(0,229,255,.5);cursor:pointer;display:grid;place-items:center;font-size:24px}
+#orb.live{animation:orbp 1s infinite}@keyframes orbp{50%{box-shadow:0 0 6px #fff,0 0 40px rgba(0,229,255,.9)}}
+#chat{position:fixed;right:18px;bottom:96px;z-index:9;width:min(360px,calc(100vw - 32px));max-height:60vh;overflow:auto;padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(2,10,18,.96);box-shadow:var(--glow)}
+#chat .m{margin:6px 0;padding:8px 10px;border-radius:10px;background:rgba(0,229,255,.08)}#chat .m.me{background:rgba(255,176,32,.1);text-align:right}
+#chat .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#chat .chips button{font-size:11px;padding:6px 8px}
+#chat form{display:flex;gap:6px;margin-top:8px}#chat input{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line2);background:#010409;color:var(--txt);font:600 14px Rajdhani}
+@media(max-width:760px){#orb{bottom:84px}#chat{bottom:156px}}
 section{display:none}section.on{display:block;animation:in .35s}
 @keyframes in{from{opacity:0;transform:translateY(8px)}}
 @media(max-width:1100px){.card.s2{grid-column:span 4}.card.hero{grid-column:span 12}}
@@ -137,6 +152,7 @@ section{display:none}section.on{display:block;animation:in .35s}
     <div class="card"><div class="mono">Still owed</div><div class="big" style="color:var(--hot)" id="owed"></div><div class="sub" id="owedSub"></div></div>
     <div class="card w6 pipe"><div class="mono">Pipeline · businesses by stage</div><div id="pipeBars"></div></div>
     <div class="card w6"><div class="mono">Agents on duty</div><div id="agMini"></div></div>
+    <div class="card w12"><div class="mono">App usage · all businesses · 30 days</div><div class="use" id="useAll" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))"></div><div class="sub" id="useNote" style="margin-top:6px"></div></div>
     <div class="card w12"><div class="mono">Next moves</div><div id="moves"></div></div>
   </div></section>
 
@@ -159,6 +175,10 @@ section{display:none}section.on{display:block;animation:in .35s}
   <section id="apps"><div class="cards" id="appList"></div></section>
   <section id="agents"><div class="card w12" id="agList"></div></section>
 </main>
+<button id="orb" title="Ask Jasmin" aria-label="Ask Jasmin">🎙️</button>
+<div id="chat" hidden><div class="mono">Jasmin · voice assistant</div><div id="msgs"></div>
+  <div class="chips"><button data-ask="How much am I making this month?">Money this month</button><button data-ask="Who owes me money?">Who owes me</button><button data-ask="Who's ready to onboard?">Ready to onboard</button><button data-ask="How many QR scans this week?">QR scans</button><button data-ask="What are my agents doing?">Agents</button></div>
+  <form id="askf"><input id="ask" placeholder="Ask anything about the business…"><button>Ask</button></form></div>
 </div>
 
 <script>
@@ -186,8 +206,31 @@ function bizCard(b){
    <div class="meta">${b.monthly?`<b class="gold">${usd(b.monthly)}/mo</b> · `:""}${b.paid_total?`paid ${usd(b.paid_total)} · `:""}${b.owner?`owner ${esc(b.owner)} · `:""}${b.views&&b.views!=="—"?`review ${esc(b.views)} views · `:""}${esc(b.source||"")}</div>
    ${b.note?`<div class="meta">${esc(b.note)}</div>`:""}${(b.events||[]).length?`<div class="meta">• ${b.events.map(esc).join("<br>• ")}</div>`:""}
    ${(b.due||[]).map(d=>`<div class="meta" style="color:var(--hot)">Owes ${usd(d.amount)} — ${esc(d.item)} (due ${esc(d.due||"—")})</div>`).join("")}
+   ${["locked","onboarding","ready"].includes(b.stage)?usageBox(b)+addBox(b):""}
    <div class="acts">${links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("")}</div></div>`;
 }
+const U=[["scan","QR scans"],["uniques","visitors"],["open","app opens"],["signup","sign-ups"],["login","logins"],["play","game plays"],["redeem","rewards"],["order","orders"],["order_total","$ ordered"],["call","calls"],["directions","directions"]];
+function usageBox(b){const u=(b.usage||{}).d30||{};return `<div class="mono" style="margin-top:10px">App usage · 30 days</div><div class="use">${U.map(([k,l])=>`<div><b>${k==="order_total"?usd(u[k]):(u[k]||0)}</b><span>${l}</span></div>`).join("")}</div>`}
+function addBox(b){
+  const on=new Set(b.addons||[]);
+  const rows=D.addons.map(a=>`<div class="add"><span class="sw ${on.has(a.id)?"on":""}" data-b="${esc(b.key)}" data-a="${esc(a.id)}" role="switch" aria-checked="${on.has(a.id)}"></span><span class="nm">${esc(a.name)} <b class="gold">${a.monthly==null?"price not set":a.monthly?usd(a.monthly)+"/mo":(a.once==null?"one-time, quoted":usd(a.once)+" once")}</b><small>${esc(a.note||"")}</small></span></div>`).join("");
+  const was=b.base_monthly||0,now=was+(b.addon_monthly||0);
+  return `<div class="adds"><div class="mono">Add-ons</div>${rows}<div class="newsub">Subscription: <span class="gold">${usd(now)}/mo</span>${now!==was?` <span class="sub">(was ${usd(was)} · +${usd(now-was)})</span>`:""}</div></div>`;
+}
+async function toggleAddon(key,id){
+  const b=D.biz.find(x=>x.key===key);if(!b)return;const a=D.addons.find(x=>x.id===id);
+  let on=new Set(b.addons||[]);
+  if(on.has(id))on.delete(id);else{if(a.group)D.addons.filter(x=>x.group===a.group).forEach(x=>on.delete(x.id));on.add(id);}
+  b.addons=[...on];b.addon_monthly=b.addons.reduce((s,i)=>s+((D.addons.find(x=>x.id===i)||{}).monthly||0),0);
+  b.monthly=(b.base_monthly||0)+b.addon_monthly;
+  D.mrr=D.biz.filter(x=>x.stage==="locked").reduce((s,x)=>s+(x.monthly||0),0);
+  D.expected=D.mrr+D.month_in+(D.expected-D.mrr-D.month_in>0?D.expected-D.mrr-D.month_in:0);
+  render();
+  const map={};D.biz.forEach(x=>{if((x.addons||[]).length)map[x.key]=x.addons});
+  try{const r=await fetch(D.vault.url+"/hq/addons",{method:"PUT",headers:{"Content-Type":"application/json","X-HQ-Key":D.vault.key},body:JSON.stringify(map)});if(!r.ok)throw 0;toast("Saved — "+b.name+" is now "+usd(b.monthly)+"/mo");}
+  catch(e){toast("Couldn't save — check the internet and try again");}
+}
+function toast(s){say(s,false);}
 function render(){
   const g=goal(),p=Math.min(100,Math.round(D.expected/g*100));
   $("stamp").textContent="Updated "+new Date(D.generatedAt).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
@@ -223,6 +266,10 @@ function render(){
   $("teamT").innerHTML="<tr><th>Name</th><th>Role</th><th>Business</th></tr>"+D.team.map(t=>`<tr><td><b>${esc(t.name)}</b></td><td>${esc(t.role)}</td><td>${esc(t.biz)}</td></tr>`).join("");
   $("appList").innerHTML=D.apps.map(a=>`<a class="biz" href="${esc(a.url)}" target="_blank" rel="noopener"><header><div class="av" style="background:var(--line)">${esc(initials(a.name))}</div><div><h3>${esc(a.name)}</h3><span class="chip">${esc(a.kind)}</span>${a.stage?`<span class="chip g">${ICON[a.stage]||""} ${esc(a.stage)}</span>`:""}</div></header></a>`).join("");
   $("agList").innerHTML=D.agents.map(a=>`<div class="agent">${led(a)}<b>${esc(a.name)} <span class="mono">${esc(a.status)}${a.last_run?" · last "+new Date(a.last_run).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}</span></b><span class="l">${esc(a.job)}</span>${a.last?`<span class="l">› ${esc(a.last)}</span>`:""}</div>`).join("");
+  document.querySelectorAll(".sw[data-a]").forEach(e=>e.onclick=()=>toggleAddon(e.dataset.b,e.dataset.a));
+  const ua=(D.usage_total||{}).d30||{};$("useAll").innerHTML=U.map(([k,l])=>`<div><b>${k==="order_total"?usd(ua[k]):(ua[k]||0)}</b><span>${l}</span></div>`).join("");
+  $("useNote").textContent="Counted from each client app (anonymous). Visitors = unique phones per day, added up.";
+  $("mrrSub").textContent=L.length+" client(s) locked in"+(D.mrr_addons?` · ${usd(D.mrr-D.mrr_addons)} plans + ${usd(D.mrr_addons)} add-ons`:"");
   $("nPipe").textContent=D.biz.length;$("nCl").textContent=L.length;$("nTeam").textContent=D.team.length;$("nApps").textContent=D.apps.length;$("nAg").textContent=D.agents.length;
 }
 function listBiz(){
@@ -241,6 +288,39 @@ async function unlock(pw,remember){PW=pw;await load();$("gate").hidden=true;$("a
   if(remember)ls(K,pw);const t=ls("sousshift.tab");if(t&&TITLES[t])show(t);
   setInterval(()=>load().catch(()=>{}),120000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)load().catch(()=>{})});}
+/* Jasmin voice assistant: answers from this dashboard's own data, out loud. Speech stays in the browser. */
+function say(text,speak=true){const m=document.createElement("div");m.className="m";m.textContent=text;$("msgs").appendChild(m);$("chat").hidden=false;$("chat").scrollTop=1e6;
+  if(speak&&"speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=1.08;speechSynthesis.speak(u);}}
+function answer(q){
+  const s=q.toLowerCase(),L=D.biz.filter(b=>b.stage==="locked"),g=goal();
+  const STOP=new Set(["the","bar","grill","cafe","restaurant","review","house","and","los","las","new"]);
+  const key=b=>b.name.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>=4&&!STOP.has(w))[0];
+  const find=D.biz.find(b=>{const k=key(b);return k&&new RegExp("\\b"+k+"\\b").test(s)});
+  const u=k=>((D.usage_total||{})[/today/.test(s)?"today":/week|7/.test(s)?"d7":"d30"]||{})[k]||0;
+  const span=/today/.test(s)?"today":/week|7/.test(s)?"this week":"the last 30 days";
+  if(find){const x=(find.usage||{}).d30||{};return `${find.name}: ${x.scan||0} QR scans, ${x.uniques||0} visitors, ${x.signup||0} sign-ups, ${x.play||0} game plays and ${x.order||0} orders in the last 30 days. They pay ${usd(find.monthly)} a month.`;}
+  if(/owe|unpaid|invoice|collect/.test(s)){const r=D.biz.filter(b=>(b.due||[]).length);return r.length?r.map(b=>`${b.name} owes ${usd(b.due.reduce((a,d)=>a+(+d.amount||0),0))}`).join(". ")+".":"Nobody owes you anything right now.";}
+  if(/(make|making|money|revenue|earn|goal|mrr)/.test(s))return `You're at ${usd(D.expected)} expected this month, ${Math.round(D.expected/g*100)} percent of your ${usd(g)} goal. ${usd(D.mrr)} a month is recurring from ${L.length} clients, and ${usd(D.month_in)} has come in so far.`;
+  if(/ready|onboard/.test(s)){const r=D.biz.filter(b=>b.stage==="ready"||b.stage==="onboarding");return r.length?`${r.map(b=>b.name).join(", ")} ${r.length>1?"are":"is"} ready to onboard.`:"Nobody is waiting to be onboarded.";}
+  if(/pending|follow|waiting|sent/.test(s)){const r=D.biz.filter(b=>b.stage==="pending");return `${r.length} pending: ${r.map(b=>b.name).join(", ")}.`;}
+  if(/contact|lead|reach/.test(s)){const r=D.biz.filter(b=>b.stage==="contact");return `${r.length} warm businesses to contact. Top of the list: ${r.slice(0,3).map(b=>b.name).join(", ")}.`;}
+  if(/client|locked|paying/.test(s))return `${L.length} clients locked in: ${L.map(b=>`${b.name} at ${usd(b.monthly)}`).join(", ")}.`;
+  if(/scan|qr/.test(s))return `${u("scan")} QR scans in ${span}, ${u("uniques")} visitors.`;
+  if(/order|sales|sold/.test(s))return `${u("order")} app orders in ${span}, about ${usd(u("order_total"))}.`;
+  if(/agent|bot|job/.test(s)){const bad=D.agents.filter(a=>a.status==="error");return `${D.agents.length} agents on duty${bad.length?`, ${bad.map(a=>a.name).join(" and ")} need a look`:", all running fine"}.`;}
+  if(/add.?on|upsell|ai (text|voice)/.test(s)){const w=D.biz.filter(b=>(b.addons||[]).length);return w.length?w.map(b=>`${b.name}: ${b.addons.join(", ")}`).join(". "):"No add-ons switched on yet. Open a client card and flip one on.";}
+  return "I can tell you your money this month, who owes you, who's ready to onboard, who's pending, leads to contact, QR scans, orders, add-ons, or how any one business is doing.";
+}
+function ask(q){if(!q)return;const m=document.createElement("div");m.className="m me";m.textContent=q;$("msgs").appendChild(m);say(answer(q));}
+$("askf").onsubmit=e=>{e.preventDefault();ask($("ask").value.trim());$("ask").value="";};
+document.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>ask(b.dataset.ask));
+$("orb").onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if($("chat").hidden&&!$("msgs").children.length)say("Hey, it's Jasmin. Tap the orb and talk, or pick a question.",false);
+  $("chat").hidden=false;if(!SR){return;}
+  const r=new SR();r.lang="en-US";r.interimResults=false;$("orb").classList.add("live");
+  r.onresult=e=>ask(e.results[0][0].transcript);r.onend=()=>$("orb").classList.remove("live");r.onerror=()=>$("orb").classList.remove("live");r.start();
+};
 $("f").onsubmit=async e=>{e.preventDefault();try{await unlock($("pw").value,$("rem").checked)}catch(err){$("err").textContent="Wrong password"}};
 (async()=>{for(const k of [K,...KS]){const v=ls(k);if(v){try{await unlock(v,true);return}catch(e){}}}})();
 </script>
