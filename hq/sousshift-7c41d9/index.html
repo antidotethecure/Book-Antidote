@@ -94,6 +94,9 @@ table{width:100%;border-collapse:collapse}td,th{padding:9px 6px;border-bottom:1p
 .sw{position:relative;width:44px;height:24px;flex:none;border-radius:20px;border:1px solid var(--line2);background:#020a12;cursor:pointer;transition:.2s}
 .sw:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#33536a;transition:.2s}
 .sw.on{border-color:var(--line);box-shadow:var(--glow)}.sw.on:after{left:23px;background:var(--line);box-shadow:0 0 8px var(--line)}
+.next{margin-top:10px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(0,229,255,.06)}
+.next .say{white-space:pre-wrap;font:500 13px/1.45 Rajdhani;margin:8px 0;max-height:150px;overflow:auto;padding:8px;border-radius:8px;background:#010409;border:1px solid var(--line2)}
+.next .acts a,.next .acts button{font-size:12px;padding:6px 9px}
 .newsub{margin-top:8px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,176,32,.45);background:rgba(255,176,32,.08);font-weight:700}
 #orb{position:fixed;right:18px;bottom:22px;z-index:9;width:62px;height:62px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 35% 30%,#7ff5ff,#007a8c 45%,#021018 75%);box-shadow:var(--glow),0 0 30px rgba(0,229,255,.5);cursor:pointer;display:grid;place-items:center;font-size:24px}
 #orb.live{animation:orbp 1s infinite}@keyframes orbp{50%{box-shadow:0 0 6px #fff,0 0 40px rgba(0,229,255,.9)}}
@@ -212,9 +215,16 @@ function bizCard(b){
    <div class="meta">${b.monthly?`<b class="gold">${usd(b.monthly)}/mo</b> · `:""}${b.paid_total?`paid ${usd(b.paid_total)} · `:""}${b.owner?`owner ${esc(b.owner)} · `:""}${b.views&&b.views!=="—"?`review ${esc(b.views)} views · `:""}${esc(b.source||"")}</div>
    ${b.note?`<div class="meta">${esc(b.note)}</div>`:""}${(b.events||[]).length?`<div class="meta">• ${b.events.map(esc).join("<br>• ")}</div>`:""}
    ${(b.due||[]).map(d=>`<div class="meta" style="color:var(--hot)">Owes ${usd(d.amount)} — ${esc(d.item)} (due ${esc(d.due||"—")})</div>`).join("")}
+   ${nextBox(b)}
    ${["locked","onboarding","ready"].includes(b.stage)?usageBox(b)+addBox(b):""}
    <div class="acts">${links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("")}</div></div>`;
 }
+function nextBox(b){const n=b.next;if(!n)return"";
+  const gm=b.email?`https://mail.google.com/mail/?authuser=secondshiftai@gmail.com&view=cm&fs=1&to=${encodeURIComponent(b.email)}&su=${encodeURIComponent(n.subject||"")}&body=${encodeURIComponent(n.say||"")}`:"";
+  const sms=b.phone?`sms:${b.phone.replace(/[^+\d]/g,"")}&body=${encodeURIComponent(n.say||"")}`:"";
+  const ig=(b.ig||"").startsWith("@")?`https://ig.me/m/${b.ig.slice(1)}`:"";
+  return `<div class="next"><div class="mono">➜ Next step</div><b>${esc(n.step)}</b><div class="say" id="say-${esc(b.key)}">${esc(n.say)}</div>
+   <div class="acts"><button type="button" data-copy="${esc(b.key)}">📋 Copy message</button>${gm?`<a href="${esc(gm)}" target="_blank" rel="noopener">✉️ Email (SousShift)</a>`:""}${sms?`<a href="${esc(sms)}">💬 Text</a>`:""}${ig?`<a href="${esc(ig)}" target="_blank" rel="noopener">📸 DM on IG</a>`:""}</div></div>`;}
 const U=[["scan","QR scans"],["uniques","visitors"],["open","app opens"],["signup","sign-ups"],["login","logins"],["play","game plays"],["redeem","rewards"],["order","orders"],["order_total","$ ordered"],["call","calls"],["directions","directions"]];
 function usageBox(b){const u=(b.usage||{}).d30||{};return `<div class="mono" style="margin-top:10px">App usage · 30 days</div><div class="use">${U.map(([k,l])=>`<div><b>${k==="order_total"?usd(u[k]):(u[k]||0)}</b><span>${l}</span></div>`).join("")}</div>`}
 function addBox(b){
@@ -252,14 +262,13 @@ function render(){
   $("barSub").textContent=usd(D.daily.reduce((a,b)=>a+b,0))+" collected in the last 30 days";
   const pm=Math.max(1,...D.stages.map(s=>s.n));
   $("pipeBars").innerHTML=D.stages.map(s=>`<div class="row" data-go="${s.id}"><span>${ICON[s.id]} ${esc(s.name)}</span><span class="trk"><b style="width:${s.n/pm*100}%"></b></span><span class="mono">${s.n}</span></div>`).join("");
+  setTimeout(()=>document.querySelectorAll("[data-open]").forEach(e=>e.onclick=ev=>{ev.preventDefault();stage=e.dataset.open;show(e.dataset.open==="locked"?"clients":"pipe")}),0);
   document.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{stage=e.dataset.go;show("pipe")});
   const led=a=>`<span class="led ${a.status==="error"?"err":a.status==="off"?"off":a.status==="running"?"run":""}"></span>`;
   $("agMini").innerHTML=D.agents.map(a=>`<div class="agent">${led(a)}<b>${esc(a.name)}</b><span class="l">${esc(a.job)}</span></div>`).join("")||'<div class="empty">No agents found</div>';
   const bad=D.agents.filter(a=>a.status==="error").length;$("sysled").className="led"+(bad?" err":"");$("sys").textContent=bad?bad+" agent(s) need a look":"all systems online";
   const ready=D.biz.filter(b=>b.stage==="ready"),pend=D.biz.filter(b=>b.stage==="pending"),dues=D.biz.filter(b=>(b.due||[]).length);
-  $("moves").innerHTML=[...dues.map(b=>`💸 Collect ${usd(b.due.reduce((a,d)=>a+(+d.amount||0),0))} from <b>${esc(b.name)}</b>`),
-    ...ready.map(b=>`🚀 <b>${esc(b.name)}</b> is ready — send the onboarding link`),
-    ...pend.map(b=>`⏳ Follow up with <b>${esc(b.name)}</b>`),
+  $("moves").innerHTML=[...D.biz.filter(b=>b.next&&["locked","onboarding","ready","pending"].includes(b.stage)).map(b=>`${ICON[b.stage]} <b>${esc(b.name)}</b> — ${esc(b.next.step)} <a href="#" data-open="${esc(b.stage)}">open</a>`),
     `📞 ${D.stages.find(s=>s.id==="contact").n} warm businesses still to contact`].map(t=>`<div class="agent"><span class="led run"></span><span>${t}</span></div>`).join("");
   $("folders").innerHTML=D.stages.map(s=>`<div class="folder ${s.id===stage?"on":""}" data-st="${s.id}"><span class="ic">${ICON[s.id]}</span><b>${esc(s.name)}</b><span class="c">${s.n}</span><div class="sub">${esc(s.desc)}</div></div>`).join("");
   document.querySelectorAll("[data-st]").forEach(e=>e.onclick=()=>{stage=e.dataset.st;$("q").value="";render()});
@@ -272,6 +281,7 @@ function render(){
   $("teamT").innerHTML="<tr><th>Name</th><th>Role</th><th>Business</th></tr>"+D.team.map(t=>`<tr><td><b>${esc(t.name)}</b></td><td>${esc(t.role)}</td><td>${esc(t.biz)}</td></tr>`).join("");
   $("appList").innerHTML=D.apps.map(a=>`<a class="biz" href="${esc(a.url)}" target="_blank" rel="noopener"><header><div class="av" style="background:var(--line)">${esc(initials(a.name))}</div><div><h3>${esc(a.name)}</h3><span class="chip">${esc(a.kind)}</span>${a.stage?`<span class="chip g">${ICON[a.stage]||""} ${esc(a.stage)}</span>`:""}</div></header></a>`).join("");
   $("agList").innerHTML=D.agents.map(a=>`<div class="agent">${led(a)}<b>${esc(a.name)} <span class="mono">${esc(a.status)}${a.last_run?" · last "+new Date(a.last_run).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}</span></b><span class="l">${esc(a.job)}</span>${a.last?`<span class="l">› ${esc(a.last)}</span>`:""}</div>`).join("");
+  document.querySelectorAll("[data-copy]").forEach(e=>e.onclick=async()=>{const b=D.biz.find(x=>x.key===e.dataset.copy);try{await navigator.clipboard.writeText(b.next.say);e.textContent="✅ Copied — paste it";}catch(err){const r=document.createRange();r.selectNodeContents($("say-"+b.key));getSelection().removeAllRanges();getSelection().addRange(r);e.textContent="Selected — tap Copy";}});
   document.querySelectorAll(".sw[data-a]").forEach(e=>e.onclick=()=>toggleAddon(e.dataset.b,e.dataset.a));
   const ua=(D.usage_total||{}).d30||{};$("useAll").innerHTML=U.map(([k,l])=>`<div><b>${k==="order_total"?usd(ua[k]):(ua[k]||0)}</b><span>${l}</span></div>`).join("");
   $("useNote").textContent="Counted from each client app (anonymous). Visitors = unique phones per day, added up.";
