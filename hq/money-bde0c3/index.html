@@ -280,7 +280,7 @@ $("lk").onclick=()=>{try{localStorage.removeItem(K)}catch(e){}location.reload()}
 </script><!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
      Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
      The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
-<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
 <b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
 <button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
 <button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
