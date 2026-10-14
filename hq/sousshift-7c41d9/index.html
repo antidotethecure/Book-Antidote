@@ -122,6 +122,12 @@ section{display:none}section.on{display:block;animation:in .35s}
   <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
   <label class="sub"><input type="checkbox" id="rem" checked> Remember on this phone</label><br><br>
   <button>Unlock</button><p id="err" class="sub" style="color:var(--hot)"></p>
+  <div id="inst" hidden style="margin-top:14px;padding:12px;border:1px dashed var(--line2);border-radius:10px">
+    <b class="orb" style="font-size:12px">📲 GET THE APP</b>
+    <div id="instIOS" class="sub" hidden style="margin-top:6px">On iPhone: tap the <b>Share</b> button <span style="font-size:16px">⬆︎</span> at the bottom of Safari, then <b>Add to Home Screen</b>. It opens full screen like any app.</div>
+    <button type="button" id="instBtn" hidden style="margin-top:8px">Install SousShift Command</button>
+    <div id="instOther" class="sub" hidden style="margin-top:6px">Open this page in Safari (iPhone) or Chrome (Android) to install it.</div>
+  </div>
 </form></div>
 
 <div id="app" hidden>
@@ -321,6 +327,13 @@ $("orb").onclick=()=>{
   const r=new SR();r.lang="en-US";r.interimResults=false;$("orb").classList.add("live");
   r.onresult=e=>ask(e.results[0][0].transcript);r.onend=()=>$("orb").classList.remove("live");r.onerror=()=>$("orb").classList.remove("live");r.start();
 };
+/* install as a phone app (PWA): Android/Chrome gets a real Install button, iPhone gets the Share → Add to Home Screen steps */
+(function(){const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(standalone)return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);$("inst").hidden=false;
+  if(ios){$("instIOS").hidden=false;return;}
+  let ev=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;$("instBtn").hidden=false;$("instOther").hidden=true;});
+  $("instOther").hidden=false;
+  $("instBtn").onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice;ev=null;$("instBtn").hidden=true;};})();
 $("f").onsubmit=async e=>{e.preventDefault();try{await unlock($("pw").value,$("rem").checked)}catch(err){$("err").textContent="Wrong password"}};
 (async()=>{for(const k of [K,...KS]){const v=ls(k);if(v){try{await unlock(v,true);return}catch(e){}}}})();
 </script>
