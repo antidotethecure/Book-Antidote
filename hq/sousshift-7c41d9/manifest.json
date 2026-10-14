@@ -1,0 +1,1 @@
+{"name": "SousShift Command", "short_name": "SousShift", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#02060c", "theme_color": "#02060c", "icons": [{"src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}

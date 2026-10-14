@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#02060c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SousShift Command</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* SousShift Command — Tron back office. Cyan light-lines on black glass, orange for money/alerts, LEDs for live state. */
+:root{--bg:#02060c;--panel:rgba(6,18,30,.78);--line:#00e5ff;--line2:rgba(0,229,255,.28);--txt:#d8f6ff;--dim:#6f95a6;
+--gold:#ffb020;--hot:#ff5a3c;--ok:#33ff99;--glow:0 0 6px rgba(0,229,255,.8),0 0 18px rgba(0,229,255,.35)}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;background:var(--bg);color:var(--txt);font:600 15px/1.35 Rajdhani,system-ui,sans-serif}
+body{min-height:100vh;overflow-x:hidden}
+/* light-cycle grid floor */
+body:before{content:"";position:fixed;inset:auto -50% -10% -50%;height:70vh;z-index:-2;
+background:linear-gradient(transparent 0 96%,rgba(0,229,255,.22) 96%) 0 0/100% 46px,linear-gradient(90deg,transparent 0 97%,rgba(0,229,255,.18) 97%) 0 0/46px 100%;
+transform:perspective(420px) rotateX(62deg);transform-origin:top;mask:linear-gradient(transparent,#000 40%)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(1200px 500px at 50% -10%,rgba(0,229,255,.12),transparent 60%),radial-gradient(800px 400px at 100% 100%,rgba(255,138,0,.07),transparent 60%)}
+a{color:var(--line);text-decoration:none}
+h1,h2,h3,.orb{font-family:Orbitron,sans-serif;letter-spacing:.06em}
+.mono{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+/* gate */
+#gate{position:fixed;inset:0;display:grid;place-items:center;padding:16px}
+#gate form{width:min(380px,100%);padding:26px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--glow);text-align:center}
+#gate input{width:100%;margin:16px 0 10px;padding:12px;border-radius:9px;border:1px solid var(--line2);background:#010409;color:var(--txt);font:600 16px Rajdhani}
+button,.btn{cursor:pointer;border:1px solid var(--line);background:rgba(0,229,255,.1);color:var(--line);border-radius:9px;padding:10px 14px;font:700 14px Rajdhani;letter-spacing:.06em;text-transform:uppercase}
+button:hover,.btn:hover{background:rgba(0,229,255,.2);box-shadow:var(--glow)}
+/* shell */
+#app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+nav{position:sticky;top:0;height:100vh;padding:18px 12px;border-right:1px solid var(--line2);background:rgba(1,6,12,.85);backdrop-filter:blur(8px)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 18px}
+.brand b{font:800 15px Orbitron;letter-spacing:.1em}.brand small{display:block;color:var(--dim);font-size:11px}
+.logo{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);box-shadow:var(--glow);display:grid;place-items:center;font:800 12px Orbitron;color:var(--line)}
+.grp{margin:14px 8px 6px}
+nav a.it{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:8px;color:var(--txt);border:1px solid transparent}
+nav a.it.on{border-color:var(--line);background:rgba(0,229,255,.08);box-shadow:inset 3px 0 0 var(--line)}
+nav a.it .n{margin-left:auto;font:500 11px "JetBrains Mono";color:var(--dim)}
+main{padding:22px clamp(16px,3vw,34px) 110px;max-width:1280px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{margin:0;font-size:clamp(22px,4vw,30px);text-shadow:var(--glow)}
+.led{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 1.6s infinite}
+.led.err{background:var(--hot);box-shadow:0 0 8px var(--hot)}.led.off{background:#335;box-shadow:none;animation:none}.led.run{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+@keyframes pulse{50%{opacity:.35}}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.card{position:relative;grid-column:span 4;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--line2);backdrop-filter:blur(6px);min-width:0}
+.card:before,.card:after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--line)}
+.card:before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-top-left-radius:12px}
+.card:after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-bottom-right-radius:12px}
+.card.hero{grid-column:span 6;border-color:var(--line);box-shadow:var(--glow)}
+.card.s2{grid-column:span 2}.card.w8{grid-column:span 8}.card.w12{grid-column:span 12}.card.w6{grid-column:span 6}
+.big{font:800 clamp(24px,4vw,34px) Orbitron;margin:6px 0 2px}.gold{color:var(--gold);text-shadow:0 0 10px rgba(255,176,32,.5)}
+.sub{color:var(--dim);font-size:13px}
+.ringwrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.ring{--p:0;width:140px;height:140px;border-radius:50%;flex:none;display:grid;place-items:center;
+background:conic-gradient(var(--line) calc(var(--p)*1%),rgba(0,229,255,.1) 0);box-shadow:var(--glow);position:relative}
+.ring:before{content:"";position:absolute;inset:10px;border-radius:50%;background:#030a12}
+.ring span{position:relative;text-align:center;font:800 26px Orbitron}.ring small{display:block;font:600 11px Rajdhani;color:var(--dim)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:10px}
+.bars i{flex:1;background:linear-gradient(var(--line),rgba(0,229,255,.15));border-radius:2px 2px 0 0;min-height:2px;box-shadow:0 0 6px rgba(0,229,255,.5)}
+.pipe .row{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;margin:8px 0;cursor:pointer}
+.pipe .trk{height:10px;border-radius:6px;background:rgba(0,229,255,.08);overflow:hidden}
+.pipe .trk b{display:block;height:100%;background:linear-gradient(90deg,var(--line),#8af6ff);box-shadow:var(--glow)}
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.folder{cursor:pointer;padding:14px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);transition:.2s}
+.folder:hover,.folder.on{border-color:var(--line);box-shadow:var(--glow)}
+.folder .ic{font-size:22px}.folder b{display:block;font:700 15px Orbitron;margin:6px 0 2px;letter-spacing:.03em}
+.folder .c{font:800 26px Orbitron;color:var(--line)}
+.search{width:100%;padding:11px 12px;margin:0 0 12px;border-radius:9px;border:1px solid var(--line2);background:#010409;color:var(--txt);font:600 15px Rajdhani}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.biz{padding:14px;border-radius:12px;background:var(--panel);border:1px solid var(--line2)}
+.biz header{display:flex;gap:10px;align-items:center}
+.av{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;font:800 13px Orbitron;color:#000;background:var(--gold);box-shadow:0 0 10px rgba(255,176,32,.6)}
+.biz h3{margin:0;font:700 14px Orbitron;letter-spacing:.02em;overflow-wrap:anywhere}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;border:1px solid var(--line2);font:500 10px "JetBrains Mono";letter-spacing:.08em;text-transform:uppercase;color:var(--line);margin:6px 4px 0 0}
+.chip.g{color:var(--gold);border-color:rgba(255,176,32,.4)}.chip.h{color:var(--hot);border-color:rgba(255,90,60,.4)}
+.biz .meta{margin-top:8px;color:var(--dim);font-size:13px}
+.biz .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.biz .acts a{font-size:12px;padding:5px 9px;border:1px solid var(--line2);border-radius:7px}
+table{width:100%;border-collapse:collapse}td,th{padding:9px 6px;border-bottom:1px solid rgba(0,229,255,.12);text-align:left;font-size:14px}th{font:500 10px "JetBrains Mono";letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.agent{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(0,229,255,.12)}
+.agent .l{grid-column:2;color:var(--dim);font:500 12px "JetBrains Mono";overflow-wrap:anywhere}
+.empty{color:var(--dim);padding:20px;text-align:center;border:1px dashed var(--line2);border-radius:12px}
+.goal{display:flex;gap:8px;align-items:center;margin-top:10px}.goal input{width:120px;padding:7px;border-radius:7px;border:1px solid var(--line2);background:#010409;color:var(--txt);font:700 14px Rajdhani}
+section{display:none}section.on{display:block;animation:in .35s}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+@media(max-width:1100px){.card.s2{grid-column:span 4}.card.hero{grid-column:span 12}}
+@media(max-width:900px){.card,.card.hero,.card.w8,.card.w6,.card.s2{grid-column:span 12}}
+@media(max-width:760px){
+ #app{grid-template-columns:minmax(0,1fr)}
+ nav{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;z-index:5;display:flex;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--line2)}
+ nav .brand,nav .grp{display:none}
+ nav a.it{flex:none;flex-direction:column;gap:2px;font-size:11px;padding:6px 10px}nav a.it .n{display:none}
+ .pipe .row{grid-template-columns:105px 1fr 28px}
+}
+</style>
+</head>
+<body>
+<div id="gate"><form id="f">
+  <div class="logo" style="margin:0 auto 12px;width:54px;height:54px;font-size:16px">SS</div>
+  <h2 style="margin:0">SOUSSHIFT COMMAND</h2><div class="mono" style="margin-top:6px">Back office · encrypted</div>
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <label class="sub"><input type="checkbox" id="rem" checked> Remember on this phone</label><br><br>
+  <button>Unlock</button><p id="err" class="sub" style="color:var(--hot)"></p>
+</form></div>
+
+<div id="app" hidden>
+<nav>
+  <div class="brand"><div class="logo">SS</div><div><b>SOUSSHIFT</b><small>AI Business Command</small></div></div>
+  <div class="grp mono">Command</div>
+  <a class="it on" data-s="ops">⚡ <span>Live Ops</span></a>
+  <a class="it" data-s="pipe">🗂 <span>Pipeline</span><span class="n" id="nPipe"></span></a>
+  <a class="it" data-s="clients">🔒 <span>Clients</span><span class="n" id="nCl"></span></a>
+  <a class="it" data-s="money">💰 <span>Money</span></a>
+  <div class="grp mono">Operations</div>
+  <a class="it" data-s="team">👥 <span>Team</span><span class="n" id="nTeam"></span></a>
+  <a class="it" data-s="apps">📱 <span>Apps</span><span class="n" id="nApps"></span></a>
+  <a class="it" data-s="agents">🤖 <span>Agents</span><span class="n" id="nAg"></span></a>
+</nav>
+<main>
+  <div class="top"><div><div class="mono" id="stamp"></div><h1 id="title">LIVE OPS</h1></div>
+    <div class="mono"><span class="led" id="sysled"></span> <span id="sys">systems online</span></div></div>
+
+  <section id="ops" class="on"><div class="grid">
+    <div class="card hero"><div class="mono">Monthly revenue goal</div>
+      <div class="ringwrap"><div class="ring" id="ring"><span id="pct">0%<small>of goal</small></span></div>
+      <div><div class="big gold" id="exp"></div><div class="sub" id="expSub"></div>
+      <div class="sub" style="margin-top:8px" id="pace"></div></div></div></div>
+    <div class="card"><div class="mono">Recurring / month</div><div class="big" id="mrr"></div><div class="sub" id="mrrSub"></div></div>
+    <div class="card s2"><div class="mono">In this month</div><div class="big gold" id="inm"></div></div>
+    <div class="card w8"><div class="mono">Revenue · 30 days</div><div class="bars" id="bars"></div><div class="sub" id="barSub"></div></div>
+    <div class="card"><div class="mono">Still owed</div><div class="big" style="color:var(--hot)" id="owed"></div><div class="sub" id="owedSub"></div></div>
+    <div class="card w6 pipe"><div class="mono">Pipeline · businesses by stage</div><div id="pipeBars"></div></div>
+    <div class="card w6"><div class="mono">Agents on duty</div><div id="agMini"></div></div>
+    <div class="card w12"><div class="mono">Next moves</div><div id="moves"></div></div>
+  </div></section>
+
+  <section id="pipe"><div class="folders" id="folders"></div>
+    <input class="search" id="q" placeholder="Search a business, owner, offer…"><div class="cards" id="bizList"></div></section>
+
+  <section id="clients"><div class="cards" id="clList"></div></section>
+
+  <section id="money"><div class="grid">
+    <div class="card hero"><div class="mono">This month vs goal</div>
+      <div class="ringwrap"><div class="ring" id="ring2"><span id="pct2"></span></div>
+      <div><div class="big gold" id="exp2"></div><div class="sub">expected this month</div>
+      <div class="goal"><span class="mono">Goal $</span><input id="goalIn" type="number" min="0" step="100"><button id="goalSet">Set</button></div>
+      <div class="sub">Saved on this phone. Tell Claude to change it for every device.</div></div></div></div>
+    <div class="card w6"><div class="mono">Money owed</div><table id="dueT"></table></div>
+    <div class="card w12"><div class="mono">Payments received</div><table id="payT"></table></div>
+  </div></section>
+
+  <section id="team"><div class="card w12"><table id="teamT"></table></div></section>
+  <section id="apps"><div class="cards" id="appList"></div></section>
+  <section id="agents"><div class="card w12" id="agList"></div></section>
+</main>
+</div>
+
+<script>
+const K="antidote.sousshift.pw",KS=["antidote.money.pw","antidote.posts.pw"],GK="sousshift.goal";
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const usd=n=>"$"+Math.round(n||0).toLocaleString();
+const ICON={locked:"🔒",onboarding:"⚙️",ready:"🚀",pending:"⏳",contact:"📞",passed:"✖"};
+let D,PW,stage="locked";
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw,E){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(E.s),iterations:E.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(E.i)},key,b64(E.c))));
+}
+async function load(){const r=await fetch("data.enc.json?"+Date.now(),{cache:"no-store"});D=await decrypt(PW,await r.json());render();}
+const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k):localStorage.setItem(k,v)}catch(e){return null}};
+function goal(){return +(ls(GK)||D.goal||5000)}
+function initials(n){return n.replace(/[^A-Za-z0-9 ]/g,"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"?"}
+function bizCard(b){
+  const st=D.stages.find(s=>s.id===b.stage)||{};
+  const links=[b.app&&["📱 App",b.app],b.pitch&&["📨 Pitch",b.pitch],b.site&&["🌐 Site","https://"+b.site.replace(/^https?:\/\//,"")],
+    b.ig&&b.ig.startsWith("@")&&["📸 IG","https://instagram.com/"+b.ig.slice(1)],b.phone&&["📞 Call","tel:"+b.phone],b.email&&["✉️ Email","mailto:"+b.email]].filter(Boolean);
+  return `<div class="biz"><header><div class="av">${esc(initials(b.name))}</div><div><h3>${esc(b.name)}</h3>
+   <span class="chip">${ICON[b.stage]||""} ${esc(st.name||b.stage)}</span>${b.tier?`<span class="chip g">${esc(String(b.tier).slice(0,28))}</span>`:""}${b.offer?`<span class="chip">${esc(b.offer)}</span>`:""}</div></header>
+   <div class="meta">${b.monthly?`<b class="gold">${usd(b.monthly)}/mo</b> · `:""}${b.paid_total?`paid ${usd(b.paid_total)} · `:""}${b.owner?`owner ${esc(b.owner)} · `:""}${b.views&&b.views!=="—"?`review ${esc(b.views)} views · `:""}${esc(b.source||"")}</div>
+   ${b.note?`<div class="meta">${esc(b.note)}</div>`:""}${(b.events||[]).length?`<div class="meta">• ${b.events.map(esc).join("<br>• ")}</div>`:""}
+   ${(b.due||[]).map(d=>`<div class="meta" style="color:var(--hot)">Owes ${usd(d.amount)} — ${esc(d.item)} (due ${esc(d.due||"—")})</div>`).join("")}
+   <div class="acts">${links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("")}</div></div>`;
+}
+function render(){
+  const g=goal(),p=Math.min(100,Math.round(D.expected/g*100));
+  $("stamp").textContent="Updated "+new Date(D.generatedAt).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+  for(const [r,t] of [["ring","pct"],["ring2","pct2"]]){$(r).style.setProperty("--p",p);$(t).innerHTML=p+"%<small>of goal</small>";}
+  $("exp").textContent=$("exp2").textContent=usd(D.expected)+" / "+usd(g);
+  $("expSub").textContent="expected this month (recurring + collected + due)";
+  const dim=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate(),day=new Date().getDate();
+  $("pace").textContent=`To hit ${usd(g)}: ${usd(Math.max(0,g-D.expected))} more — about ${usd(Math.max(0,g-D.expected)/Math.max(1,dim-day+1))}/day for the rest of the month`;
+  $("mrr").textContent=usd(D.mrr);const L=D.biz.filter(b=>b.stage==="locked");$("mrrSub").textContent=L.length+" client(s) locked in";
+  $("inm").textContent=usd(D.month_in);$("owed").textContent=usd(D.owed);
+  $("owedSub").textContent=D.biz.reduce((a,b)=>a+(b.due||[]).length,0)+" open invoice(s)";
+  const mx=Math.max(1,...D.daily);$("bars").innerHTML=D.daily.map((v,i)=>`<i title="${D.days[i]}: ${usd(v)}" style="height:${Math.max(2,v/mx*100)}%"></i>`).join("");
+  $("barSub").textContent=usd(D.daily.reduce((a,b)=>a+b,0))+" collected in the last 30 days";
+  const pm=Math.max(1,...D.stages.map(s=>s.n));
+  $("pipeBars").innerHTML=D.stages.map(s=>`<div class="row" data-go="${s.id}"><span>${ICON[s.id]} ${esc(s.name)}</span><span class="trk"><b style="width:${s.n/pm*100}%"></b></span><span class="mono">${s.n}</span></div>`).join("");
+  document.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{stage=e.dataset.go;show("pipe")});
+  const led=a=>`<span class="led ${a.status==="error"?"err":a.status==="off"?"off":a.status==="running"?"run":""}"></span>`;
+  $("agMini").innerHTML=D.agents.map(a=>`<div class="agent">${led(a)}<b>${esc(a.name)}</b><span class="l">${esc(a.job)}</span></div>`).join("")||'<div class="empty">No agents found</div>';
+  const bad=D.agents.filter(a=>a.status==="error").length;$("sysled").className="led"+(bad?" err":"");$("sys").textContent=bad?bad+" agent(s) need a look":"all systems online";
+  const ready=D.biz.filter(b=>b.stage==="ready"),pend=D.biz.filter(b=>b.stage==="pending"),dues=D.biz.filter(b=>(b.due||[]).length);
+  $("moves").innerHTML=[...dues.map(b=>`💸 Collect ${usd(b.due.reduce((a,d)=>a+(+d.amount||0),0))} from <b>${esc(b.name)}</b>`),
+    ...ready.map(b=>`🚀 <b>${esc(b.name)}</b> is ready — send the onboarding link`),
+    ...pend.map(b=>`⏳ Follow up with <b>${esc(b.name)}</b>`),
+    `📞 ${D.stages.find(s=>s.id==="contact").n} warm businesses still to contact`].map(t=>`<div class="agent"><span class="led run"></span><span>${t}</span></div>`).join("");
+  $("folders").innerHTML=D.stages.map(s=>`<div class="folder ${s.id===stage?"on":""}" data-st="${s.id}"><span class="ic">${ICON[s.id]}</span><b>${esc(s.name)}</b><span class="c">${s.n}</span><div class="sub">${esc(s.desc)}</div></div>`).join("");
+  document.querySelectorAll("[data-st]").forEach(e=>e.onclick=()=>{stage=e.dataset.st;$("q").value="";render()});
+  listBiz();
+  $("clList").innerHTML=L.map(bizCard).join("")||'<div class="empty">No clients locked in yet</div>';
+  $("goalIn").value=g;
+  const dueRows=D.biz.flatMap(b=>(b.due||[]).map(d=>({...d,client:b.name})));
+  $("dueT").innerHTML="<tr><th>Client</th><th>For</th><th>Due</th><th>Amount</th></tr>"+(dueRows.map(d=>`<tr><td>${esc(d.client)}</td><td>${esc(d.item)}</td><td>${esc(d.due||"—")}</td><td style="color:var(--hot)">${usd(d.amount)}</td></tr>`).join("")||'<tr><td colspan=4 class="sub">Nothing owed</td></tr>');
+  $("payT").innerHTML="<tr><th>Date</th><th>Client</th><th>For</th><th>Amount</th></tr>"+(D.payments.map(p=>`<tr><td>${esc(p.date||"—")}</td><td>${esc(p.client)}</td><td>${esc(p.item)}</td><td class="gold">${usd(p.amount)}</td></tr>`).join("")||'<tr><td colspan=4 class="sub">No payments yet</td></tr>');
+  $("teamT").innerHTML="<tr><th>Name</th><th>Role</th><th>Business</th></tr>"+D.team.map(t=>`<tr><td><b>${esc(t.name)}</b></td><td>${esc(t.role)}</td><td>${esc(t.biz)}</td></tr>`).join("");
+  $("appList").innerHTML=D.apps.map(a=>`<a class="biz" href="${esc(a.url)}" target="_blank" rel="noopener"><header><div class="av" style="background:var(--line)">${esc(initials(a.name))}</div><div><h3>${esc(a.name)}</h3><span class="chip">${esc(a.kind)}</span>${a.stage?`<span class="chip g">${ICON[a.stage]||""} ${esc(a.stage)}</span>`:""}</div></header></a>`).join("");
+  $("agList").innerHTML=D.agents.map(a=>`<div class="agent">${led(a)}<b>${esc(a.name)} <span class="mono">${esc(a.status)}${a.last_run?" · last "+new Date(a.last_run).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}</span></b><span class="l">${esc(a.job)}</span>${a.last?`<span class="l">› ${esc(a.last)}</span>`:""}</div>`).join("");
+  $("nPipe").textContent=D.biz.length;$("nCl").textContent=L.length;$("nTeam").textContent=D.team.length;$("nApps").textContent=D.apps.length;$("nAg").textContent=D.agents.length;
+}
+function listBiz(){
+  const q=$("q").value.trim().toLowerCase();
+  const list=D.biz.filter(b=>q?JSON.stringify(b).toLowerCase().includes(q):b.stage===stage);
+  $("bizList").innerHTML=list.map(bizCard).join("")||'<div class="empty">Nothing in this folder</div>';
+}
+const TITLES={ops:"LIVE OPS",pipe:"PIPELINE",clients:"CLIENTS · LOCKED IN",money:"MONEY",team:"TEAM & MANAGERS",apps:"APPS YOU CONTROL",agents:"AGENTS"};
+function show(s){document.querySelectorAll("section").forEach(x=>x.classList.toggle("on",x.id===s));
+  document.querySelectorAll("nav a.it").forEach(a=>a.classList.toggle("on",a.dataset.s===s));$("title").textContent=TITLES[s];
+  if(s==="pipe")render();ls("sousshift.tab",s);scrollTo(0,0);}
+document.querySelectorAll("nav a.it").forEach(a=>a.onclick=()=>show(a.dataset.s));
+$("q").oninput=listBiz;
+$("goalSet").onclick=()=>{ls(GK,String(+$("goalIn").value||5000));render();};
+async function unlock(pw,remember){PW=pw;await load();$("gate").hidden=true;$("app").hidden=false;
+  if(remember)ls(K,pw);const t=ls("sousshift.tab");if(t&&TITLES[t])show(t);
+  setInterval(()=>load().catch(()=>{}),120000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)load().catch(()=>{})});}
+$("f").onsubmit=async e=>{e.preventDefault();try{await unlock($("pw").value,$("rem").checked)}catch(err){$("err").textContent="Wrong password"}};
+(async()=>{for(const k of [K,...KS]){const v=ls(k);if(v){try{await unlock(v,true);return}catch(e){}}}})();
+</script>
+<!--BIO-START--><!-- Face ID / fingerprint unlock (passkey + WebAuthn PRF). Shared by the hq apps; inserted by ~/command-center/hq-bio/install.py.
+     Works with any page that has <form id="f">, <input id="pw"> and a #gate that gets hidden after unlocking.
+     The passkey's PRF secret wraps the password; only the wrapped copy is stored in this browser. -->
+<div id="bioask" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;background:#1c2333;color:#fff;border:1px solid #3a4560;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);font:15px/1.4 -apple-system,system-ui,sans-serif">
+<b>Open with Face ID or fingerprint next time?</b><p style="margin:6px 0 10px;font-size:14px">Saves a passkey on this device only. The password still works everywhere.</p>
+<button type="button" id="bioyes" style="padding:9px 16px;border-radius:10px;border:0;background:#2f6fed;color:#fff;font-weight:600">Turn on</button>
+<button type="button" id="biono" style="padding:9px 16px;border-radius:10px;background:transparent;color:#fff;border:1px solid #3a4560">Not now</button>
+<div id="biomsg" style="font-size:13px;margin-top:8px"></div></div>
+<script>
+(function(){
+var NAME="SousShift Command",PK="sousshiftBio1",REM="antidote.sousshift.pw";
+var SALT=new TextEncoder().encode("antidote-"+PK+"-prf-v1");
+var form=document.getElementById("f"),pwEl=document.getElementById("pw"),gate=document.getElementById("gate");
+if(!form||!pwEl||!gate)return;
+function u8(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
+function b64(a){return btoa(String.fromCharCode.apply(null,new Uint8Array(a)))}
+function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function saved(){try{return JSON.parse(get(PK)||"null")}catch(e){return null}}
+var ok=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function prfKey(id){
+  var a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),userVerification:"required",
+    allowCredentials:[{type:"public-key",id:u8(id)}],extensions:{prf:{eval:{first:SALT}}}}});
+  var r=a.getClientExtensionResults().prf;if(!r||!r.results||!r.results.first)throw new Error("noprf");
+  return crypto.subtle.importKey("raw",r.results.first,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function enroll(pw){
+  var c=await navigator.credentials.create({publicKey:{rp:{name:NAME},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:NAME,displayName:NAME+" (Anthony Suggs)"},
+    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{residentKey:"preferred",userVerification:"required"},extensions:{prf:{eval:{first:SALT}}}}});
+  var ext=c.getClientExtensionResults().prf;if(ext&&ext.enabled===false)throw new Error("noprf");
+  var id=b64(c.rawId),key;
+  if(ext&&ext.results&&ext.results.first)key=await crypto.subtle.importKey("raw",ext.results.first,"AES-GCM",false,["encrypt"]);
+  else key=await prfKey(id);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(pw));
+  set(PK,JSON.stringify({id:id,iv:b64(iv),ct:b64(ct)}));
+  if(REM)del(REM);            /* Face ID replaces the plain "remember" copy of the password */
+}
+/* Remember what was typed; after the page hides #gate (= unlocked), offer Face ID. */
+var typed=null;
+form.addEventListener("submit",function(){typed=pwEl.value},true);
+function unlocked(){return gate.hidden||gate.style.display==="none"}
+function offer(){
+  var pw=typed||(REM?get(REM):null);
+  if(!ok||saved()||get(PK+"no")==="1"||!pw)return;
+  var box=document.getElementById("bioask");box.hidden=false;
+  document.getElementById("biono").onclick=function(){box.hidden=true;set(PK+"no","1")};
+  document.getElementById("bioyes").onclick=async function(){var m=document.getElementById("biomsg");m.textContent="Follow the Face ID / fingerprint prompt…";
+    try{await enroll(pw);m.textContent="Done. Next time tap “Unlock with Face ID / fingerprint”.";setTimeout(function(){box.hidden=true},2500)}
+    catch(e){m.textContent=e&&e.message==="noprf"?"This browser can't do it yet. Update iOS / Chrome, or let your phone save the password (it fills with Face ID).":"Didn't finish. You can try again next time.";
+      setTimeout(function(){box.hidden=true},6000)}};
+}
+new MutationObserver(function(){if(unlocked())offer()}).observe(gate,{attributes:true,attributeFilter:["hidden","style"]});
+if(unlocked())offer();
+/* Unlock button on the lock screen once a passkey is saved */
+if(ok&&saved()){
+  var b=document.createElement("button");b.type="button";b.textContent="Unlock with Face ID / fingerprint";
+  b.style.cssText="display:block;width:100%;margin:0 0 12px;padding:13px;border-radius:11px;border:0;background:#2f6fed;color:#fff;font-weight:600;font-size:16px";
+  form.insertBefore(b,form.firstChild);
+  b.onclick=async function(){
+    try{var s=saved(),key=await prfKey(s.id);
+      pwEl.value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(s.iv)},key,u8(s.ct)));
+      var rem=document.getElementById("rem");if(rem)rem.checked=false;
+      typed=pwEl.value;form.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true}));}
+    catch(e){var err=document.getElementById("err");if(err)err.textContent="Face ID / fingerprint didn't work. Use the password (you can turn it on again after).";
+      if(e&&(e.name==="OperationError"||e.message==="noprf")){del(PK);b.remove()}}};
+}
+})();
+</script>
+<!--BIO-END-->
+</body>
+</html>
