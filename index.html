@@ -750,6 +750,17 @@ body.erasing .taglane .tag::after{content:"✕";position:absolute;top:-9px;right
 .clip:hover{transform:translateY(-3px);border-color:#53fc18;box-shadow:0 0 24px rgba(83,252,24,.25)}
 .clip span{color:#d8ffc9;font-weight:800;font-size:.9rem;text-align:center;padding:0 12px}
 .clip em{display:block;font-style:normal;color:#53fc18;font-size:.76rem;margin-top:4px}
+/* playable clips (10-17): tap the card, it plays right here */
+.clip-rail.vids{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.vclip{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(83,252,24,.26);background:#05070a;transition:transform .25s ease,border-color .25s ease}
+.vclip:hover{transform:translateY(-3px);border-color:#53fc18;box-shadow:0 0 24px rgba(83,252,24,.25)}
+.vclip video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#000}
+.vclip .vplay{position:absolute;left:0;right:0;top:0;aspect-ratio:16/9;display:grid;place-items:center;border:0;padding:0;cursor:pointer;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55))}
+.vclip .vplay b{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#53fc18;color:#06210a;font-size:1.3rem;box-shadow:0 0 26px rgba(83,252,24,.7)}
+.vclip.on .vplay{display:none}
+.vclip .vcap{padding:9px 12px 11px;color:#d8ffc9;font-weight:800;font-size:.88rem;line-height:1.25}
+.vclip .vcap em{display:block;font-style:normal;color:#53fc18;font-size:.74rem;margin-top:3px;font-weight:700}
+.vclip .vcap a{color:#53fc18}
 .btn-kick{margin-top:20px;display:inline-block;background:linear-gradient(180deg,#6bff33,#3fd80f);color:#06210a;font-weight:900;letter-spacing:.4px;box-shadow:0 0 26px rgba(83,252,24,.55)}
 .btn-kick:hover{box-shadow:0 0 40px rgba(83,252,24,.85)}
 @media (prefers-reduced-motion:reduce){.kick-art.snap .whiteout,.kick-art:hover .flashwrap b{animation:none}}
@@ -5095,15 +5106,22 @@ const CELEBS = [
 /* ===== KICK: clips + camera flash + shutter ===== */
 const KICK_URL="https://kick.com/therealantidote";
 const KICKCLIPS=[
-  {t:"🔥 Antidote Clip 01", u:KICK_URL, ref:"clip_01KXH68S0FBZ5MS1WQH9D4HNSR"},
-  {t:"🔥 Antidote Clip 02", u:KICK_URL, ref:"clip_01KXH6KD2DE5D2QBXB9JV268KR"}
+  {t:"Freestyle GOD !! \ud83c\udfa4", s:"On @wb23min's Kick stream", v:"assets/media/kick/kick-freestyle-god", u:"https://kick.com/wb23min/clips/clip_01KXH640PMKVPC52MFTR51JKSR"},
+  {t:"Antidote x Ray J, live on Kick", s:"Ray J pulled up on the stream", v:"assets/media/kick/kick-rayj-on-kick", u:"https://www.youtube.com/shorts/OAKGpqtTyMw"},
+  {t:"Almost met Adin Ross w/ Ray J", s:"With Ray J, C-Nova & SupaHotFire", v:"assets/media/kick/kick-rayj-adin", u:"https://www.youtube.com/shorts/DhkPvdGBsuE"},
+  {t:"The Cat Daddy Podcast interview", s:"12.5K views on @antidotethestreamer", v:"assets/media/kick/kick-catdaddy-interview", u:"https://www.instagram.com/reel/DbPcY31KCd-/"}
 ];
 (function(){
   const art=document.getElementById("kickArt"), rail=document.getElementById("clipRail"), paps=document.getElementById("kickPaps");
   if(!art) return;
   for(let i=0;i<9;i++){const b=document.createElement("b");b.style.left=(6+Math.random()*88)+"%";b.style.top=(8+Math.random()*80)+"%";b.style.animationDelay=(Math.random()*1.5).toFixed(2)+"s";paps.appendChild(b);}
   if(rail){
-    if(KICKCLIPS.length){KICKCLIPS.forEach(c=>{const a=document.createElement("a");a.className="clip";a.href=c.u;a.target="_blank";a.rel="noopener";a.innerHTML=`<span>${c.t}<em>Watch the clip \u2197</em></span>`;rail.appendChild(a);});}
+    if(KICKCLIPS.length){rail.classList.add("vids");KICKCLIPS.forEach(c=>{const d=document.createElement("div");d.className="vclip";
+      d.innerHTML=`<video preload="none" playsinline poster="${c.v}.jpg" src="${c.v}.mp4" aria-label="${c.t}"></video><button class="vplay" type="button" aria-label="Play: ${c.t}"><b>\u25b6</b></button><div class="vcap">${c.t}<em>${c.s} \u00b7 <a href="${c.u}" target="_blank" rel="noopener">original \u2197</a></em></div>`;
+      const vid=d.querySelector("video");
+      d.querySelector(".vplay").addEventListener("click",()=>{d.classList.add("on");vid.controls=true;vid.play().catch(()=>{});});
+      vid.addEventListener("play",()=>{d.classList.add("on");rail.querySelectorAll("video").forEach(o=>{if(o!==vid)o.pause();});});
+      rail.appendChild(d);});}
     else{["Latest Clips","Best Moments","Full Replays"].forEach(t=>{const a=document.createElement("a");a.className="clip";a.href=KICK_URL+"/clips";a.target="_blank";a.rel="noopener";a.innerHTML=`<span>${t}<em>Watch on Kick \u2197</em></span>`;rail.appendChild(a);});}
   }
   let ac=null;
