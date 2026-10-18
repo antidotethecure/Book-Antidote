@@ -3698,6 +3698,13 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
 .ag-form textarea{min-height:90px;resize:vertical;margin-bottom:14px}
 .ag-form label{display:block;font-size:.76rem;color:var(--mut);margin-bottom:5px;letter-spacing:.03em}
 @media(max-width:640px){.ag-row{grid-template-columns:1fr}}
+.cl-proof{display:flex;gap:16px;align-items:center;margin:22px auto 6px;max-width:760px;background:#141012;border:1px solid #3a2a22;border-left:3px solid #f5b301;border-radius:14px;padding:12px;color:inherit;text-decoration:none}
+.cl-proof img{width:120px;height:160px;object-fit:cover;border-radius:10px;flex:none}
+.cl-proof-txt{display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.35}
+.cl-proof-k{font-family:"Courier Prime",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#f5b301}
+.cl-proof-sub{font-size:13px;opacity:.75}
+.cl-proofli b{color:#f5b301}
+@media(max-width:480px){.cl-proof img{width:92px;height:124px}}
 </style>
 <section id="collab">
   <div class="wrap">
@@ -3720,6 +3727,7 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
           <li><span><b>Posted across my socials</b><span class="sub">Reel goes live to my full audience</span></span></li>
           <li><span><b>Dedicated Story feature</b><span class="sub">Tagged, with your location + handle</span></span></li>
           <li><span><b>2–3 Shorts for TikTok + YouTube</b><span class="sub">Cut for reach on every platform</span></span></li>
+          <li class="cl-proofli"><span><b>&#11088; Real result: Mardi Gras Tuesday</b><span class="sub">After our review with Hollywood Donut, Ray J &amp; Jackie Long pulled up</span></span></li>
         </ul>
         <div class="cl-fill"></div>
       </div>
@@ -3738,6 +3746,7 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
           <li><span><b>4–6 Shorts for TikTok + YouTube</b><span class="sub">Double the clips, double the reach</span></span></li>
           <li><span><b>Dedicated Story feature</b><span class="sub">Tagged, with your location + handle</span></span></li>
           <li><span><b>Pinned to my main grid — 1 full month</b><span class="sub">Top of my profile for maximum exposure</span></span></li>
+          <li class="cl-proofli"><span><b>&#11088; Real result: Mardi Gras Tuesday</b><span class="sub">After our review with Hollywood Donut, Ray J &amp; Jackie Long pulled up</span></span></li>
         </ul>
         <div class="cl-star">
           <span class="cl-star-lbl">★ Special Guest Star</span>
@@ -3747,6 +3756,12 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
       </div>
 
     </div>
+    <a class="cl-proof reveal" href="https://www.instagram.com/reel/DefUfisSDmb/" target="_blank" rel="noopener">
+      <img src="proof-mardi-gras.jpg" alt="Ray J and crew eating at Mardi Gras Tuesday" loading="lazy" decoding="async">
+      <span class="cl-proof-txt"><span class="cl-proof-k">Real result &middot; Mardi Gras Tuesday</span>
+      <b>After my review with Hollywood Donut, Ray J, Jackie Long and their crew pulled up.</b>
+      <span class="cl-proof-sub">The spot posted it themselves. Celebrity traffic, new eyes, real momentum. &#9654; Watch their reel</span></span>
+    </a>
     <div class="cl-cta-row">
       <a class="btn btn-gold" href="sms:+14243094068">💬 Text to Book</a>
       <a class="btn btn-ghost" href="https://www.instagram.com/therealantidote" target="_blank" rel="noopener">📸 DM @TheRealAntidote</a>
@@ -3784,7 +3799,7 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
   <div class="wrap">
       <div class="ag-form reveal">
         <h3>Start The Conversation</h3>
-        <p>Tell me what you're building or fixing — website, brand, content, credit, funding — and I'll follow up personally.</p>
+        <p>Tell me what you're building or fixing — website, brand, content, your restaurant app — and I'll follow up personally.</p>
         <form id="agencyForm" onsubmit="return agencySubmit(event)">
           <div class="ag-row">
             <div><label for="agName">Name</label><input id="agName" name="name" type="text" required></div>
@@ -3797,7 +3812,6 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
               <select id="agInterest" name="interest">
                 <option>Website / Brand Build</option>
                 <option>Content &amp; Marketing</option>
-                <option>Credit Repair &amp; Business Funding</option>
                 <option>More Than One</option>
               </select>
             </div>
@@ -3842,11 +3856,6 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
               <span class="pd-q-then">You need a site &amp; digital menu</span>
             </button>
       
-            <button class="pd-q" data-id="pd-capital" aria-pressed="false">
-              <span class="pd-q-mark">?</span>
-              <p class="pd-q-ask">You know what would grow this. A second truck, new equipment, ad money. The cash is not there.</p>
-              <span class="pd-q-then">You need credit &amp; funding</span>
-            </button>
       
             <button class="pd-q" data-id="pd-va" aria-pressed="false">
               <span class="pd-q-mark">?</span>
@@ -3913,17 +3922,6 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
             </div>
           </button>
       
-          <button class="pd-lane" aria-pressed="false" data-id="pd-capital" id="pd-lane-capital">
-            <div class="pd-lane-top">
-              <span class="pd-tick"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6"/></svg></span>
-              <h3 class="pd-lane-title">Business Credit &amp; Funding</h3>
-              <span class="pd-lane-price">Hire out<b>$1,500&ndash;3,000</b>per program</span>
-            </div>
-            <div class="pd-lane-body">
-              <p class="pd-lane-desc">Marketing does not fix a cash problem. This lane gets the entity, the credit file and the paperwork in shape so funding is actually available when you need equipment, a second truck, or ad budget.</p>
-              <ul class="pd-lane-does"><li>Entity structure</li><li>Business credit file</li><li>Personal credit repair</li><li>Lender readiness</li><li>Funding strategy</li></ul>
-            </div>
-          </button>
       
           <button class="pd-lane" aria-pressed="false" data-id="pd-va" id="pd-lane-va">
             <div class="pd-lane-top">
@@ -4034,21 +4032,48 @@ body.toc-on .toc-scrim{opacity:1;visibility:visible;transition:opacity .2s ease}
 </section>
 
 
-<section id="agency">
+<section id="sousshift">
   <div class="wrap">
     <div class="eyebrow">Beyond The Reviews</div>
-    <h2>The Antidote <span class="neon">Agency</span></h2>
-    <p class="ag-intro">Antidote isn't just a food creator — he's a creative director, editor, and brand builder. Every review is proof of that. Below are two live builds made end-to-end with Claude, showing what's possible when a business hires the full package: strategy, design, copy, and code.</p>
-
-    
-<div class="ag-pitch-teaser reveal">
-      <div class="eyebrow">Beyond The Reviews</div>
-      <h2>The Antidote <span class="neon">Agency</span> — Full Pitch</h2>
-      <p class="ag-intro">Diagnose what your business actually needs, see real pricing against hiring it out separately, and the AI crew that comes standard. Takes two minutes.</p>
-      <button class="btn btn-gold" id="pdExpandBtn" type="button">🔍 Open The Full Pitch</button>
+    <h2>SousShift <span class="neon">AI</span></h2>
+    <img class="ss-logo" src="https://antidotethecure.github.io/assets/ssai-lockup.jpg" alt="SousShift AI" loading="lazy" decoding="async">
+    <p class="ss-intro">Your restaurant gets its own app: a real-photo menu, rewards and points, a game with your food in it, a staff app and a private back office. Guests scan the QR on the table, no download. Built by Antidote.</p>
+    <div class="ss-grid"><a class="ss-app" href="https://antidotethecure.github.io/demo/melody-lax/" target="_blank" rel="noopener"><b>Melody Bar &amp; Grill</b><span>LAX · menu, rewards, plane game</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/demo/nalu-vida/" target="_blank" rel="noopener"><b>Nalu Vida</b><span>Venice Pier · surf game, real menu</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/demo/lucky-dragon/" target="_blank" rel="noopener"><b>Lucky Dragon Hibachi</b><span>Hibachi · loyalty + catch game</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/demo/churrito-loco/" target="_blank" rel="noopener"><b>Churrito Loco</b><span>Churros · digital menu + game</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/demo/gritz-n-wafflez/" target="_blank" rel="noopener"><b>Gritz N Wafflez</b><span>Brunch · menu + rewards</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/demo/storm-burger/" target="_blank" rel="noopener"><b>Storm Burger</b><span>Burgers · menu + rewards</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/food-truck/demo/" target="_blank" rel="noopener"><b>Food Trucks</b><span>Location, hours, deals, alerts</span><i>Open the live app &#8599;</i></a><a class="ss-app" href="https://antidotethecure.github.io/ice-cream/demo/" target="_blank" rel="noopener"><b>Ice Cream Trucks</b><span>Live route + fan alerts</span><i>Open the live app &#8599;</i></a></div>
+    <div class="cl-cta-row ss-cta">
+      <a class="btn btn-gold" href="https://antidotethecure.github.io/app/" target="_blank" rel="noopener">&#128241; See every app &amp; plan</a>
+      <a class="btn btn-ghost" href="sms:+14243094068">&#128172; Text to get yours</a>
     </div>
-    <div id="pdBody" hidden>
-    <style>
+    <div class="ss-review">
+      <p class="ss-eb">Want a food review too?</p>
+      <p class="ss-h">Reviews that bring people through the door</p>
+      <a class="cl-proof" href="https://www.instagram.com/reel/DefUfisSDmb/" target="_blank" rel="noopener">
+        <img src="proof-mardi-gras.jpg" alt="Ray J and crew eating at Mardi Gras Tuesday" loading="lazy" decoding="async">
+        <span class="cl-proof-txt"><span class="cl-proof-k">Real result &middot; Mardi Gras Tuesday</span>
+        <b>After my review with Hollywood Donut, Ray J, Jackie Long and their crew pulled up.</b>
+        <span class="cl-proof-sub">The spot posted it themselves. &#9654; Watch their reel</span></span>
+      </a>
+      <p class="ss-turn">The Headliner: 3&ndash;7 day turnaround &middot; The Feature: 7&ndash;14 days &middot; Every collab custom quoted.</p>
+      <a class="btn btn-ghost" href="#collab">See the review packages &amp; pricing &#8593;</a>
+    </div>
+  </div>
+<style>
+#sousshift{padding:64px 0 84px;position:relative}
+.ss-logo{display:block;width:min(320px,80%);border-radius:14px;margin:6px 0 16px}
+.ss-intro{font-size:1.06rem;line-height:1.6;color:var(--mut);max-width:720px;margin:0 0 22px}
+.ss-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ss-app{display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:14px;background:var(--ink-2,#141012);border:1px solid var(--ink-3,#2a2220);color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+.ss-app:hover{border-color:#2f8cff;transform:translateY(-2px)}
+.ss-app b{font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:19px;letter-spacing:.02em}
+.ss-app span{font-size:14px;color:var(--mut)}
+.ss-app i{font-style:normal;font-size:12px;color:#5aa9ff;margin-top:6px}
+.ss-cta{margin-top:22px}
+.ss-review{margin-top:46px;border-top:1px solid var(--ink-3,#2a2220);padding-top:34px}
+.ss-eb{font-family:"Courier Prime",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#5aa9ff;margin:0}
+.ss-h{font-family:"Anton",Impact,sans-serif;font-size:26px;line-height:1.15;color:var(--cream,#f5ebd7);margin:6px 0 4px}
+.ss-turn{font-size:14px;color:var(--mut);margin:14px 0}
+</style>
+</section>
+<style>
 /* ===== Scoped: Antidote Services Pitch (prefixed pd-) ===== */
 
 .pd-scope{
@@ -4231,10 +4256,9 @@ var LANES = {
   content: { name:"Content Production",     low:1500, high:3000, mine:1200, once:false },
   reviews: { name:"Reviews & Features",     low:1000, high:2500, mine:800,  once:false },
   web:     { name:"Website & Digital Menu", low:1500, high:5000, mine:1800, once:true  },
-  capital: { name:"Credit & Funding",       low:1500, high:3000, mine:1500, once:true  },
   va:      { name:"Virtual Assistance",     low:1200, high:3500, mine:1500, once:false }
 };
-var ORDER = ["growth","content","reviews","web","capital","va"];
+var ORDER = ["growth","content","reviews","web","va"];
 var BUNDLE = {1:0, 2:.05, 3:.10, 4:.14, 5:.17, 6:.20};
 
 var picked = [];
@@ -4343,19 +4367,12 @@ mbar.addEventListener('click', function(){
 render();
 
 </script>
-
-
-    
-    <div style="text-align:center;padding:8px 0 10px">
-      <button class="btn btn-ghost" id="pdCollapseBtn" type="button">▲ Collapse This Section</button>
-    </div>
-    </div>
-    <style>#pdBody[hidden],.ag-pitch-teaser[hidden]{display:none}
+<style>#pdBody[hidden],.ag-pitch-teaser[hidden]{display:none}
 .foot-legal{margin-top:10px;font-size:13px;opacity:.72}
 .foot-legal a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22)}
 .foot-legal a:hover{opacity:1;border-bottom-color:currentColor}
 </style>
-    <script>
+<script>
     (function(){
       var teaser=document.querySelector('.ag-pitch-teaser'), body=document.getElementById('pdBody'),
           exp=document.getElementById('pdExpandBtn'), col=document.getElementById('pdCollapseBtn');
@@ -4365,67 +4382,7 @@ render();
       if(col) col.addEventListener('click', closeIt);
     })();
     </script>
-    <div class="ag-credit has-bg reveal">
-      <img class="ag-credit-bg" src="credit-funding.webp" alt="" aria-hidden="true" decoding="async" loading="lazy">
-      <div class="ccc-head">
-        <img class="ccc-logo" src="assets/media/e91170ad752e.webp" alt="Credit Comeback Capital logo" loading="lazy" decoding="async">
-        <div>
-          <div class="ccc-eyebrow">The Parent Company</div>
-          <h3>Credit Comeback Capital</h3>
-          <div class="ccc-tagline">Restore <span>•</span> Rebuild <span>•</span> Rise</div>
-        </div>
-      </div>
-      <p>Credit Comeback Capital is the credit repair and business funding company behind everything on this side of Antidote's work. <b class="neon-g">Cured Credit Program</b> is its flagship client-facing build — the program below is one part of what CCC runs.</p>
-      <div class="ag-credit-quote">
-        "I built my credit from nothing to <span class="neon-g">813</span>. No inheritance. No shortcuts. Just the process — the same one I now hand straight to you, step by step."
-        <span>— Cured Credit Program, a Credit Comeback Capital program</span>
-      </div>
-      <p>Whether it's a business needing funding to open a second location or an owner needing their personal credit repaired before a lender will talk to them, Credit Comeback Capital runs as its own track alongside any content or web work Antidote does.</p>
-    </div>
 
-    <!-- CREDIT PITCH — rebuilt from the Cured Credit program deck -->
-    <div class="cc-pitch reveal" id="ccPitch">
-      <div class="cc-score-wrap">
-        <div class="cc-score-ring">
-          <div class="cc-score" id="ccScore">300</div>
-          <div class="cc-score-cap">FICO</div>
-        </div>
-        <div class="cc-score-side">
-          <div class="cc-eyebrow">From homeless to 6&#8209;figures</div>
-          <h3 class="cc-h">Built from nothing to <span class="neon-g" id="ccScoreEcho">813</span></h3>
-          <p class="cc-quote">No inheritance. No shortcuts. Just the process, the same one I hand straight to you, step by step.</p>
-          <div class="cc-verify">Verified &middot; Nov 2024 &middot; @creditcomebackcapital</div>
-        </div>
-      </div>
-
-      <div class="cc-sub">Your score sets the ceiling before you ever apply. Every lender underwrites differently, but credit tier is consistently the first filter.</div>
-      <div class="cc-bands">
-        <div class="cc-band"><b>Under 600</b><span class="cc-amt">~$1,000</span><span class="cc-desc">Often secured cards or small starter lines only</span></div>
-        <div class="cc-band"><b>600 &ndash; 700</b><span class="cc-amt">$15K &ndash; $25K</span><span class="cc-desc">Typical range for personal loans and standard lines</span></div>
-        <div class="cc-band cc-band-top"><b>700+</b><span class="cc-amt">$50K &ndash; $200K</span><span class="cc-desc">Premium and business tier financing opens up</span></div>
-      </div>
-
-      <div class="cc-ways">
-        <div class="cc-way">
-          <div class="cc-way-tag">Done for you</div>
-          <div class="cc-way-name">The Full Program</div>
-          <div class="cc-way-price">$2,000</div>
-          <ul class="cc-way-list"><li>Full 3&#8209;bureau audit</li><li>Dispute letters prepared, sent, tracked</li><li>Direct furnisher escalations when bureaus stall</li><li>Personalized rebuild plan with check&#8209;ins</li></ul>
-        </div>
-        <div class="cc-way">
-          <div class="cc-way-tag">Do it yourself</div>
-          <div class="cc-way-name">The Blueprint</div>
-          <div class="cc-way-price">$1,000</div>
-          <ul class="cc-way-list"><li>The full course, start to finish</li><li>Every dispute letter template we use</li><li>Bureau&#8209;by&#8209;bureau walkthrough</li><li>Rebuild playbook and monitoring guide</li></ul>
-        </div>
-      </div>
-
-      <a class="btn btn-gold cc-cta" href="https://cured-credit-program.netlify.app/" target="_blank" rel="noopener">See The Full Credit Program &#8599;</a>
-      <p class="cc-disc">Ranges shown are illustrative and typical, not a quote or a guarantee from any specific lender. Actual approval amounts depend on income, debt&#8209;to&#8209;income ratio, collateral and each lender&rsquo;s own underwriting. Results vary and are never guaranteed.</p>
-    </div>
-
-  </div>
-</section>
 
 <script>
 function agencySubmit(e){
@@ -4499,7 +4456,7 @@ function agencySubmit(e){
     <a class="toc-i" href="#crypto"><span class="toc-dot"></span><span class="toc-plate">🪙 Crypto</span></a>
     <a class="toc-i" href="#wall"><span class="toc-dot"></span><span class="toc-plate">🕊️ Remembrance</span></a>
     <a class="toc-i" href="#collab"><span class="toc-dot"></span><span class="toc-plate">🍽️ Collab Menu</span></a>
-    <a class="toc-i" href="#agency"><span class="toc-dot"></span><span class="toc-plate">💼 The Agency</span></a>
+    <a class="toc-i" href="#sousshift"><span class="toc-dot"></span><span class="toc-plate">📱 SousShift AI</span></a>
     <a class="toc-i toc-top" href="#top" id="tocTopLink"><span class="toc-dot"></span><span class="toc-plate">⬆️ Back to top</span></a>
   </div>
 </div>
