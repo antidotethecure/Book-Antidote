@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Letter for Anthony</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1d1d1f;--muted:#6b6b70;--line:#dcd8cf;--accent:#1f4fd1;--accent-ink:#fff;--warn:#9a5b00;--warn-bg:#fff4e0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121214;--card:#1c1c1f;--ink:#f2f2f4;--muted:#a3a3ab;--line:#33333a;--accent:#6c8cff;--accent-ink:#0b0b0d;--warn:#ffc266;--warn-bg:#2a2112}}
+:root[data-theme="dark"]{--bg:#121214;--card:#1c1c1f;--ink:#f2f2f4;--muted:#a3a3ab;--line:#33333a;--accent:#6c8cff;--accent-ink:#0b0b0d;--warn:#ffc266;--warn-bg:#2a2112}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;line-height:1.2;margin:8px 0 6px}
+h2{font-size:19px;margin:0 0 4px}
+p{margin:6px 0}
+.muted{color:var(--muted);font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+label{display:block;font-weight:600;margin:14px 0 4px}
+.hint{font-weight:400;color:var(--muted);font-size:14px;display:block}
+input[type=text],input[type=tel],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 200px}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:10px 0}
+.check input{width:22px;height:22px;margin-top:2px;flex:none}
+.btn{display:block;width:100%;font:inherit;font-weight:700;border:0;border-radius:12px;padding:15px;margin:10px 0;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.alt{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:15px;display:none;margin-top:6px}
+#pad{width:100%;height:170px;background:#fff;border:2px dashed var(--line);border-radius:10px;touch-action:none;display:block}
+.steps{counter-reset:s;padding:0;list-style:none}
+.steps li{counter-increment:s;margin:6px 0;padding-left:34px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+#preview{white-space:pre-wrap;font-family:Georgia,serif;font-size:15px;background:var(--bg);border-radius:10px;padding:12px;max-height:340px;overflow:auto}
+.mic{margin:6px 0 0;padding:10px}.mic.on{background:#d64545;color:#fff;border-color:#d64545}
+#status{font-weight:600;min-height:1.5em}
+</style>
+</head>
+<body>
+<main>
+<h1>A letter for Anthony Suggs Jr.</h1>
+<p id="hello">Thank you for helping. This takes about 5 minutes.</p>
+<ol class="steps">
+<li>Answer a few questions in your own words. Short is fine.</li>
+<li>Sign with your finger.</li>
+<li>Tap <b>Send to Anthony</b>. Your letter comes out as a signed PDF you can text or email to him.</li>
+</ol>
+
+<div class="card">
+<h2>Before you start</h2>
+<ul class="muted" style="margin:6px 0 0;padding-left:20px">
+<li>Write only what you've seen yourself. It has to be true.</li>
+<li><b>Don't</b> write about the charges or what happened, don't name anyone in the case, and don't say whether he's guilty or innocent. The judge wants to know who Anthony is.</li>
+<li>Nothing is sent anywhere until you tap Send. Your answers stay on your phone.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>1. About you</h2>
+<div class="row">
+<div><label for="name">Your full name</label><input id="name" type="text" autocomplete="name"></div>
+<div><label for="city">City and state</label><input id="city" type="text" placeholder="Long Beach, CA"></div>
+</div>
+<div class="row">
+<div><label for="job">Your job or role</label><input id="job" type="text" placeholder="Owner, Bramlett Trucking"></div>
+<div><label for="contact">Phone or email <span class="hint">So the court can reach you</span></label><input id="contact" type="text" inputmode="email"></div>
+</div>
+<div class="row">
+<div><label for="rel">How you know him</label>
+<select id="rel">
+<option value="">Choose one</option>
+<option value="mother">I'm his mother</option>
+<option value="family member">Family member</option>
+<option value="friend">Friend</option>
+<option value="employer">His boss / employer</option>
+<option value="coworker">Coworker</option>
+<option value="client">Client / business owner he worked with</option>
+<option value="mentor">Mentor / pastor / coach</option>
+<option value="other">Other</option>
+</select></div>
+<div><label for="years">How long you've known him</label><input id="years" type="text" placeholder="12 years / his whole life"></div>
+</div>
+<label for="rel2">If family or other, what's your relationship? <span class="hint">Example: cousin, godmother, neighbor</span></label>
+<input id="rel2" type="text">
+</div>
+
+<div class="card">
+<h2>2. Which court is this for?</h2>
+<p class="muted">If you're not sure, leave both checked. You'll get one signed copy for each.</p>
+<label class="check"><input type="checkbox" id="cFed" checked> <span>Federal court (Santa Ana)</span></label>
+<label class="check"><input type="checkbox" id="cState" checked> <span>Orange County court (Santa Ana)</span></label>
+</div>
+
+<div class="card">
+<h2>3. In your own words</h2>
+<p class="muted">Type, or tap <b>🎤 Tap to talk</b> and just talk. Your phone writes down what you say. Tap it again when you're done, then fix any words it got wrong.</p>
+<label for="q1">What's Anthony like, and how did you two meet? <span class="hint">Example: how you met, what he's like as a son, friend or worker, what people count on him for.</span></label>
+<textarea id="q1"></textarea>
+<button class="btn alt mic" type="button" data-for="q1">🎤 Tap to talk</button>
+<div class="warn" data-for="q1"></div>
+<label for="q2">What does Anthony do for you, or what have you done together? <span class="hint">Example: work he's done for you or your business, things you've built or gone through together, how he shows up for you.</span></label>
+<textarea id="q2"></textarea>
+<button class="btn alt mic" type="button" data-for="q2">🎤 Tap to talk</button>
+<div class="warn" data-for="q2"></div>
+<label for="q3">Tell one real moment you saw yourself that shows who he is. <span class="hint">Example: a time he helped you or someone else, kept his word, or did the right thing when it was hard.</span></label>
+<textarea id="q3"></textarea>
+<button class="btn alt mic" type="button" data-for="q3">🎤 Tap to talk</button>
+<div class="warn" data-for="q3"></div>
+<label for="q4">His work, his business and the people who depend on him <span class="hint">Optional. Example: his job, SousShift AI and his restaurant clients, his food reviews, taking care of his mom, his dog Sevyn.</span></label>
+<textarea id="q4"></textarea>
+<button class="btn alt mic" type="button" data-for="q4">🎤 Tap to talk</button>
+<div class="warn" data-for="q4"></div>
+<label for="q5">Anything else you want the judge to know <span class="hint">Optional. Example: that he shows up to every court date, or how you'll support him.</span></label>
+<textarea id="q5"></textarea>
+<button class="btn alt mic" type="button" data-for="q5">🎤 Tap to talk</button>
+<div class="warn" data-for="q5"></div>
+
+</div>
+
+<div class="card">
+<h2>4. Check it and sign</h2>
+<p class="muted">Here's your letter. The words in the middle are yours exactly as you typed them.</p>
+<div id="preview"></div>
+<label class="check"><input type="checkbox" id="aware"> <span>I know Anthony has pending court cases.</span></label>
+<label class="check"><input type="checkbox" id="truth"> <span>Everything in this letter is true and based on what I know myself.</span></label>
+<label>Sign here with your finger</label>
+<canvas id="pad"></canvas>
+<button class="btn alt" id="clear" type="button">Clear signature</button>
+</div>
+
+<button class="btn" id="send" type="button">Send to Anthony</button>
+<button class="btn alt" id="save" type="button">Save the PDF to my phone</button>
+<p id="status" role="status" aria-live="polite"></p>
+<p class="muted">If Send doesn't open your Messages or Mail, tap Save, then text or email the PDF to Anthony at (424) 309-4068 or antidotethecure@gmail.com.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const F = ["name","city","job","contact","rel","years","rel2","q1","q2","q3","q4","q5"];
+const COURTS = {
+  fed:   ["Honorable Judge", "United States District Court, Central District of California", "411 W. 4th Street, Santa Ana, CA 92701", "United States v. Anthony Suggs Jr., No. 5:26-cr-00198-JGB"],
+  state: ["Honorable Judge", "Superior Court of California, County of Orange", "Central Justice Center, 700 W. Civic Center Drive, Santa Ana, CA 92701", "People v. Anthony Suggs Jr., No. 25CF5418"]
+};
+// Topics to keep out of a character letter; this only shows a gentle note, it never blocks.
+const RISKY = /\b(innocent|guilty|charges?|gun|firearm|witness|victim|girlfriend|destiny|askari|jail call|phone call|tamper|traffick|framed|set ?up|lying|liar|cops?|police|detective|fbi|prosecutor|DA)\b/i;
+
+// Prefill from the link: ?n=Tony&r=employer
+const qs = new URLSearchParams(location.search);
+if (qs.get("n")) $("hello").textContent = "Hi " + qs.get("n").slice(0, 40) + ", thank you for helping Anthony. This takes about 5 minutes.";
+if (qs.get("r") && [...$("rel").options].some(o => o.value === qs.get("r"))) $("rel").value = qs.get("r");
+
+// Keep a draft on this phone only.
+try { const d = JSON.parse(localStorage.getItem("charLetter") || "{}"); F.forEach(k => { if (d[k] && !(k === "rel" && qs.get("r"))) $(k).value = d[k]; }); } catch (e) {}
+function saveDraft(){ try { const d = {}; F.forEach(k => d[k] = $(k).value); localStorage.setItem("charLetter", JSON.stringify(d)); } catch (e) {} }
+
+function relText(){
+  const r = $("rel").value, r2 = $("rel2").value.trim();
+  if ((r === "family member" || r === "other") && r2) return r2;
+  return { "mother":"mother","family member":"family member","friend":"friend","employer":"employer","coworker":"coworker","client":"client","mentor":"mentor" }[r] || r2 || "friend";
+}
+function today(){ return new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" }); }
+function body(){
+  const v = k => $(k).value.trim();
+  const me = [`My name is ${v("name") || "[your name]"}`];
+  if (v("city")) me.push(`and I live in ${v("city")}`);
+  let intro = me.join(" ") + ".";
+  if (v("job")) intro += ` I work as ${v("job")}.`;
+  intro += ` I am Anthony Suggs Jr.'s ${relText()}` + (v("years") ? `, and I have known him for ${v("years")}.` : ".");
+  intro += " I am writing to tell the Court about the person I know.";
+  const paras = [intro, v("q1"), v("q2"), v("q3"), v("q4"), v("q5")].filter(Boolean);
+  paras.push("Everything in this letter is true and based on my own knowledge." + (v("contact") ? ` I can be reached at ${v("contact")}.` : ""));
+  return paras;
+}
+function letterText(c){
+  const h = COURTS[c];
+  return [today(), "", h[0], h[1], h[2], "", "Re: " + h[3], "", "Your Honor,", "", body().join("\n\n"), "", "Respectfully,", "", "[signature]", $("name").value.trim()].join("\n");
+}
+function courts(){ return ["fed","state"].filter(c => $(c === "fed" ? "cFed" : "cState").checked); }
+function refresh(){
+  saveDraft();
+  const cs = courts();
+  $("preview").textContent = cs.length ? letterText(cs[0]) : "Check at least one court above.";
+  document.querySelectorAll(".warn").forEach(w => {
+    const m = $(w.dataset.for).value.match(RISKY);
+    w.style.display = m ? "block" : "none";
+    if (m) w.textContent = `Heads up: "${m[0]}" sounds like it's about the case. Character letters work best when they stick to who Anthony is. You can keep it if it's important to you.`;
+  });
+}
+F.concat(["cFed","cState"]).forEach(k => $(k).addEventListener("input", refresh));
+refresh();
+
+
+// Talk instead of type: the phone's own speech-to-text writes into the box.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recBtn = null;
+document.querySelectorAll(".mic").forEach(b => {
+  if (!SR) { b.textContent = "🎤 To talk: tap the box, then the mic on your keyboard"; b.disabled = true; return; }
+  b.onclick = () => {
+    if (rec) { rec.stop(); return; }
+    const box = $(b.dataset.for), base = box.value.trim();
+    rec = new SR(); rec.lang = "en-US"; rec.continuous = true; rec.interimResults = true; recBtn = b;
+    b.classList.add("on"); b.textContent = "⏹ Listening... tap when done";
+    rec.onresult = e => { let t = ""; for (const r of e.results) t += r[0].transcript; box.value = (base ? base + " " : "") + t.trim(); refresh(); };
+    rec.onerror = e => { $("status").textContent = e.error === "not-allowed" ? "Allow the microphone to talk, or tap the box and use your keyboard's mic." : "Mic stopped. Tap again to keep going."; };
+    rec.onend = () => { b.classList.remove("on"); b.textContent = "🎤 Tap to talk"; rec = null; refresh(); };
+    rec.start();
+  };
+});
+
+// Signature pad
+const pad = $("pad"), ctx = pad.getContext("2d");
+let drawing = false, signed = false;
+function sizePad(){ const r = pad.getBoundingClientRect(), s = window.devicePixelRatio || 1; pad.width = r.width * s; pad.height = r.height * s; ctx.setTransform(s,0,0,s,0,0); ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#111"; signed = false; }
+sizePad(); addEventListener("resize", sizePad);
+function pt(e){ const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+pad.addEventListener("pointerdown", e => { drawing = true; pad.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pt(e)); });
+pad.addEventListener("pointermove", e => { if (!drawing) return; ctx.lineTo(...pt(e)); ctx.stroke(); signed = true; });
+pad.addEventListener("pointerup", () => drawing = false);
+$("clear").onclick = () => { ctx.clearRect(0, 0, pad.width, pad.height); signed = false; };
+
+// PDF: Times Roman only carries basic Latin characters, so swap or drop the rest.
+const clean = s => s.replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/…/g,"...").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g,"");
+function wrap(text, font, size, width){
+  const out = [];
+  for (const para of text.split("\n")) {
+    if (!para.trim()) { out.push(""); continue; }
+    let line = "";
+    for (const w of para.split(/\s+/)) {
+      const t = line ? line + " " + w : w;
+      if (font.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t;
+    }
+    out.push(line);
+  }
+  return out;
+}
+async function makePdf(){
+  const problems = [];
+  if (!$("name").value.trim()) problems.push("your name");
+  if (!$("rel").value) problems.push("how you know him");
+  if (!["q1","q2","q3"].some(k => $(k).value.trim())) problems.push("at least one answer in part 3");
+  if (!courts().length) problems.push("a court");
+  if (!$("aware").checked || !$("truth").checked) problems.push("both checkboxes");
+  if (!signed) problems.push("your signature");
+  if (problems.length) { $("status").textContent = "Still needed: " + problems.join(", ") + "."; return null; }
+  const { PDFDocument, StandardFonts } = PDFLib;
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.TimesRoman);
+  const sig = await doc.embedPng(pad.toDataURL("image/png"));
+  const W = 612, H = 792, M = 72, size = 12, lh = 16;
+  for (const c of courts()) {
+    const lines = wrap(clean(letterText(c)), font, size, W - 2*M);
+    let page = doc.addPage([W, H]), y = H - M;
+    for (const ln of lines) {
+      if (y < M + (ln === "[signature]" ? 60 : 0)) { page = doc.addPage([W, H]); y = H - M; }
+      if (ln === "[signature]") {
+        const sw = 180, sh = sw * pad.height / pad.width;
+        page.drawImage(sig, { x: M, y: y - sh + lh, width: sw, height: sh }); y -= sh;
+      } else { page.drawText(ln, { x: M, y, size, font }); y -= lh; }
+    }
+  }
+  doc.setTitle("Character letter for Anthony Suggs Jr. from " + clean($("name").value.trim()));
+  const bytes = await doc.save();
+  const fname = "Character letter - " + clean($("name").value.trim()).replace(/[^\w .-]/g,"") + ".pdf";
+  return new File([bytes], fname, { type: "application/pdf" });
+}
+function download(file){ const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); }
+$("send").onclick = async () => {
+  const file = await makePdf(); if (!file) return;
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: file.name, text: "My character letter for Anthony" }); $("status").textContent = "Done. Thank you! Anthony will get your letter."; return; }
+    catch (e) { if (e.name === "AbortError") { $("status").textContent = "Not sent yet. Tap Send to try again."; return; } }
+  }
+  download(file);
+  $("status").textContent = "Saved to your phone. Now text or email the PDF to Anthony: (424) 309-4068 or antidotethecure@gmail.com.";
+};
+$("save").onclick = async () => { const file = await makePdf(); if (file) { download(file); $("status").textContent = "Saved. Text or email it to Anthony when you're ready."; } };
+</script>
+</body>
+</html>
