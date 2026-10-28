@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script>/* anti-clickjacking: static hosting can't send X-Frame-Options, so refuse cross-origin framing */(function(){if(top===self)return;try{if(top.location.origin===location.origin)return}catch(e){}document.documentElement.style.display="none";try{top.location=location.href}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="theme-color" content="#0f1f3d">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1338,7 +1338,7 @@ async function sharePdf(sid,i){const it=DATA.sections.find(x=>x.id===sid).items[
 /* ✍️ Sign inside the app (no DocuSign): draw once, stamp signature + today's date on every MY-signature field (Client/Defendant/Declarant),
    skip Attorney/Server fields, then share/save the signed PDF. Uses pdf-lib (loaded on first use). */
 let PDFLIB=null;
-async function pdfLib(){if(PDFLIB)return PDFLIB;await new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});PDFLIB=window.PDFLib;return PDFLIB;}
+async function pdfLib(){if(PDFLIB)return PDFLIB;await new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";sc.integrity="sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI";sc.crossOrigin="anonymous";sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});PDFLIB=window.PDFLib;return PDFLIB;}
 async function pdfBytes(it){if(it.m){const u=await media(it.m,"application/pdf");return new Uint8Array(await (await fetch(u)).arrayBuffer());}return u8(it.data);}
 function padSetup(){const c=document.getElementById("spc"),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;
   const x=c.getContext("2d");x.scale(dpr,dpr);x.lineWidth=2.6;x.lineCap="round";x.lineJoin="round";x.strokeStyle="#0b1a3a";let on=false,drew=false;
