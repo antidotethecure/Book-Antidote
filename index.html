@@ -332,7 +332,7 @@ body.idleon #takeover{opacity:1}
 
 /* ---------- FOOTER / STICKY ---------- */
 footer{padding:36px 0 118px;text-align:center;color:var(--mut);font-size:.9rem}
-.foot-social{display:flex;gap:16px;justify-content:center;margin-bottom:14px;font-weight:700}
+.foot-social{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-bottom:14px;font-weight:700}
 .foot-social a{color:var(--cream);text-decoration:none}
 .sticky-bar{position:fixed;bottom:0;left:0;right:0;z-index:70;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(11,10,8,.94);border-top:1px solid rgba(245,166,35,.4);backdrop-filter:blur(8px)}
 .sticky-bar a{flex:1;text-align:center;text-decoration:none;font-weight:700;font-size:.95rem;padding:12px 6px;border-radius:11px}
@@ -7003,17 +7003,22 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   var ctx=cv.getContext('2d');
   var W=0,H=0,particles=[],raf=null,active=false,spawnAcc=0,last=0;
   var GLYPHS=['\u266A','\u266B'];
+  /* The canvas used to cover the whole section at full pixel ratio: 1170x17148 (76 MB) on a phone,
+     past iOS's canvas limit. It is now one screen tall and slides to the visible part of the section;
+     H stays the section height, so the notes fall exactly as before. */
+  var DPR=Math.min(window.devicePixelRatio||1,2), VH=0;
 
   function resize(){
-    var r=sec.getBoundingClientRect(), d=window.devicePixelRatio||1;
-    W=cv.width=Math.max(1,r.width*d); H=cv.height=Math.max(1,r.height*d);
-    cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
+    var r=sec.getBoundingClientRect(), d=DPR;
+    VH=Math.min(r.height,window.innerHeight);
+    W=cv.width=Math.max(1,r.width*d); H=Math.max(1,r.height*d); cv.height=Math.max(1,VH*d);
+    cv.style.width=r.width+'px'; cv.style.height=VH+'px';
   }
   resize();
   window.addEventListener('resize', resize);
 
   function spawn(){
-    var d=window.devicePixelRatio||1;
+    var d=DPR;
     particles.push({
       x: Math.random()*W,
       y: -30*d,
@@ -7033,19 +7038,22 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       spawnAcc+=dt;
       if(spawnAcc>170){ spawnAcc=0; spawn(); }
     }
-    ctx.clearRect(0,0,W,H);
+    var off=Math.max(0,Math.min(H/DPR-VH,-sec.getBoundingClientRect().top));   /* top of the visible window, in section px */
+    cv.style.transform='translateY('+off+'px)';
+    ctx.clearRect(0,0,W,cv.height);
     particles.forEach(function(p){
       p.y+=p.speed*2;
       p.sway+=p.swaySpeed;
-      var x=p.x+Math.sin(p.sway)*14*(window.devicePixelRatio||1);
+      var x=p.x+Math.sin(p.sway)*14*DPR, y=p.y-off*DPR;
+      if(y<-60*DPR||y>cv.height+60*DPR) return;
       ctx.save();
       ctx.globalAlpha=p.alpha;
       ctx.fillStyle='#f5a623';
       ctx.shadowColor='rgba(245,166,35,.65)';
-      ctx.shadowBlur=10;
+      ctx.shadowBlur=10*DPR/(window.devicePixelRatio||1);   /* same glow on screen as before the pixel-ratio cap */
       ctx.font=p.size+'px sans-serif';
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(p.glyph, x, p.y);
+      ctx.fillText(p.glyph, x, y);
       ctx.restore();
     });
     particles=particles.filter(function(p){ return p.y < H+40; });
@@ -7066,6 +7074,10 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   sec.addEventListener('mouseenter', start);
   sec.addEventListener('mouseleave', stop);
   sec.addEventListener('touchstart', start, {passive:true});
+  /* a phone never fires mouseleave, so one touch left this loop running for the rest of the visit */
+  if('IntersectionObserver' in window) new IntersectionObserver(function(es){
+    if(!es[es.length-1].isIntersecting){ stop(); particles=[]; }
+  }).observe(sec);
 })();
 </script>
 
