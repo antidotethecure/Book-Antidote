@@ -42,7 +42,7 @@
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const el = document.createElement('div'); el.id = 'dgs-intro'; el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="grid"></div><div class="glow"></div><canvas></canvas><div class="scan"></div>
-    <div class="stage"><div class="ring"></div><div class="ring r2"></div><img class="logo" src="/img/dgs-logo.png" alt=""><div class="flash"></div></div>
+    <div class="stage"><div class="ring"></div><div class="ring r2"></div><img class="logo" src="img/dgs-logo.png" alt=""><div class="flash"></div></div>
     <h1>Dragons Guard Staffing</h1><div class="sub">SOLID SECURITY \u00b7 LA &amp; OC</div><div class="boot"></div>
     <div class="stamp">\u{1F6E1} ${STAMP}</div><div class="skip">TAP TO SKIP</div>`;
   (document.body || document.documentElement).appendChild(el);
