@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<script src="shim.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DGS Client Portal</title>
+<link rel="icon" href="img/icon-180.png"><link rel="apple-touch-icon" href="img/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="DGS Client">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#000;--card:#111;--card2:#181818;--line:#2a2a2a;--tx:#fff;--mut:#a3a3a3;--red:#e03020;--red2:#b8241a;--ok:#22c55e;--warn:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 -apple-system,system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(224,48,32,.25),transparent 60%);pointer-events:none;z-index:-1}
+header{position:sticky;top:0;z-index:5;background:#000e;backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:max(10px,env(safe-area-inset-top)) 16px 0}
+h1{font:900 19px system-ui;margin:0;text-transform:uppercase;letter-spacing:.03em}h3{margin:0 0 6px;text-transform:uppercase;font:900 15px system-ui;letter-spacing:.04em}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:40px;height:40px}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:8px;scrollbar-width:none}
+nav button{background:none;border:0;color:var(--mut);font:800 12px system-ui;text-transform:uppercase;letter-spacing:.06em;padding:11px 12px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+nav button.on{color:#fff;border-color:var(--red)}
+main{padding:12px 16px 60px;max-width:900px;margin:auto}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.05em}
+.p-ok{background:#14532d;color:#bbf7d0}.p-warn{background:#713f12;color:#fde68a}.p-bad{background:var(--red2);color:#fff}.p-gray{background:#262626;color:#d4d4d4}
+button.b{border:0;border-radius:12px;padding:13px 16px;font:800 14px system-ui;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:var(--red);cursor:pointer}
+button.b:disabled{opacity:.4}.b-dark{background:#262626!important}.w{width:100%}
+input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0a0a0a;color:var(--tx);font:16px system-ui;margin:4px 0 8px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--red);border-color:transparent}
+.f2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 10px}
+.guards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.g{display:flex;gap:8px;align-items:center;background:#0a0a0a;border:1px solid var(--line);border-radius:12px;padding:8px}
+.g img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--red);background:#222}
+.inv{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.inv input{width:22px;height:22px;margin:0;accent-color:var(--red)}
+.total{font:900 30px ui-monospace,monospace}
+.ev{padding:10px 0;border-bottom:1px solid var(--line)}.ev img{width:64px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px}
+.hidden{display:none!important}
+.login{max-width:380px;margin:9vh auto;padding:16px;text-align:center}.login img{width:140px;filter:drop-shadow(0 0 30px rgba(224,48,32,.45))}
+#toast{position:fixed;left:16px;right:16px;bottom:20px;padding:14px;border-radius:12px;background:#1f1f1f;border:1px solid var(--red2);z-index:20;text-align:center;font-weight:600}
+@media print{header,nav,.noprint{display:none!important}body{background:#fff;color:#000}.card{background:#fff;border-color:#ccc}.mut{color:#444}}
+</style>
+</head>
+<body>
+<script src="splash.js" data-mode="client"></script>
+<div id="toast" class="hidden"></div>
+
+<section id="v-login" class="hidden"><div class="login">
+  <img src="img/dgs-logo.png" alt="DGS"><h1 style="margin-top:12px">Dragons Guard Staffing</h1><p class="mut">Client portal — your guards, your bookings, your bill</p>
+  <div class="card" style="text-align:left"><input id="lu" placeholder="Username" autocomplete="username" autocapitalize="none">
+  <input id="lp" type="password" placeholder="Password" autocomplete="current-password">
+  <button class="b w" id="go">Sign in</button><p class="mut" id="err"></p></div>
+  <p class="mut">No login yet? Ask your DGS manager.</p>
+</div></section>
+
+<section id="v-reset" class="hidden"><div class="login">
+  <h1>Make your own password</h1>
+  <div class="card" style="text-align:left"><input id="r-old" type="password" placeholder="Password DGS gave you"><input id="r-new" type="password" placeholder="New password (6+ characters)">
+  <button class="b w" id="r-go">Save</button><p class="mut" id="r-err"></p></div>
+</div></section>
+
+<div id="v-app" class="hidden">
+<header>
+  <div class="row"><div class="brand"><img src="img/dgs-logo.png" alt=""><div><h1 id="co"></h1><div class="mut">Dragons Guard Staffing · client portal</div></div></div>
+    <button class="b b-dark noprint" id="out" style="padding:8px 12px;font-size:11px">Sign out</button></div>
+  <nav><button data-t="book" class="on">Your guards</button><button data-t="pay">Pay</button><button data-t="req">Request guards</button><button data-t="rep">Reports</button></nav>
+</header>
+<main>
+  <section id="t-book"><div id="due-banner"></div><div id="shifts"></div></section>
+
+  <section id="t-pay" class="hidden">
+    <div class="card"><h3>Amount due</h3><div id="unpaid"></div>
+      <div class="row" style="margin-top:12px"><div><div class="mut">Selected</div><div class="total" id="sel-total">$0.00</div></div>
+        <button class="b" id="pay-go">Pay securely</button></div>
+      <p class="mut" id="pay-note">Card or bank (ACH) through Stripe. Payment goes straight to Dragons Guard Staffing; your card details never touch this app.</p></div>
+    <div class="card"><h3>Paid</h3><div id="paid"></div></div>
+  </section>
+
+  <section id="t-req" class="hidden">
+    <div class="card"><h3>Request guards</h3>
+      <label class="mut">Location<select id="q-site"></select></label>
+      <div class="f2"><label class="mut">Date<input type="date" id="q-date"></label><label class="mut">Start<input type="time" id="q-start" value="21:00"></label>
+        <label class="mut">End<input type="time" id="q-end" value="02:00"></label><label class="mut">Guards needed<input id="q-n" value="2" inputmode="numeric"></label></div>
+      <label class="mut">Notes (event type, dress code, entrance)<textarea id="q-notes" rows="3"></textarea></label>
+      <button class="b w" id="q-go">Send request</button>
+      <p class="mut">DGS confirms and staffs it. Your bill shows up under Pay once it's booked.</p></div>
+    <div id="reqs"></div>
+  </section>
+
+  <section id="t-rep" class="hidden">
+    <div class="row noprint"><input type="date" id="rp-day" style="width:auto"><button class="b b-dark" onclick="print()">Print / Save PDF</button></div>
+    <div class="card" id="report"></div>
+  </section>
+</main>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), TZ='America/Los_Angeles';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tm=t=>new Date(t*1000).toLocaleTimeString('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit'});
+const day=t=>new Date(t*1000).toLocaleDateString('en-US',{timeZone:TZ,weekday:'long',month:'short',day:'numeric'});
+const money=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const STATUS={on:['p-ok','On site'],break:['p-warn','On break'],done:['p-gray','Done'],late:['p-bad','Not here yet'],booked:['p-gray','Booked']};
+const LBL={clock_in:'Arrived',clock_out:'Left',round:'Post check-in',checkpoint:'Checkpoint',incident:'Incident'};
+let S=null;
+function toast(m,ms=4000){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.add('hidden'),ms)}
+async function api(p,b){const r=await fetch(p,b?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}:{});const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||'Something went wrong.');e.status=r.status;throw e}return j}
+function laMidnight(d){const [y,m,dd]=d.split('-').map(Number),noon=Date.UTC(y,m-1,dd,12);const h=+new Date(noon).toLocaleString('en-US',{timeZone:TZ,hour:'numeric',hour12:false});return (noon-h*3600000)/1000}
+const todayLA=()=>new Date().toLocaleDateString('en-CA',{timeZone:TZ});
+const hm=v=>{const [h,m]=v.split(':').map(Number);return h*3600+m*60};
+const view=v=>['login','reset','app'].forEach(x=>$('#v-'+x).classList.toggle('hidden',x!==v));
+
+async function load(){
+  try{S=await api('/api/client/state')}catch(e){if(e.status===401)return view('login');return}
+  if(S.client.must_reset)return view('reset');
+  view('app');$('#co').textContent=S.client.company;render();
+}
+function render(){
+  const unpaid=S.invoices.filter(i=>i.status==='unpaid'),due=unpaid.reduce((a,i)=>a+i.amount_cents,0);
+  $('#due-banner').innerHTML=due?`<div class="card row" style="border-color:var(--red)"><div><div class="mut">Balance due</div><div class="total">${money(due)}</div></div><button class="b" data-go="pay">Pay now</button></div>`:'';
+  const by={};S.shifts.forEach(s=>(by[day(s.start_ts)]??=[]).push(s));
+  $('#shifts').innerHTML=Object.entries(by).map(([d,list])=>`<h3 style="margin-top:16px">${d}</h3>`+list.map(s=>{const live=S.now>=s.start_ts&&S.now<s.end_ts;
+    return`<div class="card" style="${live?'border-color:var(--ok)':''}"><div class="row"><b>${esc(s.site)} · ${tm(s.start_ts)} – ${tm(s.end_ts)}</b>${live?'<span class="pill p-ok">Live now</span>':''}</div>
+    <div class="mut">${s.guards.length} of ${s.slots} guard${s.slots===1?'':'s'} assigned${s.notes?' · '+esc(s.notes):''}</div>
+    <div class="guards">${s.guards.map(g=>{const [c,l]=STATUS[g.status]||['p-gray',g.status];
+      return`<div class="g"><img src="${g.photo?'photos/'+esc(g.photo):'img/dgs-logo.png'}" alt=""><div><b>${esc(g.name)}</b><div class="mut">${g.card_no?'Guard card '+esc(g.card_no):'Licensed guard'}</div>
+      <span class="pill ${c}">${l}${g.clock_in&&g.status!=='done'?' '+tm(g.clock_in):''}</span></div></div>`}).join('')||'<div class="mut">Guards being assigned…</div>'}</div></div>`}).join('')).join('')
+    ||'<div class="card mut">No upcoming bookings. Use <b>Request guards</b> to book DGS.</div>';
+  $('#unpaid').innerHTML=unpaid.map(i=>`<label class="inv"><input type="checkbox" data-inv="${i.id}" data-c="${i.amount_cents}" checked><span>${esc(i.description)}</span><b>${money(i.amount_cents)}</b></label>`).join('')||'<div class="mut">You\'re all paid up. ✅</div>';
+  $('#paid').innerHTML=S.invoices.filter(i=>i.status==='paid').map(i=>`<div class="inv" style="grid-template-columns:1fr auto"><span>${esc(i.description)}<div class="mut">Paid ${i.paid_ts?day(i.paid_ts):''} · ${esc(i.method==='stripe'?'card/bank':i.method||'')}</div></span><b>${money(i.amount_cents)}</b></div>`).join('')||'<div class="mut">No payments yet.</div>';
+  sumSel();
+  $('#pay-go').classList.toggle('hidden',!S.stripe);
+  if(!S.stripe)$('#pay-note').textContent='Online payment is being set up. DGS will send you an invoice for now.';
+  $('#q-site').innerHTML=S.sites.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  if(!$('#q-date').value)$('#q-date').value=todayLA();
+  $('#reqs').innerHTML=S.requests.length?`<div class="card"><h3>Your requests</h3>${S.requests.map(r=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>${esc(r.site)} · ${day(r.start_ts)} ${tm(r.start_ts)}–${tm(r.end_ts)} · ${r.guards} guards</span>
+    <span class="pill ${r.status==='booked'?'p-ok':r.status==='declined'?'p-bad':'p-warn'}">${r.status==='new'?'Waiting on DGS':esc(r.status)}</span></div>`).join('')}</div>`:'';
+}
+function sumSel(){const t=[...document.querySelectorAll('[data-inv]:checked')].reduce((a,x)=>a+ +x.dataset.c,0);$('#sel-total').textContent=money(t);$('#pay-go').disabled=!t}
+document.addEventListener('change',e=>{if(e.target.dataset.inv)sumSel()});
+$('#pay-go').onclick=async()=>{const ids=[...document.querySelectorAll('[data-inv]:checked')].map(x=>+x.dataset.inv);$('#pay-go').disabled=true;
+  try{const r=await api('/api/client/pay',{invoice_ids:ids});if(/^https:\/\/checkout\.stripe\.com\//.test(r.url))location.href=r.url;else toast('Payment link looked wrong — not opening it.')}catch(e){toast(e.message);$('#pay-go').disabled=false}};
+async function report(){if(!$('#rp-day').value)$('#rp-day').value=todayLA();const ev=await api('/api/client/report?from='+laMidnight($('#rp-day').value));
+  $('#report').innerHTML=`<h3>Daily activity — ${esc($('#rp-day').value)}</h3><div class="mut">${ev.length} entries from your DGS guards</div>`+ev.map(e=>{const ph=JSON.parse(e.photos||'[]');
+    return`<div class="ev"><div class="row"><b>${LBL[e.kind]||esc(e.kind)}${e.checkpoint?' · '+esc(e.checkpoint):''}${e.incident_type?' · '+esc(e.incident_type):''}</b><span class="mut">${tm(e.ts)}</span></div>
+    <div>${esc(e.guard)} @ ${esc(e.site)}</div>${e.note?`<div class="mut">“${esc(e.note)}”</div>`:''}${ph.map(p=>`<img src="photos/${esc(p)}" alt="" loading="lazy">`).join(' ')}</div>`}).join('')}
+$('#rp-day').onchange=report;
+$('#q-go').onclick=async()=>{const d=$('#q-date').value;if(!d)return toast('Pick a date.');const base=laMidnight(d),s=hm($('#q-start').value);let e=hm($('#q-end').value);if(e<=s)e+=86400;
+  try{await api('/api/client/request',{site_id:+$('#q-site').value,start_ts:base+s,end_ts:base+e,guards:+$('#q-n').value,notes:$('#q-notes').value});$('#q-notes').value='';toast('Request sent to DGS ✅');load()}catch(x){toast(x.message)}};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-t],[data-go]');if(!t)return;const v=t.dataset.t||t.dataset.go;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===v));['book','pay','req','rep'].forEach(x=>$('#t-'+x).classList.toggle('hidden',x!==v));if(v==='rep')report();scrollTo(0,0)});
+$('#go').onclick=async()=>{$('#err').textContent='';try{await api('/api/client/login',{username:$('#lu').value,password:$('#lp').value});$('#lp').value='';load()}catch(e){$('#err').textContent=e.message}};
+$('#lp').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#r-go').onclick=async()=>{try{await api('/api/client/password',{old:$('#r-old').value,new:$('#r-new').value});load()}catch(e){$('#r-err').textContent=e.message}};
+$('#out').onclick=async()=>{await api('/api/logout',{}).catch(()=>{});view('login')};
+(async()=>{const sid=new URLSearchParams(location.search).get('paid');
+  if(sid){history.replaceState(null,'','client.html');try{const r=await api('/api/client/paid?session_id='+encodeURIComponent(sid));toast(r.status==='paid'?'Payment received — thank you ✅':'Payment is processing. It shows as paid once your bank clears it.',6000)}catch{}}
+  await load();setInterval(()=>{if(!$('#v-app').classList.contains('hidden')&&$('#t-pay').classList.contains('hidden'))load()},30000)})();
+</script>
+<script src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<script src="shim.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DGS Guard</title>
+
+<link rel="icon" href="img/icon-180.png">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DGS Guard">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#000;--card:#111;--card2:#1a1a1a;--line:#2a2a2a;--tx:#fff;--mut:#a3a3a3;--red:#e03020;--red2:#b8241a;--ok:#22c55e;--warn:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:max(14px,env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(224,48,32,.28),transparent 60%);pointer-events:none;z-index:-1}
+h1{font:900 22px/1.1 system-ui;margin:0;letter-spacing:.02em;text-transform:uppercase}
+h2{font:800 13px system-ui;color:var(--mut);margin:22px 0 8px;text-transform:uppercase;letter-spacing:.12em}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:46px;height:46px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.mut{color:var(--mut);font-size:14px}
+button,.btn{appearance:none;border:0;border-radius:14px;padding:15px;font:800 16px system-ui;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--red);width:100%;cursor:pointer;min-height:56px}
+button:active{transform:scale(.98)}button:disabled{opacity:.4}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.b-dark{background:#262626}.b-warn{background:var(--warn);color:#111}.b-ok{background:var(--ok);color:#04130a}.b-line{background:none;border:1px solid var(--line)}
+input,select,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#0a0a0a;color:var(--tx);font:16px system-ui;margin:6px 0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--red);border-color:transparent}
+.pill{display:inline-block;padding:4px 10px;border-radius:99px;font:800 12px system-ui;text-transform:uppercase;letter-spacing:.05em}
+.p-ok{background:#14532d;color:#bbf7d0}.p-warn{background:#713f12;color:#fde68a}.p-bad{background:var(--red2);color:#fff}.p-gray{background:#262626;color:#d4d4d4}
+.sos{background:#7f1d1d;border:2px solid var(--red);font-size:19px;min-height:66px;margin-top:16px;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden}
+.sos i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--red)}.sos span{position:relative}
+.hidden{display:none!important}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;z-index:9}
+.sheet .card{width:100%;margin:0;border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;padding-bottom:max(20px,env(safe-area-inset-bottom));border-color:var(--red2)}
+.thumb{width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin:8px 0}
+.list>div{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.list>div:last-child{border:0}
+.big{font:900 26px system-ui;text-transform:uppercase;margin-top:6px}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));padding:14px;border-radius:12px;background:#1f1f1f;border:1px solid var(--red2);z-index:20;text-align:center;font-weight:600}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(3,1fr);background:#0a0a0a;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:8}
+.tabs button{background:none;min-height:62px;border-radius:0;font-size:12px;color:var(--mut)}
+.tabs button.on{color:#fff;box-shadow:inset 0 3px 0 var(--red)}
+.center{max-width:420px;margin:8vh auto 0;text-align:center}.center img{width:150px;filter:drop-shadow(0 0 30px rgba(224,48,32,.45))}
+.shift{border-left:4px solid var(--line)}.shift.conf{border-left-color:var(--ok)}.shift.avail{border-left-color:var(--warn)}
+.pay{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.pay b{font:900 28px ui-monospace,monospace;color:#4ade80}
+.avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--red);background:#222}
+</style>
+</head>
+<body>
+<script src="splash.js" data-mode="guard"></script>
+<div id="toast" class="hidden"></div>
+
+<section id="v-login" class="hidden"><div class="center">
+  <img src="img/dgs-logo.png" alt="DGS">
+  <h1 style="margin-top:14px">Dragons Guard Staffing</h1><p class="mut">Guard sign in</p>
+  <div class="card" style="text-align:left">
+    <input id="l-user" placeholder="Username" autocomplete="username" autocapitalize="none" autocorrect="off">
+    <input id="l-pw" placeholder="Password" type="password" autocomplete="current-password">
+    <button id="l-go">Sign in</button><p id="l-err" class="mut"></p>
+  </div>
+  <p class="mut">Forgot your password? Call the office for a new one.</p>
+</div></section>
+
+<section id="v-reset" class="hidden"><div class="center">
+  <img src="img/dgs-logo.png" alt="" style="width:90px">
+  <h1 style="margin-top:10px">Make your own password</h1>
+  <div class="card" style="text-align:left">
+    <p class="mut">Only you will know it. At least 6 characters. Don't share it — everything you do is logged under your name.</p>
+    <input id="r-old" type="password" placeholder="Password the office gave you" autocomplete="current-password">
+    <input id="r-new" type="password" placeholder="New password" autocomplete="new-password">
+    <input id="r-new2" type="password" placeholder="New password again" autocomplete="new-password">
+    <button id="r-go">Save password</button><p id="r-err" class="mut"></p>
+  </div>
+</div></section>
+
+<section id="v-rules" class="hidden"><div class="center" style="text-align:left">
+  <h1>House rules</h1>
+  <div class="card"><div id="rules-t" style="white-space:pre-wrap"></div></div>
+  <button id="rules-ok">I've read the rules and I agree</button>
+  <p class="mut">Your agreement is saved with the time.</p>
+</div></section>
+
+<section id="v-consent" class="hidden"><div class="center" style="text-align:left">
+  <h1>Location &amp; camera</h1>
+  <div class="card">
+    <p>This app records your <b>location</b> and a <b>photo</b> when you clock in or out, check in at your post or a checkpoint, start or end a break, report an incident, or press SOS. While you're clocked in and the app is open, it also records your location about once a minute.</p>
+    <p><b>You can only clock in when you're physically at the site.</b></p>
+    <p><b>Your location is never recorded while you're clocked out.</b> Dragons Guard Staffing uses it only to confirm you're on post and to keep you safe.</p>
+    <button id="c-ok">I agree — turn on location</button>
+  </div>
+</div></section>
+
+<section id="v-main" class="hidden">
+  <div class="row"><div class="brand"><img src="img/dgs-logo.png" alt=""><div><h1 id="m-hi"></h1><div class="mut">Dragons Guard Staffing</div></div></div></div>
+
+  <div id="t-duty">
+    <div class="card" id="m-status"></div>
+    <div id="m-off"><button class="b-ok" id="b-clockin" data-act="clock_in">Clock in</button>
+      <button class="b-dark hidden" style="margin-top:10px" id="b-late">⏰ Running late?</button></div>
+    <div id="m-on" class="hidden">
+      <div class="grid">
+        <button data-act="round">⏱ Post check-in</button>
+        <button data-act="checkpoint" id="b-cp">📍 Checkpoint</button>
+        <button class="b-warn" data-act="break" id="b-break">☕ Start break</button>
+        <button class="b-dark" data-act="incident">📝 Incident</button>
+      </div>
+      <button class="b-dark" style="margin-top:10px" data-act="clock_out">Clock out</button>
+      <div class="card hidden" id="m-orders"><b>POST ORDERS</b><div class="mut" id="m-orders-t" style="white-space:pre-wrap;margin-top:6px"></div></div>
+    </div>
+    <button class="sos" id="b-sos"><i></i><span>🚨 HOLD FOR SOS</span></button>
+    <p class="mut" style="text-align:center">Hold 2 seconds — sends your location to the office. Call 911 in an emergency.</p>
+    <h2>My activity</h2>
+    <div class="card list" id="m-recent"></div>
+    <p class="mut" id="m-queue"></p>
+  </div>
+
+  <div id="t-shifts" class="hidden">
+    <h2>Shifts</h2>
+    <p class="mut">Tap <b>I'm available</b> on shifts you can work. The office confirms who gets it. You can only clock in on a confirmed shift, at the site.</p>
+    <div id="s-list"></div>
+  </div>
+
+  <div id="t-profile" class="hidden">
+    <h2>My profile</h2>
+    <div class="card" style="text-align:center">
+      <img class="avatar" id="p-photo" alt=""><br>
+      <label class="btn b-dark" for="p-file" style="display:inline-block;width:auto;padding:10px 16px;min-height:0;margin-top:8px">Update photo</label>
+      <input type="file" accept="image/*" capture="user" id="p-file" class="hidden">
+      <div class="mut" id="p-user" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <label class="mut">Phone</label><input id="p-phone" inputmode="tel">
+      <label class="mut">Guard card (BSIS) #</label><input id="p-card">
+      <label class="mut">Guard card expires</label><input id="p-exp" type="date">
+      <button id="p-save">Save</button>
+    </div>
+    <div class="card"><b>Change password</b>
+      <input id="pw-old" type="password" placeholder="Current password" autocomplete="current-password">
+      <input id="pw-new" type="password" placeholder="New password" autocomplete="new-password">
+      <button class="b-dark" id="pw-go">Change password</button></div>
+    <div class="card hidden" id="p-rules-w"><b>HOUSE RULES</b><div class="mut" id="p-rules" style="white-space:pre-wrap;margin-top:6px"></div></div>
+    <button class="b-line" id="m-out">Sign out</button>
+  </div>
+
+  <nav class="tabs"><button data-tab="duty" class="on">🛡 Duty</button><button data-tab="shifts">📅 Shifts</button><button data-tab="profile">👤 Profile</button></nav>
+</section>
+
+<div class="sheet hidden" id="late-sheet"><div class="card">
+  <div class="row"><h1>Running late</h1><button class="b-dark" style="width:auto;min-height:0;padding:8px 14px" id="ls-x">✕</button></div>
+  <p class="mut" id="ls-shift"></p>
+  <label class="mut">How late will you be?</label><select id="ls-eta"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1½ hours</option><option value="120">2 hours</option></select>
+  <textarea id="ls-why" rows="3" placeholder="Why? (traffic, car trouble…)"></textarea>
+  <p class="mut">The office will approve or tell you not to come. Time you're late is not paid.</p>
+  <button id="ls-go">Send to the office</button>
+</div></div>
+
+<div class="sheet hidden" id="sheet"><div class="card">
+  <div class="row"><h1 id="s-title"></h1><button class="b-dark" style="width:auto;min-height:0;padding:8px 14px" id="s-x">✕</button></div>
+  <div id="s-where" class="mut" style="margin:6px 0"></div>
+  <div id="s-cp-w"><label class="mut">Checkpoint</label><select id="s-cp"></select></div>
+  <div id="s-type-w"><label class="mut">What happened</label><select id="s-type">
+    <option>Fight / disturbance</option><option>Trespass</option><option>Ejected patron</option><option>Theft</option><option>Medical</option>
+    <option>Property damage</option><option>Suspicious person</option><option>Police called</option><option>Weapon</option><option>Other</option></select></div>
+  <div id="s-photo-w">
+    <label class="btn b-dark" style="display:block;text-align:center;margin-top:8px" for="s-file" id="s-photo-l">📷 Take photo</label>
+    <input type="file" accept="image/*" capture="environment" id="s-file" class="hidden">
+    <img id="s-prev" class="thumb hidden" alt="">
+  </div>
+  <textarea id="s-note" rows="3" placeholder="Notes (optional)"></textarea>
+  <p class="mut" id="s-gps">Getting your location…</p>
+  <button id="s-go">Submit</button>
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s), TZ='America/Los_Angeles';
+let ME=null, ACT=null, PHOTO=null, POS=null, watchId=null, lastPing=0;
+const LABEL={clock_in:'Clocked in',clock_out:'Clocked out',checkpoint:'Checkpoint',round:'Post check-in',break_start:'Break started',break_end:'Break ended',incident:'Incident',sos:'SOS'};
+const ON_SITE=['clock_in','checkpoint','round'], QUEUEABLE=['clock_out','break_start','break_end','incident','sos'];
+const tm=t=>new Date(t*1000).toLocaleTimeString('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit'});
+const day=t=>new Date(t*1000).toLocaleDateString('en-US',{timeZone:TZ,weekday:'short',month:'short',day:'numeric'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m,ms=3500){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.add('hidden'),ms)}
+function show(v){for(const x of ['login','reset','rules','consent','main'])$('#v-'+x).classList.toggle('hidden',x!==v)}
+async function api(path,body){
+  const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'same-origin'}:{credentials:'same-origin'});
+  const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||'Something went wrong.');e.status=r.status;throw e}return j}
+
+// offline queue — only for things that don't need a live on-site GPS check
+const QK='dgs_queue';
+const qget=()=>{try{return JSON.parse(localStorage.getItem(QK)||'[]')}catch{return[]}};
+const qset=a=>{try{localStorage.setItem(QK,JSON.stringify(a))}catch{toast('Phone storage full — get signal to send.')}};
+async function flush(){let q=qget();while(q.length){try{await api('/api/event',q[0])}catch(e){if(!e.status)break}q.shift();qset(q)}
+  $('#m-queue').textContent=q.length?`${q.length} waiting to send (no signal)…`:''}
+setInterval(flush,15000);addEventListener('online',flush);
+
+// location — fresh fixes only for on-site actions
+const fix=p=>({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy),fix_ts:p.timestamp/1000});
+function locate(fresh){return new Promise(res=>{if(!navigator.geolocation)return res(null);
+  navigator.geolocation.getCurrentPosition(p=>res(POS=fix(p)),()=>res(null),{enableHighAccuracy:true,timeout:20000,maximumAge:fresh?0:15000})})}
+function track(on){
+  if(on&&watchId==null&&navigator.geolocation)watchId=navigator.geolocation.watchPosition(p=>{POS=fix(p);
+    if(Date.now()-lastPing>60000){lastPing=Date.now();api('/api/ping',POS).catch(()=>{})}},()=>{},{enableHighAccuracy:true,maximumAge:30000});
+  if(!on&&watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
+
+function shrink(file,max=1024){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{
+  const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=img.width*k;c.height=img.height*k;
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c.toDataURL('image/jpeg',.7))};img.onerror=rej;img.src=URL.createObjectURL(file)})}
+
+async function load(){
+  try{ME=await api('/api/me')}catch(e){if(e.status===401)return show('login');toast('No signal.');return}
+  if(ME.guard.must_reset)return show('reset');
+  if(ME.rules){$('#rules-t').textContent=ME.rules;return show('rules')}
+  if(!localStorage.getItem('dgs_consent'))return show('consent');
+  show('main');render();flush();
+}
+function render(){
+  const s=ME.shift, site=ME.sites[s.site_id], cs=ME.clockable;
+  $('#m-hi').textContent=ME.guard.name;
+  $('#m-off').classList.toggle('hidden',s.on);$('#m-on').classList.toggle('hidden',!s.on);
+  track(s.on);
+  let h='';
+  if(!s.on){
+    const next=ME.shifts.find(x=>x.mine==='confirmed');
+    if(cs){const cSite=ME.sites[cs.site_id];h=`<span class="pill p-ok">Shift ready</span><div class="big">${esc(cSite?.name)}</div><div class="mut">${tm(cs.start_ts)} – ${tm(cs.end_ts)}${cSite?.address?' · '+esc(cSite.address):''}</div><p class="mut">Clock in when you're at the site.</p>`}
+    else if(next)h=`<span class="pill p-gray">Off duty</span><div class="big">Next: ${esc(next.site)}</div><div class="mut">${day(next.start_ts)} · ${tm(next.start_ts)} – ${tm(next.end_ts)}</div><p class="mut">Clock-in opens 1 hour before your shift.</p>`;
+    else h=`<span class="pill p-gray">Off duty</span><p class="mut">No confirmed shift. Open <b>Shifts</b> and tap “I'm available”. Location is off while you're clocked out.</p>`;
+    $('#b-clockin').disabled=!cs;
+    const lateFor=cs||next, ln=lateFor&&ME.late.find(n=>n.shift_id===lateFor.id);
+    $('#b-late').classList.toggle('hidden',!lateFor||lateFor.start_ts-Date.now()/1000>6*3600);
+    if(ln)$('#m-status').dataset.late=`<p>${ln.status==='pending'?'<span class="pill p-warn">Late notice sent — waiting on office</span>':ln.status==='approved'?`<span class="pill p-ok">Approved — come in by ${tm(ln.eta_ts)}</span>`:'<span class="pill p-bad">Denied — don\'t come in. Call the office.</span>'}</p>`;
+    else delete $('#m-status').dataset.late;
+    if(ME.pay_rate)h+=`<p class="mut">Your rate: $${(+ME.pay_rate).toFixed(2)}/hr. Pay starts when you clock in on site — not before your shift starts.</p>`;
+  }else{
+    h=`<div class="row"><span class="pill ${s.on_break?'p-warn':s.off_site?'p-bad':'p-ok'}">${s.on_break?'On break':s.off_site?'Off site':'On duty'}</span><span class="mut">since ${tm(s.on_break?s.break_since:s.since)}</span></div><div class="big">${esc(s.site)}</div>`;
+    if(s.shift_end)h+=`<div class="mut">Shift ends ${tm(s.shift_end)}</div>`;
+    if(s.pay&&s.pay.rate)h+=`<div class="pay"><span class="mut">Earned this shift<br>$${(+s.pay.rate).toFixed(2)}/hr</span><b id="m-earned">$${s.pay.earned.toFixed(2)}</b></div>`+
+      (s.pay.late_min>=1?`<div class="mut" style="color:#fca5a5">Late ${s.pay.late_min} min — −$${s.pay.lost.toFixed(2)} not paid</div>`:'');
+    if(s.round_due){const m=Math.round((s.round_due-Date.now()/1000)/60);
+      h+=`<p>${m<0?`<span class="pill p-bad">Post check-in ${-m} min late</span>`:`<span class="mut">Next post check-in in <b style="color:#fff">${m} min</b></span>`}</p>`;
+      if(m<=0&&!s.on_break&&navigator.vibrate)navigator.vibrate([300,150,300])}
+  }
+  $('#m-status').innerHTML=h+($('#m-status').dataset.late&&!s.on?$('#m-status').dataset.late:'');
+  $('#b-break').textContent=s.on_break?'✅ End break':'☕ Start break';
+  $('#b-cp').classList.toggle('hidden',!(site&&site.checkpoints.length));
+  $('#m-orders').classList.toggle('hidden',!(site&&site.post_orders));$('#m-orders-t').textContent=site?.post_orders||'';
+  $('#m-recent').innerHTML=ME.recent.map(e=>`<div class="row"><span>${LABEL[e.kind]||e.kind}${e.checkpoint?' · '+esc(e.checkpoint):''}${e.in_fence===0?' <span class="pill p-bad">off site</span>':''}</span><span class="mut">${day(e.ts)} ${tm(e.ts)}</span></div>`).join('')||'<div class="mut">Nothing yet.</div>';
+  // shifts
+  $('#s-list').innerHTML=ME.shifts.map(x=>`<div class="card shift ${x.mine==='confirmed'?'conf':x.mine?'avail':''}">
+    <div class="row"><b>${esc(x.site)}</b>${x.mine==='confirmed'?'<span class="pill p-ok">Confirmed</span>':x.mine?'<span class="pill p-warn">Waiting on office</span>':`<span class="mut">${x.slots-x.filled} spot${x.slots-x.filled===1?'':'s'} open</span>`}</div>
+    <div>${day(x.start_ts)} · ${tm(x.start_ts)} – ${tm(x.end_ts)}</div><div class="mut">${esc(x.address||'')}${x.notes?' · '+esc(x.notes):''}</div>
+    ${x.mine==='confirmed'?'':`<button style="margin-top:10px" class="${x.mine?'b-dark':'b-ok'}" data-shift="${x.id}" data-v="${x.mine?0:1}">${x.mine?"Can't make it":"I'm available"}</button>`}</div>`).join('')||'<div class="card mut">No open shifts right now. Check back later.</div>';
+  // profile
+  $('#p-rules-w').classList.toggle('hidden',!ME.house_rules);$('#p-rules').textContent=ME.house_rules||'';
+  const g=ME.guard;$('#p-user').textContent='@'+g.username;
+  $('#p-photo').src=g.photo?'/api/me/photo/'+g.photo:'img/dgs-logo.png';
+  if(document.activeElement?.closest('#t-profile')==null){$('#p-phone').value=g.phone||'';$('#p-card').value=g.card_no||'';$('#p-exp').value=g.card_exp||''}
+}
+setInterval(()=>{const s=ME?.shift,el=$('#m-earned');if(!s?.on||!s.pay?.rate||!el)return;
+  if(s.on_break&&ME.unpaid_breaks)return;const now=Date.now()/1000;if(now<s.pay.paid_from)return;
+  el.textContent='$'+(s.pay.earned+Math.max(0,now-Math.max(ME.now,s.pay.paid_from))*s.pay.rate/3600).toFixed(2)},1000);
+setInterval(()=>{if(ME&&!$('#v-main').classList.contains('hidden')&&$('#sheet').classList.contains('hidden'))api('/api/me').then(j=>{ME=j;render()}).catch(()=>{})},45000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+
+function openSheet(act){
+  if(act==='break')act=ME.shift.on_break?'break_end':'break_start';
+  ACT=act;PHOTO=null;$('#s-prev').classList.add('hidden');$('#s-note').value='';$('#s-file').value='';
+  const siteId=act==='clock_in'?ME.clockable?.site_id:ME.shift.site_id, site=ME.sites[siteId];
+  $('#s-title').textContent={clock_in:'Clock in',clock_out:'Clock out',checkpoint:'Checkpoint',round:'Post check-in',break_start:'Start break',break_end:'End break',incident:'Report incident'}[act];
+  $('#s-where').textContent=site?site.name:'';
+  $('#s-cp-w').classList.toggle('hidden',act!=='checkpoint');
+  $('#s-cp').innerHTML=(site?.checkpoints||[]).map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#s-type-w').classList.toggle('hidden',act!=='incident');
+  const selfie=act==='clock_in'||act==='clock_out', need=['clock_in','clock_out','checkpoint','round'].includes(act);
+  $('#s-photo-l').textContent=selfie?'📷 Take selfie':need?'📷 Take photo':'📷 Add photo (optional)';
+  $('#s-file').setAttribute('capture',selfie?'user':'environment');
+  $('#s-photo-w').classList.toggle('hidden',act.startsWith('break'));
+  $('#sheet').classList.remove('hidden');$('#s-gps').textContent='Getting your location…';
+  locate(ON_SITE.includes(act)).then(p=>{
+    if(!p)return $('#s-gps').textContent='⚠️ No location — turn on Location Services for this app (Settings → Privacy → Location).';
+    let t=`📍 Location locked (±${p.acc} m)`;
+    if(site&&ON_SITE.includes(act)){const d=dist(p,site);t+=d<=site.radius_m?' — you\'re on site ✅':` — you're ${d.toLocaleString()} m away ❌`}
+    if(p.acc>ME.max_acc)t+=' — signal weak, step outside';
+    $('#s-gps').textContent=t});
+}
+function dist(a,b){const r=6371000,t=x=>x*Math.PI/180,dp=t(b.lat-a.lat),dl=t(b.lng-a.lng),h=Math.sin(dp/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dl/2)**2;return Math.round(2*r*Math.asin(Math.sqrt(h)))}
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>openSheet(b.dataset.act));
+$('#s-x').onclick=()=>$('#sheet').classList.add('hidden');
+$('#s-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{PHOTO=await shrink(f);$('#s-prev').src=PHOTO;$('#s-prev').classList.remove('hidden')}catch{toast('Could not read photo')}};
+$('#s-go').onclick=async()=>{
+  const need=['clock_in','clock_out','checkpoint','round'].includes(ACT);
+  if(need&&!PHOTO)return toast('Take a photo first.');
+  $('#s-go').disabled=true;$('#s-go').textContent='Checking location…';
+  const p=await locate(ON_SITE.includes(ACT));
+  $('#s-go').disabled=false;$('#s-go').textContent='Submit';
+  if(!p&&ACT!=='incident')return toast('Turn on Location Services, then try again.');
+  const body={kind:ACT,...(p||{}),note:$('#s-note').value,photos:PHOTO?[PHOTO]:[]};
+  if(ACT==='clock_in')body.site_id=ME.clockable?.site_id;
+  if(ACT==='checkpoint')body.checkpoint=$('#s-cp').value;
+  if(ACT==='incident')body.incident_type=$('#s-type').value;
+  $('#s-go').disabled=true;
+  try{const r=await api('/api/event',body);toast(ACT==='clock_in'?'Clocked in ✅ Stay safe.':r.pay&&r.pay.rate?`Clocked out ✅ ${r.pay.hours} h — $${r.pay.earned.toFixed(2)} earned${r.pay.lost?` (−$${r.pay.lost.toFixed(2)} late)`:''}`:'Sent to the office ✅',7000);$('#sheet').classList.add('hidden')}
+  catch(e){if(e.status)toast(e.message,6000);
+    else if(QUEUEABLE.includes(ACT)){const q=qget();q.push(body);qset(q);toast('No signal — saved, will send automatically.');$('#sheet').classList.add('hidden')}
+    else toast('No signal. You need signal to do this — try again in a moment.',6000)}
+  $('#s-go').disabled=false;load();
+};
+
+// running late
+$('#b-late').onclick=()=>{const sh=ME.clockable||ME.shifts.find(x=>x.mine==='confirmed');if(!sh)return;
+  $('#late-sheet').dataset.id=sh.id;$('#ls-shift').textContent=`${ME.sites[sh.site_id]?.name||sh.site||''} · starts ${tm(sh.start_ts)}`;$('#late-sheet').classList.remove('hidden')};
+$('#ls-x').onclick=()=>$('#late-sheet').classList.add('hidden');
+$('#ls-go').onclick=async()=>{try{await api('/api/late',{shift_id:+$('#late-sheet').dataset.id,eta_min:+$('#ls-eta').value,reason:$('#ls-why').value});
+  $('#late-sheet').classList.add('hidden');toast('Sent. The office will approve or tell you not to come.',5000);load()}catch(e){toast(e.message)}};
+
+// SOS: hold 2 s so it can't fire by accident
+let sosT=null;const sos=$('#b-sos'),bar=sos.querySelector('i');
+const sosStart=e=>{e.preventDefault();bar.style.transition='width 2s linear';bar.style.width='100%';sosT=setTimeout(async()=>{
+  sosEnd();if(navigator.vibrate)navigator.vibrate(500);const p=POS||await locate();
+  const body={kind:'sos',...(p||{})};
+  try{await api('/api/event',body);toast('🚨 SOS sent to the office with your location.',7000)}
+  catch(e){const q=qget();q.unshift(body);qset(q);toast('No signal — SOS sends the moment you get signal. Call 911 if you need help now.',9000)}},2000)};
+const sosEnd=()=>{clearTimeout(sosT);bar.style.transition='none';bar.style.width='0'};
+sos.addEventListener('touchstart',sosStart,{passive:false});sos.addEventListener('mousedown',sosStart);
+['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>sos.addEventListener(ev,sosEnd));
+
+// tabs, shifts, profile
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));
+  ['duty','shifts','profile'].forEach(t=>$('#t-'+t).classList.toggle('hidden',t!==b.dataset.tab));scrollTo(0,0)});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-shift]');if(!b)return;b.disabled=true;
+  try{await api('/api/shift',{shift_id:+b.dataset.shift,available:b.dataset.v==='1'});toast(b.dataset.v==='1'?'Sent — the office will confirm.':'Removed.')}catch(x){toast(x.message)}load()});
+let newPhoto=null;
+$('#p-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;newPhoto=await shrink(f,600);$('#p-photo').src=newPhoto};
+$('#p-save').onclick=async()=>{try{await api('/api/me/profile',{phone:$('#p-phone').value,card_no:$('#p-card').value,card_exp:$('#p-exp').value,photo:newPhoto});newPhoto=null;toast('Saved ✅');load()}catch(e){toast(e.message)}};
+$('#pw-go').onclick=async()=>{try{await api('/api/me/password',{old:$('#pw-old').value,new:$('#pw-new').value});$('#pw-old').value=$('#pw-new').value='';toast('Password changed ✅')}catch(e){toast(e.message)}};
+$('#r-go').onclick=async()=>{$('#r-err').textContent='';if($('#r-new').value!==$('#r-new2').value)return $('#r-err').textContent="New passwords don't match.";
+  try{await api('/api/me/password',{old:$('#r-old').value,new:$('#r-new').value});load()}catch(e){$('#r-err').textContent=e.message}};
+$('#l-go').onclick=async()=>{$('#l-err').textContent='';try{await api('/api/login',{username:$('#l-user').value,password:$('#l-pw').value});$('#l-pw').value='';load()}catch(e){$('#l-err').textContent=e.message}};
+$('#l-pw').onkeydown=e=>{if(e.key==='Enter')$('#l-go').click()};
+$('#rules-ok').onclick=async()=>{try{await api('/api/me/rules',{});load()}catch(e){toast(e.message)}};
+$('#c-ok').onclick=async()=>{localStorage.setItem('dgs_consent',Date.now());await locate();load()};
+$('#m-out').onclick=async()=>{await api('/api/logout',{}).catch(()=>{});track(false);ME=null;show('login')};
+if('serviceWorker' in navigator)Promise.resolve().catch(()=>{});
+load();
+</script>
+<script src="demo.js"></script>
+</body>
+</html>

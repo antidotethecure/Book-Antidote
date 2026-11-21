@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<script src="shim.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DGS Command</title>
+
+<link rel="icon" href="img/icon-180.png"><link rel="apple-touch-icon" href="img/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="DGS Command">
+<meta name="theme-color" content="#000000">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+<style>
+:root{--bg:#000;--card:#111;--card2:#181818;--line:#2a2a2a;--tx:#fff;--mut:#a3a3a3;--red:#e03020;--red2:#b8241a;--ok:#22c55e;--warn:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,system-ui,sans-serif}
+header{position:sticky;top:0;z-index:500;background:#000e;backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:max(10px,env(safe-area-inset-top)) 16px 0}
+h1{font:900 19px system-ui;margin:0;text-transform:uppercase;letter-spacing:.03em}h3{margin:0 0 6px;text-transform:uppercase;font:900 15px system-ui;letter-spacing:.04em}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:38px;height:38px}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:8px;scrollbar-width:none}
+nav button{background:none;border:0;color:var(--mut);font:800 12px system-ui;text-transform:uppercase;letter-spacing:.06em;padding:11px 12px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+nav button.on{color:#fff;border-color:var(--red)}
+main{padding:12px 16px 60px;max-width:1150px;margin:auto}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;font:800 11px system-ui;text-transform:uppercase;letter-spacing:.05em}
+.p-ok{background:#14532d;color:#bbf7d0}.p-warn{background:#713f12;color:#fde68a}.p-bad{background:var(--red2);color:#fff}.p-gray{background:#262626;color:#d4d4d4}
+button.b,a.b{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font:800 13px system-ui;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:var(--red);cursor:pointer;text-decoration:none}
+.b-dark{background:#262626!important}.b-ok{background:var(--ok)!important;color:#04130a!important}
+input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0a0a0a;color:var(--tx);font:15px system-ui;margin:4px 0 8px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--red);border-color:transparent}
+#map{height:400px;border-radius:14px;border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.f3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 10px}
+.ev{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ev img{width:72px;height:72px;object-fit:cover;border-radius:10px;cursor:pointer;background:#222}
+.alert{background:#450a0a;border:2px solid var(--red);border-radius:14px;padding:12px;margin:10px 0;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{background:#7f1d1d}}
+.hidden{display:none!important}
+#lightbox{position:fixed;inset:0;background:#000e;z-index:1000;display:flex;align-items:center;justify-content:center}
+#lightbox img{max-width:96vw;max-height:90vh;border-radius:10px}
+a{color:#fca5a5}.temp{font:800 22px ui-monospace,monospace;background:#000;border:1px dashed var(--red);padding:10px;border-radius:10px;text-align:center;letter-spacing:.08em}
+.av{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--red);background:#222}
+.blip{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(224,48,32,.7);animation:blip 1.4s infinite;margin-right:6px;vertical-align:middle}
+@keyframes blip{70%{box-shadow:0 0 0 9px rgba(224,48,32,0)}100%{box-shadow:0 0 0 0 rgba(224,48,32,0)}}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mut);font-size:12px;text-transform:uppercase}
+.login{max-width:380px;margin:10vh auto;padding:16px;text-align:center}.login img{width:140px;filter:drop-shadow(0 0 30px rgba(224,48,32,.45))}
+@media print{header,nav,.noprint,#alerts{display:none!important}body{background:#fff;color:#000}.card{border-color:#ccc;background:#fff}.mut{color:#444}a{color:#000}}
+</style>
+</head>
+<body>
+<script src="splash.js" data-mode="hub"></script>
+<section id="v-login" class="hidden"><div class="login">
+  <img src="img/dgs-logo.png" alt="DGS"><h1 style="margin-top:12px">Dragons Guard Staffing</h1><p class="mut">Command center</p>
+  <div class="card" style="text-align:left"><input id="lu" placeholder="Username" autocomplete="username" autocapitalize="none">
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <button class="b" style="width:100%" id="go">Sign in</button><p class="mut" id="err"></p></div>
+</div></section>
+
+<div id="v-app" class="hidden">
+<header>
+  <div class="row"><div class="brand"><img src="img/dgs-logo.png" alt=""><div><h1>DGS Command</h1><div class="mut" id="sum"></div></div></div>
+    <div class="mut" id="who"></div></div>
+  <nav><button data-t="live" class="on">Live</button><button data-t="shifts">Shifts</button><button data-t="feed">Activity</button><button data-t="report">Daily report</button>
+    <button data-t="guards">Guards</button><button data-t="sites">Sites</button><button data-t="clients">Clients</button><button data-t="back">Back office</button><button data-t="team">Managers</button></nav>
+</header>
+<main>
+  <div id="alerts"></div>
+
+  <div id="clientreq"></div>
+  <div id="latereq"></div>
+  <div id="nothere"></div>
+  <section id="t-live">
+    <div id="map"></div>
+    <div class="row noprint" style="margin-top:10px"><input id="g-search" placeholder="Search guards…" style="max-width:280px"><select id="g-filter" style="width:auto">
+      <option value="on">On duty</option><option value="late">🔴 Late / off site</option><option value="break">On break</option><option value="all">Everyone</option></select></div>
+    <div class="grid" id="gcards"></div>
+  </section>
+
+  <section id="t-shifts" class="hidden">
+    <div class="card"><h3>Post a shift</h3>
+      <div class="f3"><label class="mut">Site<select id="sh-site"></select></label><label class="mut">Date<input type="date" id="sh-date"></label>
+        <label class="mut">Start<input type="time" id="sh-start" value="20:00"></label><label class="mut">End<input type="time" id="sh-end" value="02:00"></label>
+        <label class="mut">Guards needed<input id="sh-slots" value="4" inputmode="numeric"></label><label class="mut">Repeat daily for<select id="sh-rep"><option value="1">Just this day</option><option>2</option><option>3</option><option>5</option><option>7</option><option>14</option></select></label></div>
+      <div class="f3"><label class="mut">Notes for guards (dress code, where to report)<input id="sh-notes"></label><label class="mut">Pay for this shift ($/h, blank = each guard's rate)<input id="sh-rate" inputmode="decimal"></label></div>
+      <button class="b" id="sh-add">Post shift</button> <span class="mut">Overnight is fine — an end time earlier than the start means the next morning.</span></div>
+    <div id="sh-list"></div>
+  </section>
+
+  <section id="t-feed" class="hidden">
+    <div class="row noprint"><input type="date" id="f-day" style="width:auto"><select id="f-guard" style="width:auto"></select><select id="f-site" style="width:auto"></select><select id="f-kind" style="width:auto">
+      <option value="">All types</option><option value="clock_in">Clock in</option><option value="clock_out">Clock out</option><option value="round">Post check-in</option>
+      <option value="checkpoint">Checkpoint</option><option value="break_start">Break start</option><option value="break_end">Break end</option><option value="incident">Incident</option><option value="sos">SOS</option></select></div>
+    <div class="card" id="feed"></div>
+  </section>
+
+  <section id="t-report" class="hidden">
+    <div class="row noprint"><input type="date" id="r-day" style="width:auto"><select id="r-site" style="width:auto"></select>
+      <button class="b" id="r-print">Print / Save PDF</button><a class="b b-dark" id="r-csv">Download CSV</a></div>
+    <div id="report"></div>
+  </section>
+
+  <section id="t-guards" class="hidden">
+    <div class="card"><h3>Add a guard</h3>
+      <div class="f3"><label class="mut">Full name<input id="g-name"></label><label class="mut">Username (they sign in with this)<input id="g-user" autocapitalize="none" placeholder="e.g. marcus.t"></label>
+        <label class="mut">Phone<input id="g-phone" inputmode="tel"></label><label class="mut">Guard card #<input id="g-card"></label><label class="mut">Card expires<input id="g-exp" type="date"></label><label class="mut">Pay ($/hour)<input id="g-rate" inputmode="decimal" placeholder="20.00"></label></div>
+      <button class="b" id="g-add">Add guard</button>
+      <div id="g-temp" class="hidden" style="margin-top:12px"></div>
+      <p class="mut">Each guard gets their own login. Send them the app link <b id="g-link"></b> plus their username and the one-time password. They make their own password the first time they sign in. iPhone: open in Safari → Share → Add to Home Screen.</p></div>
+    <div class="row"><input id="gl-search" placeholder="Search guards…" style="max-width:280px"><span class="mut" id="gl-count"></span></div>
+    <div class="grid" id="glist"></div>
+  </section>
+
+  <section id="t-sites" class="hidden">
+    <div class="card" id="s-form"><h3 id="s-h">Add a site</h3>
+      <div class="f3"><label class="mut">Site name<input id="s-name" placeholder="e.g. Stadium Bar"></label><label class="mut">Address<input id="s-addr"></label></div>
+      <div class="f3"><label class="mut">Latitude<input id="s-lat"></label><label class="mut">Longitude<input id="s-lng"></label><label class="mut">&nbsp;<button class="b b-dark" id="s-here" style="width:100%">📍 Use where I'm standing</button></label></div>
+      <div class="f3"><label class="mut">Clock-in zone (meters around the site)<input id="s-rad" value="100" inputmode="numeric"></label>
+        <label class="mut">Post check-in every (minutes, 0 = off)<input id="s-round" value="60" inputmode="numeric"></label>
+        <label class="mut">Client (who pays for this site)<select id="s-client"></select></label><label class="mut">Bill rate ($ per guard-hour)<input id="s-bill" inputmode="decimal" placeholder="45.00"></label></div>
+      <label class="mut">Checkpoints (one per line)<textarea id="s-cps" rows="4" placeholder="Front door&#10;Parking lot&#10;VIP entrance"></textarea></label>
+      <label class="mut">Post orders<textarea id="s-orders" rows="3"></textarea></label>
+      <input type="hidden" id="s-id"><button class="b" id="s-save">Save site</button> <button class="b b-dark hidden" id="s-cancel">Cancel</button> <button class="b b-dark hidden" id="s-close">Close site</button>
+      <p class="mut">Tip: tap the map on the Live tab to drop the site's pin. Guards can only clock in inside the red circle — keep it tight (75–150 m) so nobody can clock in from down the street.</p></div>
+    <div class="grid" id="slist"></div>
+  </section>
+
+  <section id="t-clients" class="hidden">
+    <div class="card" id="money"></div>
+    <div class="card"><h3>Add a client</h3><p class="mut">The business that books DGS. They get their own login at <b id="c-link"></b>: they see the guards coming (name, photo, guard card, on-site status), request guards, pay their bill by card or bank through Stripe, and read daily reports for their locations. Link their locations under <b>Sites</b> and set the bill rate there.</p>
+      <div class="f3"><label class="mut">Company<input id="c-co"></label><label class="mut">Contact name<input id="c-contact"></label><label class="mut">Email<input id="c-email" type="email"></label>
+        <label class="mut">Phone<input id="c-phone" inputmode="tel"></label><label class="mut">Username<input id="c-user" autocapitalize="none" placeholder="e.g. stadiumbar"></label></div>
+      <button class="b" id="c-add">Add client</button><div id="c-temp" class="hidden" style="margin-top:12px"></div></div>
+    <div class="grid" id="clist"></div>
+    <div class="card"><div class="row"><h3>Invoices</h3><select id="inv-f" style="width:auto"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="">All</option></select></div><div id="ilist"></div></div>
+  </section>
+
+  <section id="t-back" class="hidden">
+    <div class="row noprint"><select id="b-days" style="width:auto"><option value="7">Last 7 days</option><option value="14" selected>Last 14 days</option><option value="30">Last 30 days</option></select>
+      <select id="b-view" style="width:auto"><option value="att">Attendance</option><option value="log">Login log</option><option value="pay">Payroll</option><option value="audit">Manager actions</option></select>
+      <input id="b-search" placeholder="Search…" style="max-width:240px"></div>
+    <div id="back"></div>
+  </section>
+
+  <section id="t-team" class="hidden">
+    <div class="card" id="pay-card"><h3>Pay settings</h3><label class="row" style="justify-content:flex-start"><input type="checkbox" id="ub" style="width:auto;margin:0"> Breaks are unpaid (meal breaks)</label>
+      <p class="mut">California: 10-minute rest breaks must be paid; a 30-minute meal break can be unpaid if the guard is fully relieved. Ask your payroll company.</p></div>
+    <div class="card" id="rules-card"><h3>House rules</h3><p class="mut">Every guard has to read and tap “I agree” before they can use the app. Change the rules and everyone has to agree again. Who agreed (and when) shows in Back office.</p>
+      <textarea id="rules" rows="8" placeholder="1. Clock in on site only — no exceptions.&#10;2. No-call no-show = removed from the schedule.&#10;3. Post check-in every hour at clubs.&#10;4. Uniform: black DGS shirt, black pants."></textarea>
+      <button class="b" id="rules-save">Save house rules</button></div>
+    <div class="card" id="team-add"><h3>Add a manager</h3><p class="mut">Managers get their own login to this command center: book guards on shifts, take them off, clock them out, see attendance and the login log. Only the owner can add or remove managers.</p>
+      <div class="f3"><label class="mut">Name<input id="a-name"></label><label class="mut">Username<input id="a-user" autocapitalize="none"></label><label class="mut">Password (6+)<input id="a-pw" type="text"></label></div>
+      <button class="b" id="a-add">Add manager</button></div>
+    <div id="alist"></div>
+    <div class="card"><h3>My password</h3><div class="f3"><input id="m-old" type="password" placeholder="Current password"><input id="m-new" type="password" placeholder="New password"></div>
+      <button class="b b-dark" id="m-pw">Change password</button> <button class="b b-dark" id="m-out">Sign out</button></div>
+  </section>
+</main>
+</div>
+<div id="lightbox" class="hidden"><img alt=""></div>
+
+<script>
+const $=s=>document.querySelector(s), TZ='America/Los_Angeles';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LABEL={clock_in:'Clocked in',clock_out:'Clocked out',checkpoint:'Checkpoint',round:'Post check-in',break_start:'Break started',break_end:'Break ended',incident:'Incident',sos:'🚨 SOS',blocked:'⛔ Blocked attempt',no_show:'🚫 Missed shift'};
+const tm=t=>new Date(t*1000).toLocaleTimeString('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit'});
+const dt=t=>new Date(t*1000).toLocaleString('en-US',{timeZone:TZ,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const dday=t=>new Date(t*1000).toLocaleDateString('en-US',{timeZone:TZ,weekday:'long',month:'short',day:'numeric'});
+const ago=s=>s<60?'just now':s<3600?Math.round(s/60)+' min ago':Math.round(s/3600)+' h ago';
+let S=null, map, layers=[], seen=new Set(), first=true;
+async function api(p,b){const r=await fetch(p,b?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}:{});const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||'Error');e.status=r.status;throw e}return j}
+function laMidnight(d){const [y,m,dd]=d.split('-').map(Number),noon=Date.UTC(y,m-1,dd,12);
+  const h=+new Date(noon).toLocaleString('en-US',{timeZone:TZ,hour:'numeric',hour12:false});return (noon-h*3600000)/1000}
+const todayLA=()=>new Date().toLocaleDateString('en-CA',{timeZone:TZ});
+const hm=v=>{const [h,m]=v.split(':').map(Number);return h*3600+m*60};
+
+function status(g){const s=g.shift;if(!g.active)return'<span class="pill p-gray">Inactive</span>';if(!s.on)return'<span class="pill p-gray">Off duty</span>';
+  if(s.off_site)return'<span class="pill p-bad">Off site</span>';if(s.round_overdue)return'<span class="pill p-bad">Check-in late</span>';
+  if(s.on_break)return'<span class="pill p-warn">On break</span>';if(s.overtime)return'<span class="pill p-warn">Past shift end</span>';return'<span class="pill p-ok">On duty</span>'}
+function cardWarn(g){if(!g.card_exp)return'';const d=(new Date(g.card_exp)-Date.now())/864e5;return d<0?'<span class="pill p-bad">Guard card expired</span>':d<30?'<span class="pill p-warn">Card expires soon</span>':''}
+
+async function refresh(){
+  try{S=await api('/api/hub/state')}catch(e){if(e.status===401){$('#v-app').classList.add('hidden');$('#v-login').classList.remove('hidden')}return}
+  $('#v-login').classList.add('hidden');$('#v-app').classList.remove('hidden');
+  const on=S.guards.filter(g=>g.shift.on), late=on.filter(g=>g.shift.round_overdue||g.shift.off_site);
+  $('#sum').textContent=`${on.length} on duty · ${on.filter(g=>g.shift.on_break).length} on break · ${late.length} need attention`;
+  $('#who').textContent=S.me.name+(S.me.role==='owner'?' · owner':' · manager');
+  const pend=S.late_notices.filter(n=>n.status==='pending'),lnBy=Object.fromEntries(S.late_notices.map(n=>[n.shift_id+':'+n.guard_id,n]));
+  $('#latereq').innerHTML=pend.length?`<div class="card" style="border-color:var(--red)"><h3>⏰ Running late — approve? (${pend.length})</h3>${pend.map(n=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
+    <span><span class="blip"></span><b>${esc(n.guard)}</b> — ${esc(n.site)} ${tm(n.start_ts)} · says they'll be there by <b>${tm(n.eta_ts)}</b> (${Math.max(0,Math.round((n.eta_ts-n.start_ts)/60))} min late)${n.reason?` · “${esc(n.reason)}”`:''}</span>
+    <span><button class="b b-ok" data-late="${n.id}:1">Approve — come in</button> <button class="b b-dark" data-late="${n.id}:0">Deny — don't come</button></span></div>`).join('')}</div>`:'';
+  $('#nothere').innerHTML=S.not_here.length?`<div class="card" style="border-color:var(--warn)"><h3>⏰ Not here yet (${S.not_here.length})</h3>${S.not_here.map(n=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><span><span class="blip"></span><b>${esc(n.guard)}</b> — ${esc(n.site)}, started ${tm(n.start_ts)} (${Math.round((S.now-n.start_ts)/60)} min ago)${(l=>l?` · <span class="pill ${l.status==='approved'?'p-ok':l.status==='pending'?'p-warn':'p-bad'}">late notice ${l.status}${l.status!=='denied'?', ETA '+tm(l.eta_ts):''}</span>`:' · <span class="pill p-bad">No word</span>')(lnBy[n.shift_id+':'+n.guard_id])}</span><span>${n.phone?`<a href="tel:${esc(n.phone)}">Call</a> · <a href="sms:${esc(n.phone)}">Text</a> · `:''}<a href="#" data-sg="${n.shift_id}:${n.guard_id}:remove">Take off shift</a></span></div>`).join('')}</div>`:'';
+  $('#alerts').innerHTML=S.alerts.map(a=>{const ph=JSON.parse(a.photos||'[]'),sos=a.kind==='sos',inc=a.kind==='incident';
+    const ns=a.kind==='no_show';return`<div class="${sos||ns?'alert':'card'}" style="${sos?'':'border-color:var(--red2)'}"><div class="row"><b>${sos?'🚨 SOS':inc?'📝 Incident: '+esc(a.incident_type||''):'⚠️ '+esc(a.flag)} — ${esc(a.guard)} ${a.site?'@ '+esc(a.site):''}</b><span>${dt(a.ts)}</span></div>
+    ${!sos&&!inc?`<div class="mut">${LABEL[a.kind]||esc(a.kind)}</div>`:a.flag?`<div class="mut">⚠️ ${esc(a.flag)}</div>`:''}${a.note?`<div>${esc(a.note)}</div>`:''}
+    <div class="row" style="margin-top:8px">${a.lat!=null?`<a target="_blank" rel="noopener" href="https://maps.google.com/?q=${+a.lat},${+a.lng}">Open in Maps</a>`:'<span class="mut">No location</span>'}
+    <span>${ph.map(p=>`<img src="photos/${esc(p)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px" data-big>`).join(' ')}</span>
+    <button class="b b-dark" data-ack="${a.id}">Handled</button></div></div>`}).join('');
+  const fresh=S.alerts.filter(a=>!seen.has(a.id));fresh.forEach(a=>seen.add(a.id));
+  if(fresh.length&&!first){beep(fresh.some(a=>a.kind==='sos'||a.kind==='no_show'));try{if(Notification.permission==='granted')new Notification(fresh[0].kind==='sos'?'🚨 SOS — '+fresh[0].guard:fresh[0].kind==='no_show'?'🚫 Missed shift — '+fresh[0].guard:'DGS alert — '+fresh[0].guard)}catch{}}
+  first=false;
+  renderLive();renderGuards();renderSites();renderTeam();renderClients();
+}
+function beep(loud){try{const c=new AudioContext();for(let i=0;i<(loud?8:2);i++){const o=c.createOscillator(),g=c.createGain();o.frequency.value=loud?880:660;o.connect(g);g.connect(c.destination);g.gain.value=.25;o.start(c.currentTime+i*.3);o.stop(c.currentTime+i*.3+.18)}}catch{}}
+
+function renderLive(){
+  if(!map){map=L.map('map').setView([34.05,-118.25],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    map.on('click',e=>{$('#s-lat').value=e.latlng.lat.toFixed(6);$('#s-lng').value=e.latlng.lng.toFixed(6)})}
+  layers.forEach(l=>l.remove());layers=[];const pts=[];
+  S.sites.filter(s=>s.active).forEach(s=>{layers.push(L.circle([s.lat,s.lng],{radius:s.radius_m,color:'#e03020',weight:2,fillOpacity:.1}).addTo(map).bindTooltip(esc(s.name)));pts.push([s.lat,s.lng])});
+  S.guards.filter(g=>g.shift.on&&g.last_lat!=null).forEach(g=>{const s=g.shift,c=s.off_site||s.round_overdue?'#e03020':s.on_break?'#f59e0b':'#22c55e';
+    layers.push(L.circleMarker([g.last_lat,g.last_lng],{radius:8,color:'#fff',weight:2,fillColor:c,fillOpacity:1}).addTo(map).bindTooltip(`${esc(g.name)} · ${ago(S.now-g.last_seen)}`));pts.push([g.last_lat,g.last_lng])});
+  if(pts.length&&!map._fit){map.fitBounds(pts,{padding:[40,40],maxZoom:16});map._fit=1}
+  const qy=$('#g-search').value.toLowerCase(),f=$('#g-filter').value;
+  const list=S.guards.filter(g=>g.active&&(!qy||g.name.toLowerCase().includes(qy))&&(f==='all'||(f==='on'&&g.shift.on)||(f==='late'&&(g.late||g.shift.round_overdue||g.shift.off_site))||(f==='break'&&g.shift.on_break)));
+  $('#gcards').innerHTML=list.map(g=>{const s=g.shift;
+    return`<div class="card"><div class="row"><div class="row" style="justify-content:flex-start"><img class="av" src="${g.photo?'photos/'+esc(g.photo):'img/dgs-logo.png'}" alt="">${g.late?'<span class="blip" title="Late"></span>':''}<b>${esc(g.name)}</b></div>${status(g)}</div>
+    ${s.on&&s.pay&&s.pay.rate?`<div class="mut" style="margin-top:4px"><b style="color:#4ade80">$${s.pay.earned.toFixed(2)}</b> earned · $${(+s.pay.rate).toFixed(2)}/hr${s.pay.late_min>=1?` · <span style="color:#fca5a5">late ${s.pay.late_min} min (−$${s.pay.lost.toFixed(2)})</span>`:''}</div>`:''}
+    ${s.on?`<div style="margin-top:6px">${esc(s.site)}</div><div class="mut">On since ${tm(s.since)}${s.shift_end?' · ends '+tm(s.shift_end):''}${s.on_break?' · break since '+tm(s.break_since):''}</div>
+    ${s.round_due?`<div class="mut">Next check-in ${s.round_overdue?'<b style="color:#fca5a5">was due '+tm(s.round_due)+'</b>':'due '+tm(s.round_due)}</div>`:''}
+    <div class="mut">Last seen ${g.last_seen?ago(S.now-g.last_seen):'—'} ${g.last_acc?'(±'+Math.round(g.last_acc)+' m)':''}</div>`:'<div class="mut">Off duty</div>'}
+    <div class="row" style="margin-top:6px">${g.phone?`<a href="tel:${esc(g.phone)}">Call</a><a href="sms:${esc(g.phone)}">Text</a>`:''}${s.on?`<a href="#" data-trail="${g.id}">Today's path</a><a href="#" data-clockout="${g.id}">Clock out</a>`:''}</div></div>`}).join('')||`<div class="card mut">${f==='on'?'Nobody is on duty right now.':'No guards match.'}</div>`;
+}
+async function trail(id){const rows=await api(`/api/hub/trail?guard=${id}&from=${laMidnight(todayLA())}`);if(!rows.length)return alert('No path recorded today yet.');
+  const l=L.polyline(rows.map(r=>[r.lat,r.lng]),{color:'#f87171',weight:4}).addTo(map);layers.push(l);map.fitBounds(l.getBounds(),{padding:[40,40]});scrollTo(0,0)}
+
+function evRow(e){const ph=JSON.parse(e.photos||'[]');
+  return`<div class="ev">${ph.length?`<img src="photos/${esc(ph[0])}" data-big loading="lazy" alt="">`:'<div style="width:72px"></div>'}
+  <div><div class="row"><b>${LABEL[e.kind]||esc(e.kind)}${e.checkpoint?' · '+esc(e.checkpoint):''}${e.incident_type?' · '+esc(e.incident_type):''}</b><span class="mut">${dt(e.ts)}</span></div>
+  <div>${esc(e.guard)} ${e.site?'@ '+esc(e.site):''} ${e.in_fence===0?`<span class="pill p-bad">${(+e.dist_m).toLocaleString()} m from site</span>`:e.in_fence===1?'<span class="pill p-ok">on site</span>':''}${e.by_admin?` <span class="pill p-gray">by ${esc(e.by_admin)}</span>`:''}</div>
+  ${e.flag?`<div style="color:#fca5a5">⚠️ ${esc(e.flag)}</div>`:''}${e.note?`<div class="mut">“${esc(e.note)}”</div>`:''}
+  <div class="mut">${e.lat!=null?`<a target="_blank" rel="noopener" href="https://maps.google.com/?q=${+e.lat},${+e.lng}">📍 ${(+e.lat).toFixed(5)}, ${(+e.lng).toFixed(5)}</a> ±${Math.round(e.acc||0)} m`:'No location'}${ph.length>1?` · ${ph.length} photos`:''}</div></div></div>`}
+function opts(sel,list,label){const v=sel.value;sel.innerHTML=(label?`<option value="">${label}</option>`:'')+list.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');if(v)sel.value=v}
+async function renderFeed(){if(!$('#f-day').value)$('#f-day').value=todayLA();opts($('#f-guard'),S.guards,'All guards');opts($('#f-site'),S.sites,'All sites');
+  const from=laMidnight($('#f-day').value);
+  const ev=await api(`/api/hub/events?from=${from}&to=${from+86400}&guard=${$('#f-guard').value}&site=${$('#f-site').value}&kind=${$('#f-kind').value}`);
+  $('#feed').innerHTML=ev.map(evRow).join('')||'<div class="mut">No activity.</div>'}
+['#f-day','#f-guard','#f-site','#f-kind'].forEach(s=>$(s).onchange=renderFeed);
+
+async function renderReport(){
+  if(!$('#r-day').value)$('#r-day').value=todayLA();opts($('#r-site'),S.sites,'All sites');
+  const from=laMidnight($('#r-day').value),to=from+86400,site=$('#r-site').value;
+  $('#r-csv').href=`/api/hub/export.csv?from=${from}&to=${to}`;
+  const ev=(await api(`/api/hub/events?from=${from}&to=${to}&site=${site}`)).reverse();
+  const by={};ev.forEach(e=>(by[e.site||'No site']??=[]).push(e));
+  $('#report').innerHTML=`<div class="card"><div class="brand"><img src="img/dgs-logo.png" alt=""><div><h1>Daily Activity Report</h1><div class="mut">${esc(S.company)} · ${$('#r-day').value} · ${ev.length} entries</div></div></div></div>`+
+    (Object.entries(by).map(([n,list])=>{const c=k=>list.filter(e=>e.kind===k).length,gs=new Set(list.map(e=>e.guard));
+      return`<div class="card"><h3>${esc(n)}</h3><div class="mut">${gs.size} guards · ${c('round')} post check-ins · ${c('checkpoint')} checkpoints · ${c('incident')} incidents · ${c('break_start')} breaks</div>${list.map(evRow).join('')}</div>`}).join('')||'<div class="card mut">No activity that day.</div>')}
+$('#r-day').onchange=renderReport;$('#r-site').onchange=renderReport;$('#r-print').onclick=()=>print();
+
+async function renderShifts(){
+  opts($('#sh-site'),S.sites.filter(s=>s.active));if(!$('#sh-date').value)$('#sh-date').value=todayLA();
+  const rows=await api('/api/hub/shifts?from='+laMidnight(todayLA())),by={};
+  rows.forEach(r=>(by[dday(r.start_ts)]??=[]).push(r));
+  const active=S.guards.filter(g=>g.active);
+  $('#sh-list').innerHTML=Object.entries(by).map(([d,list])=>`<h3 style="margin-top:18px">${d}</h3>`+list.map(r=>{
+    const conf=r.guards.filter(g=>g.status==='confirmed'),av=r.guards.filter(g=>g.status==='available');
+    return`<div class="card" style="${r.cancelled?'opacity:.5':''}"><div class="row"><b>${esc(r.site)} · ${tm(r.start_ts)} – ${tm(r.end_ts)}${r.pay_rate?` · $${(+r.pay_rate).toFixed(2)}/h`:''}</b>
+      ${r.cancelled?'<span class="pill p-gray">Cancelled</span>':`<span class="pill ${conf.length>=r.slots?'p-ok':'p-warn'}">${conf.length}/${r.slots} filled</span>`}</div>
+      ${r.notes?`<div class="mut">${esc(r.notes)}</div>`:''}
+      <div style="margin-top:8px">${conf.map(g=>`<span class="pill p-ok" style="margin:2px">${esc(g.name)} <a href="#" data-sg="${r.id}:${g.guard_id}:remove" style="color:#fff">✕</a></span>`).join('')}</div>
+      ${av.length?`<div class="mut" style="margin-top:8px">Available — tap to confirm:</div>${av.map(g=>`<button class="b b-ok" style="margin:3px" data-sg="${r.id}:${g.guard_id}:confirmed">✓ ${esc(g.name)}</button>`).join('')}`:''}
+      ${r.cancelled?'':`<div class="row" style="margin-top:8px;justify-content:flex-start"><select data-assign="${r.id}" style="width:auto;margin:0"><option value="">Assign a guard…</option>${active.filter(g=>!r.guards.some(x=>x.guard_id===g.id)).map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('')}</select>
+      <button class="b b-dark" data-cancel="${r.id}">Cancel shift</button></div>`}</div>`}).join('')).join('')||'<div class="card mut">No upcoming shifts. Post one above.</div>'}
+$('#sh-add').onclick=async()=>{const d=$('#sh-date').value;if(!d||!$('#sh-site').value)return alert('Pick a site and date.');
+  const s=hm($('#sh-start').value);let e=hm($('#sh-end').value);if(e<=s)e+=86400;
+  const [y,m,dd]=d.split('-').map(Number);
+  for(let i=0;i<+$('#sh-rep').value;i++){const base=laMidnight(new Date(Date.UTC(y,m-1,dd+i)).toISOString().slice(0,10));
+    try{await api('/api/hub/shift',{site_id:+$('#sh-site').value,start_ts:base+s,end_ts:base+e,slots:+$('#sh-slots').value||1,notes:$('#sh-notes').value,pay_rate:$('#sh-rate').value||null})}catch(x){return alert(x.message)}}
+  $('#sh-notes').value='';renderShifts()};
+
+function renderGuards(){$('#g-link').textContent=location.origin+'/';
+  const qy=$('#gl-search').value.toLowerCase(),list=S.guards.filter(g=>!qy||g.name.toLowerCase().includes(qy)||g.username.includes(qy));
+  $('#gl-count').textContent=`${S.guards.filter(g=>g.active).length} active guards`;
+  $('#glist').innerHTML=list.map(g=>`<div class="card"><div class="row"><div class="row" style="justify-content:flex-start"><img class="av" src="${g.photo?'photos/'+esc(g.photo):'img/dgs-logo.png'}" alt=""><div>${g.late?'<span class="blip"></span>':''}<b>${esc(g.name)}</b><div class="mut">@${esc(g.username)} · ${g.pay_rate?'$'+(+g.pay_rate).toFixed(2)+'/hr':'<span style="color:#fca5a5">no pay rate</span>'}</div></div></div>${status(g)}</div>
+  <div class="mut" style="margin-top:6px">${esc(g.phone||'No phone')} · Card ${esc(g.card_no||'—')}${g.card_exp?' exp '+esc(g.card_exp):''} ${cardWarn(g)} ${g.must_reset?'<span class="pill p-warn">Hasn\'t signed in yet</span>':''}</div>
+  <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="b b-dark" data-rate="${g.id}">Pay rate</button><button class="b b-dark" data-reset="${g.id}">New password</button>
+  <button class="b ${g.active?'':'b-ok'}" data-active="${g.id}" data-v="${g.active?0:1}">${g.active?'Deactivate':'Reactivate'}</button></div></div>`).join('')}
+$('#gl-search').oninput=renderGuards;$('#g-search').oninput=renderLive;$('#g-filter').onchange=renderLive;
+function showTemp(user,pw){$('#g-temp').classList.remove('hidden');$('#g-temp').innerHTML=`<div class="mut">Username</div><div class="temp">${esc(user)}</div><div class="mut" style="margin-top:6px">One-time password — shown once, write it down or text it to them now</div><div class="temp">${esc(pw)}</div>`}
+$('#g-add').onclick=async()=>{try{const u=$('#g-user').value.trim().toLowerCase(),r=await api('/api/hub/guard',{name:$('#g-name').value,username:u,phone:$('#g-phone').value,card_no:$('#g-card').value,card_exp:$('#g-exp').value,pay_rate:$('#g-rate').value});
+  showTemp(u,r.temp_password);['#g-name','#g-user','#g-phone','#g-card','#g-exp','#g-rate'].forEach(s=>$(s).value='');refresh()}catch(e){alert(e.message)}};
+
+function renderSites(){const cv=$('#s-client').value;$('#s-client').innerHTML='<option value="">— none —</option>'+S.clients.filter(c=>c.active).map(c=>`<option value="${c.id}">${esc(c.company)}</option>`).join('');$('#s-client').value=cv;
+  const cn=Object.fromEntries(S.clients.map(c=>[c.id,c.company]));
+  $('#slist').innerHTML=S.sites.map(s=>`<div class="card"><div class="row"><b>${esc(s.name)}</b>${s.active?'':'<span class="pill p-gray">Closed</span>'}</div>
+  <div class="mut">${esc(s.address||'')}</div><div class="mut">Clock-in zone ${s.radius_m} m · ${s.round_min?'check-in every '+s.round_min+' min':'no hourly check-in'} · ${s.checkpoints.length} checkpoints</div>${s.client_id?`<div class="mut">Client: <b>${esc(cn[s.client_id]||'')}</b> · bills $${(+s.bill_rate||0).toFixed(2)}/guard-hour</div>`:''}
+  <button class="b b-dark" style="margin-top:8px" data-edit="${s.id}">Edit</button></div>`).join('')}
+function fillSite(s){$('#s-id').value=s?.id||'';$('#s-name').value=s?.name||'';$('#s-addr').value=s?.address||'';$('#s-lat').value=s?.lat??'';$('#s-lng').value=s?.lng??'';
+  $('#s-rad').value=s?.radius_m??100;$('#s-client').value=s?.client_id||'';$('#s-bill').value=s?.bill_rate||'';$('#s-round').value=s?.round_min??60;$('#s-cps').value=(s?.checkpoints||[]).join('\n');$('#s-orders').value=s?.post_orders||'';
+  $('#s-h').textContent=s?'Edit '+s.name:'Add a site';$('#s-cancel').classList.toggle('hidden',!s);$('#s-close').classList.toggle('hidden',!s);
+  $('#s-close').textContent=s&&!s.active?'Reopen site':'Close site'}
+const siteBody=()=>({id:+$('#s-id').value||null,name:$('#s-name').value,address:$('#s-addr').value,lat:$('#s-lat').value,lng:$('#s-lng').value,
+  radius_m:$('#s-rad').value,round_min:$('#s-round').value,client_id:+$('#s-client').value||null,bill_rate:$('#s-bill').value,checkpoints:$('#s-cps').value.split('\n'),post_orders:$('#s-orders').value});
+$('#s-save').onclick=async()=>{try{await api('/api/hub/site',siteBody());fillSite(null);refresh()}catch(e){alert(e.message)}};
+$('#s-close').onclick=async()=>{const s=S.sites.find(x=>x.id==$('#s-id').value);try{await api('/api/hub/site',{...siteBody(),active:!s.active});fillSite(null);refresh()}catch(e){alert(e.message)}};
+$('#s-cancel').onclick=()=>fillSite(null);
+$('#s-here').onclick=()=>navigator.geolocation.getCurrentPosition(p=>{$('#s-lat').value=p.coords.latitude.toFixed(6);$('#s-lng').value=p.coords.longitude.toFixed(6)},()=>alert('Turn on location'),{enableHighAccuracy:true});
+
+const money=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function renderClients(){
+  $('#c-link').textContent=location.origin+'/dgs/client.html';
+  $('#clientreq').innerHTML=S.requests.length?`<div class="card" style="border-color:var(--ok)"><h3>📥 Client booking requests (${S.requests.length})</h3>${S.requests.map(r=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">
+    <span><b>${esc(r.company)}</b> wants <b>${r.guards}</b> guard${r.guards===1?'':'s'} at ${esc(r.site)} · ${dday(r.start_ts)} ${tm(r.start_ts)}–${tm(r.end_ts)}${r.notes?` · “${esc(r.notes)}”`:''}</span>
+    <span><button class="b b-ok" data-req="${r.id}:1">Book it</button> <button class="b b-dark" data-req="${r.id}:0">Decline</button></span></div>`).join('')}<div class="mut" style="margin-top:6px">Booking creates the shift (guards can then say they're available) and bills the client automatically.</div></div>`:'';
+  const unpaid=S.invoices.filter(i=>i.status==='unpaid'),month=new Date().toISOString().slice(0,7);
+  const paidM=S.invoices.filter(i=>i.status==='paid'&&i.paid_ts&&new Date(i.paid_ts*1000).toISOString().slice(0,7)===month);
+  $('#money').innerHTML=`<div class="row"><div><div class="mut">Owed by clients</div><div style="font:900 26px ui-monospace,monospace;color:#fca5a5">${money(unpaid.reduce((a,i)=>a+i.amount_cents,0))}</div></div>
+    <div><div class="mut">Collected this month</div><div style="font:900 26px ui-monospace,monospace;color:#4ade80">${money(paidM.reduce((a,i)=>a+i.amount_cents,0))}</div></div>
+    <div><div class="mut">Online payments</div><div>${S.stripe?'<span class="pill p-ok">Stripe connected</span>':'<span class="pill p-warn">Not connected yet</span>'}</div></div></div>`;
+  $('#clist').innerHTML=S.clients.map(c=>{const mine=S.invoices.filter(i=>i.client_id===c.id&&i.status==='unpaid');
+    return`<div class="card"><div class="row"><b>${esc(c.company)}</b>${c.active?(c.must_reset?'<span class="pill p-warn">Hasn\'t signed in</span>':'<span class="pill p-ok">Active</span>'):'<span class="pill p-gray">Off</span>'}</div>
+    <div class="mut">${esc(c.contact||'')} · @${esc(c.username)}${c.email?' · '+esc(c.email):''}${c.phone?' · '+esc(c.phone):''}</div>
+    <div class="mut">Owes ${money(mine.reduce((a,i)=>a+i.amount_cents,0))} · last seen ${c.last_active?ago(S.now-c.last_active):'never'}</div>
+    <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="b b-dark" data-creset="${c.id}">New password</button><button class="b ${c.active?'b-dark':'b-ok'}" data-cactive="${c.id}" data-v="${c.active?0:1}">${c.active?'Turn off':'Turn on'}</button></div></div>`}).join('');
+  const f=$('#inv-f').value,list=S.invoices.filter(i=>!f||i.status===f);
+  $('#ilist').innerHTML=list.map(i=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>${esc(i.company)}</b> · ${esc(i.description)}<div class="mut">#${i.id} · ${i.status==='paid'?'paid '+dt(i.paid_ts)+' ('+esc(i.method)+')':esc(i.status)}</div></span>
+    <span><b>${money(i.amount_cents)}</b> ${i.status==='unpaid'?`<button class="b b-dark" data-inv="${i.id}:paid">Got paid (cash/check)</button> <button class="b b-dark" data-inv="${i.id}:void">Void</button>`:''}</span></div>`).join('')||'<div class="mut">Nothing here.</div>'}
+$('#inv-f').onchange=renderClients;
+$('#c-add').onclick=async()=>{try{const u=$('#c-user').value.trim().toLowerCase(),r=await api('/api/hub/client',{company:$('#c-co').value,contact:$('#c-contact').value,email:$('#c-email').value,phone:$('#c-phone').value,username:u});
+  $('#c-temp').classList.remove('hidden');$('#c-temp').innerHTML=`<div class="mut">Send them: ${esc(location.origin)}/client</div><div class="mut">Username</div><div class="temp">${esc(u)}</div><div class="mut">One-time password (shown once)</div><div class="temp">${esc(r.temp_password)}</div>`;
+  ['#c-co','#c-contact','#c-email','#c-phone','#c-user'].forEach(x=>$(x).value='');refresh()}catch(e){alert(e.message)}};
+function renderTeam(){const owner=S.me.role==='owner';$('#team-add').classList.toggle('hidden',!owner);$('#rules-card').classList.toggle('hidden',!owner);$('#pay-card').classList.toggle('hidden',!owner);$('#ub').checked=S.unpaid_breaks;
+  if(document.activeElement!==$('#rules'))$('#rules').value=S.rules||'';
+  $('#alist').innerHTML=S.admins.map(a=>`<div class="card row"><div><b>${esc(a.name)}</b> <span class="mut">@${esc(a.username)} · ${a.role==='owner'?'owner':'manager'} · ${a.last_active?'active '+ago(S.now-a.last_active):'never signed in'}</span></div>
+    ${!owner||a.role==='owner'?'':`<button class="b ${a.active?'b-dark':'b-ok'}" data-admin="${a.id}" data-v="${a.active?0:1}">${a.active?'Remove access':'Restore access'}</button>`}</div>`).join('')}
+$('#ub').onchange=async()=>{try{await api('/api/hub/settings',{unpaid_breaks:$('#ub').checked});refresh()}catch(e){alert(e.message)}};
+$('#rules-save').onclick=async()=>{try{await api('/api/hub/rules',{rules:$('#rules').value});alert('Saved. Every guard must agree to the new rules next time they open the app.');refresh()}catch(e){alert(e.message)}};
+
+async function renderBack(){const days=$('#b-days').value,v=$('#b-view').value,qy=$('#b-search').value.toLowerCase();
+  if(v==='att'){const rows=(await api('/api/hub/attendance?days='+days)).filter(a=>!qy||a.name.toLowerCase().includes(qy)||a.username.includes(qy));
+    const rv=S.rules_version,gmap=Object.fromEntries(S.guards.map(g=>[g.id,g]));
+    rows.sort((a,b)=>(b.no_shows.length-a.no_shows.length)||(b.late-a.late)||((a.last_active||0)-(b.last_active||0)));
+    $('#back').innerHTML=`<div class="card"><h3>Attendance — last ${days} days</h3><div class="mut">Flaked = booked and confirmed but never clocked in. Late = clocked in 10+ min after start. Blocked = tried to clock in or check in off site.</div></div>`+
+    rows.map(a=>{const inact=!a.last_active||S.now-a.last_active>7*86400,g=gmap[a.id]||{};
+      return`<div class="card"><div class="row"><div><b>${esc(a.name)}</b> <span class="mut">@${esc(a.username)}</span></div><div>
+        ${a.no_shows.length?`<span class="pill p-bad">Flaked ${a.no_shows.length}×</span> `:''}${a.late?`<span class="pill p-warn">Late ${a.late}×</span> `:''}${a.blocked?`<span class="pill p-bad">Blocked ${a.blocked}×</span> `:''}
+        ${a.must_reset?'<span class="pill p-warn">Never signed in</span> ':inact?'<span class="pill p-gray">Not on app 7+ days</span> ':''}${!a.active?'<span class="pill p-gray">Inactive</span>':''}
+        ${S.rules&&g.rules_ack!==rv?'<span class="pill p-warn">Hasn\'t agreed to rules</span>':''}</div></div>
+      <div class="mut" style="margin-top:6px">Worked ${a.worked} of ${a.booked} booked shifts · Last login ${a.last_login?dt(a.last_login):'never'} · Last opened app ${a.last_active?ago(S.now-a.last_active):'never'} · ${a.logins} logins, ${a.opens} app opens</div>
+      ${a.no_shows.length?`<div class="mut" style="color:#fca5a5">Missed: ${a.no_shows.map(n=>esc(n.site)+' '+dt(n.start_ts)).join(' · ')}</div>`:''}</div>`}).join('')}
+  if(v==='log'){const rows=(await api('/api/hub/logins?days='+days)).filter(l=>!qy||(l.username||'').includes(qy));
+    $('#back').innerHTML=`<div class="card"><h3>Login log — last ${days} days</h3><div class="mut">Every sign-in (and failed try) plus every time a guard opens the app.</div>`+
+      rows.map(l=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>@${esc(l.username)}</b> <span class="mut">${l.role==='hub'?'manager':l.role==='client'?'client':'guard'}</span></span>
+      <span>${l.kind==='open'?'<span class="pill p-gray">Opened app</span>':l.ok?'<span class="pill p-ok">Signed in</span>':'<span class="pill p-bad">Wrong password</span>'} <span class="mut">${esc(l.device)} · ${dt(l.ts)}</span></span></div>`).join('')+'</div>'}
+  if(v==='pay'){const rows=(await api(`/api/hub/payroll?from=${S.now-days*86400}&to=${S.now+60}`)).filter(r=>!qy||r.name.toLowerCase().includes(qy));
+    const tot=k=>rows.reduce((a,r)=>a+r[k],0);
+    $('#back').innerHTML=`<div class="card"><h3>Payroll — last ${days} days</h3><div class="mut">Paid time runs from clock-in (or the shift start, whichever is later) to clock-out. Late minutes aren't paid. Breaks are ${S.unpaid_breaks?'unpaid':'paid'}. Shifts still open count up to now.</div>
+      <div style="overflow-x:auto"><table><tr><th>Guard</th><th>Rate</th><th>Shifts</th><th>Hours</th><th>Late</th><th>Missed $ (late)</th><th>Earned</th></tr>
+      ${rows.map(r=>`<tr><td>${r.late_min?'<span class="blip"></span>':''}${esc(r.name)}</td><td>${r.rate?'$'+(+r.rate).toFixed(2):'<span style="color:#fca5a5">not set</span>'}</td><td>${r.shifts}${r.open?' <span class="mut">('+r.open+' open)</span>':''}</td><td>${r.hours.toFixed(2)}</td>
+        <td>${r.late_min?r.late_min+' min':'—'}</td><td style="color:#fca5a5">${r.lost?'−$'+r.lost.toFixed(2):'—'}</td><td style="color:#4ade80"><b>$${r.earned.toFixed(2)}</b></td></tr>`).join('')}
+      <tr><th>Total</th><th></th><th>${tot('shifts')}</th><th>${tot('hours').toFixed(2)}</th><th>${tot('late_min')} min</th><th>−$${tot('lost').toFixed(2)}</th><th>$${tot('earned').toFixed(2)}</th></tr></table></div>
+      <p class="mut">This is a time-and-pay summary to hand to your payroll company — it doesn't take out taxes.</p><button class="b b-dark noprint" onclick="print()">Print / Save PDF</button></div>`}
+  if(v==='audit'){const rows=(await api('/api/hub/audit')).filter(a=>!qy||(a.admin+a.action+a.detail).toLowerCase().includes(qy));
+    $('#back').innerHTML=`<div class="card"><h3>Manager actions</h3><div class="mut">Who booked, removed, reset or changed what — and when.</div>`+
+      rows.map(a=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>@${esc(a.admin)}</b> ${esc(a.action)} <span class="mut">${esc(a.detail)}</span></span><span class="mut">${dt(a.ts)}</span></div>`).join('')+'</div>'}}
+['#b-days','#b-view'].forEach(x=>$(x).onchange=renderBack);$('#b-search').oninput=renderBack;
+$('#a-add').onclick=async()=>{try{await api('/api/hub/admin',{name:$('#a-name').value,username:$('#a-user').value.trim().toLowerCase(),password:$('#a-pw').value});['#a-name','#a-user','#a-pw'].forEach(s=>$(s).value='');refresh()}catch(e){alert(e.message)}};
+$('#m-pw').onclick=async()=>{try{await api('/api/hub/password',{old:$('#m-old').value,new:$('#m-new').value});$('#m-old').value=$('#m-new').value='';alert('Password changed.')}catch(e){alert(e.message)}};
+$('#m-out').onclick=async()=>{await api('/api/logout',{}).catch(()=>{});location.reload()};
+
+document.addEventListener('change',async e=>{const t=e.target;if(t.dataset.assign&&t.value){await api('/api/hub/shift',{id:+t.dataset.assign,guard_id:+t.value,status:'confirmed'}).catch(x=>alert(x.message));renderShifts()}});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-big],[data-ack],[data-trail],[data-clockout],[data-reset],[data-active],[data-edit],[data-t],[data-sg],[data-cancel],[data-admin],[data-late],[data-rate],[data-req],[data-inv],[data-creset],[data-cactive],#lightbox');if(!t)return;
+  if(t.id==='lightbox')return t.classList.add('hidden');
+  if(t.dataset.big!==undefined&&t.src){$('#lightbox img').src=t.src;$('#lightbox').classList.remove('hidden')}
+  if(t.dataset.ack){await api('/api/hub/ack',{id:+t.dataset.ack});refresh()}
+  if(t.dataset.trail){e.preventDefault();trail(+t.dataset.trail)}
+  if(t.dataset.clockout){e.preventDefault();if(confirm('Clock this guard out now?')){await api('/api/hub/clockout',{guard_id:+t.dataset.clockout}).catch(x=>alert(x.message));refresh()}}
+  if(t.dataset.reset){const g=S.guards.find(x=>x.id==t.dataset.reset);if(confirm(`Give ${g.name} a new one-time password? Their old one stops working.`)){const r=await api('/api/hub/guard',{id:g.id,reset:true});
+    document.querySelector('[data-t=guards]').click();showTemp(g.username,r.temp_password);scrollTo(0,0)}}
+  if(t.dataset.active){await api('/api/hub/guard',{id:+t.dataset.active,active:!!+t.dataset.v});refresh()}
+  if(t.dataset.edit){fillSite(S.sites.find(s=>s.id==t.dataset.edit));scrollTo(0,0)}
+  if(t.dataset.sg){e.preventDefault();const [sid,gid,st]=t.dataset.sg.split(':');await api('/api/hub/shift',{id:+sid,guard_id:+gid,status:st});renderShifts();refresh()}
+  if(t.dataset.cancel){if(confirm('Cancel this shift?')){await api('/api/hub/shift',{id:+t.dataset.cancel,cancel:true});renderShifts()}}
+  if(t.dataset.req){const [id,ok]=t.dataset.req.split(':');await api('/api/hub/request',{id:+id,book:ok==='1'}).catch(x=>alert(x.message));refresh()}
+  if(t.dataset.inv){const [id,a]=t.dataset.inv.split(':');if(confirm(a==='paid'?'Mark this invoice paid (cash / check / Zelle)?':'Void this invoice?')){await api('/api/hub/invoice',{id:+id,action:a,method:a==='paid'?'cash/check':''}).catch(x=>alert(x.message));refresh()}}
+  if(t.dataset.creset){const c=S.clients.find(x=>x.id==t.dataset.creset);if(confirm('New one-time password for '+c.company+'?')){const r=await api('/api/hub/client',{id:c.id,reset:true});alert(`Username: ${c.username}\nOne-time password: ${r.temp_password}`)}}
+  if(t.dataset.cactive){await api('/api/hub/client',{id:+t.dataset.cactive,active:!!+t.dataset.v});refresh()}
+  if(t.dataset.late){const [id,ok]=t.dataset.late.split(':');if(ok==='1'||confirm("Deny? This takes them off the shift and tells them not to come in.")){await api('/api/hub/late',{id:+id,approve:ok==='1'});refresh()}}
+  if(t.dataset.rate){const g=S.guards.find(x=>x.id==t.dataset.rate),v=prompt(`Pay rate for ${g.name} ($ per hour):`,g.pay_rate||'');if(v!==null){await api('/api/hub/guard',{id:g.id,pay_rate:v}).catch(x=>alert(x.message));refresh()}}
+  if(t.dataset.admin){await api('/api/hub/admin',{id:+t.dataset.admin,active:!!+t.dataset.v}).catch(x=>alert(x.message));refresh()}
+  if(t.dataset.t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b===t));
+    ['live','shifts','feed','report','guards','sites','clients','back','team'].forEach(x=>$('#t-'+x).classList.toggle('hidden',x!==t.dataset.t));
+    if(t.dataset.t==='live')map?.invalidateSize();if(t.dataset.t==='report')renderReport();if(t.dataset.t==='feed')renderFeed();if(t.dataset.t==='shifts')renderShifts();if(t.dataset.t==='back')renderBack()}
+});
+$('#go').onclick=async()=>{$('#err').textContent='';try{await api('/api/hub/login',{username:$('#lu').value,password:$('#pw').value});$('#pw').value='';try{if(Notification.permission==='default')Notification.requestPermission()}catch{}refresh()}catch(e){$('#err').textContent=e.message}};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+refresh();setInterval(refresh,10000);
+</script>
+<script src="demo.js"></script>
+</body>
+</html>
